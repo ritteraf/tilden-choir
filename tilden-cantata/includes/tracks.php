@@ -473,6 +473,12 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 	if ( function_exists( 'tcc_enqueue_signin_assets' ) ) {
 		tcc_enqueue_signin_assets();
 	}
+	if ( $page ) {
+		// The full-screen practice app.
+		wp_enqueue_style( 'tcc-app', TCC_URL . 'assets/app.css', [ 'tcc-signin' ], TCC_VERSION );
+		wp_enqueue_script( 'tcc-app', TCC_URL . 'assets/app.js', [ 'tcc-signin' ], TCC_VERSION, [ 'strategy' => 'defer' ] );
+		return '<div class="tcc-app-root" data-tcc-app="' . esc_attr( wp_json_encode( $data ) ) . '"><noscript><p>The practice app needs JavaScript turned on.</p></noscript></div>';
+	}
 	wp_enqueue_style( 'tcc-practice', TCC_URL . 'assets/practice.css', [], TCC_VERSION );
 	wp_enqueue_script( 'tcc-practice', TCC_URL . 'assets/practice.js', [ 'tcc-signin' ], TCC_VERSION, [ 'strategy' => 'defer' ] );
 	$empty = $data['empty'] ? '<p class="tcc-practice__empty">' . esc_html( $data['empty'] ) . '</p>' : '';
@@ -601,7 +607,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 	wp_enqueue_script( 'tcc-tracks-admin', TCC_URL . 'assets/tracks-admin.js', [ 'jquery' ], TCC_VERSION, true );
 } );
 
-/* ---------- Cantata → Practice tracks: overview, what the choir is practising, import ---------- */
+/* ---------- Cantata → Practice tracks: overview, what the choir is practicing, import ---------- */
 
 add_action( 'admin_menu', function () {
 	add_submenu_page( 'tcc-menu', 'Practice tracks', 'Practice tracks', 'manage_options', 'tcc-tracks', 'tcc_render_tracks_page' );
@@ -647,10 +653,10 @@ function tcc_render_tracks_page() {
 			$active = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(DISTINCT person_id) FROM ' . tcc_practice_table() . ' WHERE cantata_id = %d AND plays > 0', $view ) );
 			$helpers = $wpdb->get_results( $wpdb->prepare( 'SELECT person_id, song, part FROM ' . tcc_practice_table() . ' WHERE cantata_id = %d AND flag = %s', $view, 'help' ), ARRAY_A );
 		?>
-		<h2 style="margin-top:32px">What the choir is practising
+		<h2 style="margin-top:32px">What the choir is practicing
 			<form method="get" style="display:inline;margin-left:12px;font-weight:normal"><input type="hidden" name="page" value="tcc-tracks"><select name="cantata" onchange="this.form.submit()"><?php foreach ( $cantatas as $c ) : ?><option value="<?php echo $c->ID; ?>"<?php selected( $view, $c->ID ); ?>><?php echo esc_html( tcc_year( $c->ID ) . ' · ' . $c->post_title ); ?></option><?php endforeach; ?></select></form>
 		</h2>
-		<p><strong><?php echo $active; ?></strong> of <?php echo $people_total; ?> people on this season's roster have practised on the site. Flags are what singers set themselves: <em>help</em> means "I need help with this".</p>
+		<p><strong><?php echo $active; ?></strong> of <?php echo $people_total; ?> people on this season's roster have practiced on the site. Flags are what singers set themselves: <em>help</em> means "I need help with this".</p>
 		<table class="widefat striped" style="max-width:1100px"><thead><tr><th>Song</th><th>Plays</th><th>People</th><th style="color:#9c2b1a">Need help</th><th>Working on it</th><th>Got it</th><th>By part</th></tr></thead><tbody>
 		<?php foreach ( $songs as $i => $title ) :
 			$plays = 0; $people = 0; $help = 0; $working = 0; $ok = 0; $bits = [];

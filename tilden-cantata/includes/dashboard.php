@@ -168,6 +168,7 @@ function tcc_world( int $cantata_id ): array {
 		'rest'       => esc_url_raw( rest_url( 'tcc/v1/' ) ),
 		'token'      => tcc_practice_token( $cantata_id ),
 		'icons'      => [ 'doc' => tcc_svg( 'file-doc' ), 'image' => tcc_svg( 'file-image' ), 'play' => tcc_svg( 'file-play' ), 'link' => tcc_svg( 'file-link' ), 'star' => tcc_svg( 'star' ), 'bell' => tcc_svg( 'bell' ), 'then' => tcc_svg( 'then' ), 'note' => tcc_svg( 'note' ) ],
+		'icon'       => TCC_URL . 'assets/icons/icon-192.png',
 		'canEdit'    => current_user_can( 'edit_posts' ),
 		'admin'      => current_user_can( 'edit_posts' ) ? admin_url( 'admin.php?page=tcc-tracks' ) : '',
 	];

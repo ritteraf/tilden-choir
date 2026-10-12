@@ -323,7 +323,7 @@
 		L.tracks.forEach( function ( t, i ) {
 			var st = own ? stat( t.song ) : {};
 			var meta = [ fmt( t.dur ) ];
-			if ( own && +st.plays ) { meta.push( 'practiced ' + st.plays + '×' + ( st.last_played ? ', last ' + ago( st.last_played ) : '' ) ); }
+			if ( own && ( +st.plays || +st.seconds >= 45 ) ) { meta.push( +st.plays >= 3 ? 'feeling good' : 'getting there' ); }
 			var li = h( 'li', { class: 'tcc-pr__row' + ( own && D.next && D.next.songs.indexOf( t.song ) !== -1 ? ' is-next' : '' ), 'data-i': i }, [
 				h( 'button', { type: 'button', class: 'tcc-pr__play', 'aria-label': 'Play ' + t.title, html: SVG.play, onclick: function () { if ( S.list && S.list.key === key && S.idx === i ) { toggle(); } else { playList( key, i ); } } } ),
 				h( 'div', { class: 'tcc-pr__row-text', onclick: function () { if ( S.list && S.list.key === key && S.idx === i ) { toggle(); } else { playList( key, i ); } } }, [
