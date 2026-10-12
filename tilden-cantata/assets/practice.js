@@ -62,8 +62,11 @@
 	}
 
 	/* ---------- state ---------- */
+	var PAGE = D.mode === 'page';
+	var VOICE = [ 'soprano', 'alto', 'tenor', 'bass' ];
 	var S = {
 		who: D.signin && D.signin.who ? D.signin.who : D.who,
+		playPart: '',  // the part a play counts toward (the part shown when the track was started)
 		rows: {},     // 'song|part' -> { plays, seconds, flag, last_played }
 		notes: [],    // personal notes
 		list: null,   // the list currently playing: { key, cantata: {id,token,title,year}, part, tracks }
@@ -81,14 +84,40 @@
 	/* lists we can play: this year's own part, companions, and past years */
 	var LISTS = {};
 	Object.keys( D.lists || {} ).forEach( function ( p ) { LISTS[ 'now:' + p ] = { key: 'now:' + p, cantata: { id: D.cantata.id, token: D.token, title: D.cantata.title, year: D.cantata.year }, part: p, tracks: D.lists[ p ] }; } );
-	( D.past || [] ).forEach( function ( c ) { LISTS[ 'past:' + c.id ] = { key: 'past:' + c.id, cantata: { id: c.id, token: c.token, title: c.title, year: c.year }, part: D.part, tracks: c.tracks }; } );
+	( D.past || [] ).forEach( function ( c ) {
+		if ( PAGE ) { Object.keys( c.parts || {} ).forEach( function ( p ) { LISTS[ 'past:' + c.id + ':' + p ] = { key: 'past:' + c.id + ':' + p, cantata: { id: c.id, token: c.token, title: c.title, year: c.year }, part: p, tracks: c.parts[ p ] }; } ); }
+		else { LISTS[ 'past:' + c.id ] = { key: 'past:' + c.id, cantata: { id: c.id, token: c.token, title: c.title, year: c.year }, part: D.part, tracks: c.tracks }; }
+	} );
+	function pastKeysFor( part ) { return Object.keys( LISTS ).filter( function ( k ) { return k.indexOf( 'past:' ) === 0 && ( ! PAGE || k.slice( k.lastIndexOf( ':' ) + 1 ) === part ); } ); }
+	function partLabel( p ) { return ( D.partLabels && D.partLabels[ p ] ) || p; }
+	/* page mode: which part to show first */
+	function urlPart() { var m = location.search.match( /[?&]part=([a-z]+)/ ); return m && LISTS[ 'now:' + m[ 1 ] ] ? m[ 1 ] : ''; }
+	function urlSong() { var m = location.hash.match( /#song-(\d+)/ ); return m ? parseInt( m[ 1 ], 10 ) - 1 : -1; }
+	function partForVoice( voice ) {
+		var v = D.voice && D.voice[ voice ];
+		if ( ! v ) { return ''; }
+		for ( var i = 0; i < v.tracks.length; i++ ) { if ( LISTS[ 'now:' + v.tracks[ i ] ] ) { return v.tracks[ i ]; } }
+		return '';
+	}
+	function setPart( p, silent ) {
+		if ( ! p || ! D.partLabels[ p ] ) { return; }
+		D.part = p; D.partLabel = partLabel( p ); S.ownKey = 'now:' + p;
+		if ( ! silent ) { try { localStorage.setItem( 'tcc_part', p ); } catch ( e ) {} renderLists(); renderSwitch(); }
+	}
+	if ( PAGE ) {
+		var saved = ''; try { saved = localStorage.getItem( 'tcc_part' ) || ''; } catch ( e ) {}
+		var pick = urlPart() || ( LISTS[ 'now:' + saved ] ? saved : '' ) || VOICE.concat( [ 'accompaniment', 'sections', 'listen' ] ).filter( function ( p ) { return LISTS[ 'now:' + p ]; } )[ 0 ] || 'soprano';
+		setPart( pick, true );
+	}
 
 	function rowKey( song, part ) { return song + '|' + part; }
 	function stat( song ) { return S.rows[ rowKey( song, D.part ) ] || {}; }
+	function countPart() { return S.playPart || D.part; }
 
 	/* ---------- build the page ---------- */
 	var ui = {};
 	function build() {
+		if ( PAGE ) { buildPage(); return; }
 		root.innerHTML = '';
 		ui.who = h( 'div', { class: 'tcc-pr__who' } );
 		root.appendChild( ui.who );
@@ -127,6 +156,96 @@
 		document.body.classList.add( 'tcc-has-player' );
 	}
 
+	/* ---------- page mode: the whole-page practice layout ---------- */
+	function buildPage() {
+		root.innerHTML = '';
+		ui.who = h( 'div', { class: 'tcc-pr__who' } );
+		ui.switch = h( 'div', { class: 'tcc-pp__switch', role: 'tablist', 'aria-label': 'Part' } );
+		ui.lists = h( 'div', { class: 'tcc-pp__lists' } );
+		ui.notes = h( 'div', { class: 'tcc-pp__notes' } );
+		ui.bar = buildBar();
+		ui.bar.classList.add( 'tcc-pr__bar--panel' );
+		ui.bar.hidden = false;
+		ui.picker = null;
+		root.appendChild( h( 'div', { class: 'tcc-pp' }, [
+			h( 'div', { class: 'tcc-pp__top' }, [ ui.switch, ui.who ] ),
+			h( 'div', { class: 'tcc-pp__main' }, [ ui.bar, ui.notes ] ),
+			h( 'div', { class: 'tcc-pp__side' }, [ ui.lists ] )
+		] ) );
+		renderSwitch(); renderLists(); paintNotes(); // who-line waits for /me
+		document.body.classList.add( 'tcc-has-page-player' );
+	}
+	function renderSwitch() {
+		ui.switch.innerHTML = '';
+		var mine = S.who && S.who.part ? ( D.voice[ S.who.part ] || { tracks: [] } ).tracks : [];
+		VOICE.concat( [ 'accompaniment', 'sections', 'listen' ] ).forEach( function ( p ) {
+			if ( ! LISTS[ 'now:' + p ] ) { return; }
+			var own = mine.indexOf( p ) !== -1;
+			ui.switch.appendChild( h( 'button', { type: 'button', role: 'tab', 'aria-selected': p === D.part ? 'true' : 'false', class: 'tcc-pp__tab' + ( p === D.part ? ' is-on' : '' ) + ( own ? ' is-mine' : '' ) + ( VOICE.indexOf( p ) === -1 ? ' tcc-pp__tab--other' : '' ), onclick: function () { setPart( p ); } }, [ partLabel( p ), own ? h( 'small', {}, [ 'your part' ] ) : null ] ) );
+		} );
+	}
+	function renderLists() {
+		ui.lists.innerHTML = '';
+		var L = LISTS[ S.ownKey ];
+		if ( D.next && D.next.songs && D.next.songs.length && L ) {
+			var nextTracks = L.tracks.filter( function ( t ) { return D.next.songs.indexOf( t.song ) !== -1; } );
+			if ( nextTracks.length ) {
+				ui.lists.appendChild( h( 'div', { class: 'tcc-pr__next tcc-pr__next--slim' }, [
+					h( 'div', { class: 'tcc-pr__next-text' }, [
+						h( 'span', { class: 'tcc-pr__eyebrow' }, [ 'On ' + ( D.next.date || 'Wednesday' ) ] ),
+						h( 'span', {}, [ D.next.full ? 'Full run-through — the whole work.' : 'We’re working on ' + D.next.songs.map( function ( i ) { return ( i + 1 ) + ( ( D.next.focus || [] ).indexOf( i ) !== -1 ? ' ★' : '' ); } ).join( ', ' ) + '.' ] )
+					] ),
+					h( 'button', { type: 'button', class: 'tcc-pr__btn tcc-pr__btn--primary', onclick: function () { playList( S.ownKey, L.tracks.indexOf( nextTracks[ 0 ] ), D.next.songs ); } }, [ h( 'span', { html: SVG.play } ), 'Practice these' ] )
+				] ) );
+			}
+		}
+		ui.lists.appendChild( h( 'div', { class: 'tcc-pr__head' }, [ h( 'span', { class: 'tcc-pr__eyebrow' }, [ D.cantata.year + ' · ' + D.cantata.title ] ), h( 'h2', { class: 'tcc-pr__title' }, [ D.partLabel + ( VOICE.indexOf( D.part ) !== -1 ? ' tracks' : '' ) ] ) ] ) );
+		if ( L ) { ui.lists.appendChild( renderList( S.ownKey, true ) ); }
+		else { ui.lists.appendChild( h( 'p', { class: 'tcc-practice__empty' }, [ 'No ' + D.partLabel + ' tracks for this year yet.' ] ) ); }
+		var pastKeys = pastKeysFor( D.part );
+		if ( pastKeys.length ) {
+			var past = h( 'div', { class: 'tcc-pr__past' }, [ h( 'span', { class: 'tcc-pr__eyebrow tcc-pr__eyebrow--line' }, [ 'Earlier years' ] ) ] );
+			pastKeys.forEach( function ( k ) { var PL = LISTS[ k ]; past.appendChild( h( 'details', { class: 'tcc-pr__year' }, [ h( 'summary', {}, [ PL.cantata.year + ' · ' + PL.cantata.title ] ), renderList( k, false ) ] ) ); } );
+			ui.lists.appendChild( past );
+		}
+		markCurrent();
+	}
+	/* the notes timeline under the panel: every director note and personal note on the current song, in order */
+	function paintNotes() {
+		if ( ! PAGE || ! ui.notes ) { return; }
+		ui.notes.innerHTML = '';
+		var t = current();
+		if ( ! t ) {
+			ui.notes.appendChild( h( 'p', { class: 'tcc-pp__notes-empty' }, [ 'Pick a song ' + ( window.innerWidth > 900 ? 'on the right' : 'below' ) + ' to begin. Notes from the director, and your own, show up here as it plays.' ] ) );
+			return;
+		}
+		var list = cuesForCurrent();
+		ui.notes.appendChild( h( 'div', { class: 'tcc-pp__notes-head' }, [
+			h( 'span', { class: 'tcc-pr__eyebrow' }, [ 'Notes on ' + t.title ] ),
+			h( 'span', { class: 'tcc-pp__notes-count' }, [ list.length ? list.length + ( list.length === 1 ? ' note' : ' notes' ) : '' ] )
+		] ) );
+		if ( ! list.length ) {
+			ui.notes.appendChild( h( 'p', { class: 'tcc-pp__notes-empty' }, [ S.who ? 'No notes on this one yet. Press “My note” while it plays to drop one at that moment.' : 'No notes on this one yet.' ] ) );
+		} else {
+			var ol = h( 'ol', { class: 'tcc-pp__cues' } );
+			list.forEach( function ( c, i ) {
+				ol.appendChild( h( 'li', { class: 'tcc-pp__cue tcc-pp__cue--' + c.kind, 'data-t': c.t, 'data-end': i + 1 < list.length ? list[ i + 1 ].t : 1e9 }, [
+					h( 'button', { type: 'button', class: 'tcc-pp__cue-t', onclick: function () { audio.currentTime = Math.max( 0, c.t - 1 ); if ( audio.paused ) { audio.play().catch( function () {} ); } } }, [ fmt( c.t ) ] ),
+					h( 'span', { class: 'tcc-pp__cue-k' }, [ c.kind === 'cue' ? 'Director' : 'Me' ] ),
+					h( 'span', { class: 'tcc-pp__cue-text' }, [ c.text ] ),
+					( ( c.kind === 'mine' && S.who ) || ( c.kind === 'cue' && D.canEdit ) ) ? h( 'button', { type: 'button', class: 'tcc-pp__cue-x', 'aria-label': 'Remove this note', html: SVG.x, onclick: function () { removeNote( c ); } } ) : null
+				] ) );
+			} );
+			ui.notes.appendChild( ol );
+		}
+		tickNoteRows();
+	}
+	function tickNoteRows() {
+		if ( ! PAGE || ! ui.notes ) { return; }
+		var now = audio.currentTime || 0;
+		ui.notes.querySelectorAll( '.tcc-pp__cue' ).forEach( function ( li ) { li.classList.toggle( 'is-on', now >= +li.getAttribute( 'data-t' ) - 1 && now < +li.getAttribute( 'data-end' ) - 1 ); } );
+	}
+
 	function onSeason() { return ! D.signin || ! S.who || S.who.onSeason !== false; }
 	function renderWho() {
 		ui.who.innerHTML = '';
@@ -160,7 +279,7 @@
 			D.signin.who = S.who ? { id: S.who.id, name: S.who.name, onSeason: onSeason() } : null;
 			window.tccSignin.open( D.signin, function ( who ) {
 				S.who = who; try { localStorage.removeItem( 'tcc_who_skip' ); } catch ( e ) {}
-				renderWho(); loadState();
+				renderWho(); loadState( true );
 			} );
 			return;
 		}
@@ -208,7 +327,7 @@
 			var li = h( 'li', { class: 'tcc-pr__row' + ( own && D.next && D.next.songs.indexOf( t.song ) !== -1 ? ' is-next' : '' ), 'data-i': i }, [
 				h( 'button', { type: 'button', class: 'tcc-pr__play', 'aria-label': 'Play ' + t.title, html: SVG.play, onclick: function () { if ( S.list && S.list.key === key && S.idx === i ) { toggle(); } else { playList( key, i ); } } } ),
 				h( 'div', { class: 'tcc-pr__row-text', onclick: function () { if ( S.list && S.list.key === key && S.idx === i ) { toggle(); } else { playList( key, i ); } } }, [
-					h( 'b', {}, [ ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title ] ),
+					h( 'b', {}, [ ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title, own && D.next && ( D.next.focus || [] ).indexOf( t.song ) !== -1 ? h( 'span', { class: 'tcc-focus', title: 'The director says: focus on this one' }, [ ' ★' ] ) : null ] ),
 					h( 'span', { class: 'tcc-pr__row-meta' }, [ meta.join( ' · ' ) ] )
 				] ),
 				own && S.who ? flagChip( t.song, st.flag || '' ) : null
@@ -227,8 +346,9 @@
 			[ 'ok', 'working', 'help', '' ].forEach( function ( f ) {
 				if ( f === '' && ! flag ) { return; }
 				menu.appendChild( h( 'button', { type: 'button', class: 'tcc-pr__menu-item tcc-pr__flag--' + ( f || 'none' ), onclick: function () {
-					api( 'flag', 'POST', { cantata: D.cantata.id, song: song, part: D.part, flag: f } ).then( function () {
-						var k = rowKey( song, D.part ); S.rows[ k ] = S.rows[ k ] || {}; S.rows[ k ].flag = f;
+					var fp = D.part;
+					api( 'flag', 'POST', { cantata: D.cantata.id, song: song, part: fp, flag: f } ).then( function () {
+						var k = rowKey( song, fp ); S.rows[ k ] = S.rows[ k ] || {}; S.rows[ k ].flag = f;
 						refreshLists();
 					} );
 					menu.remove();
@@ -242,6 +362,7 @@
 	function closeMenus() { root.querySelectorAll( '.tcc-pr__menu' ).forEach( function ( m ) { m.remove(); } ); }
 
 	function refreshLists() {
+		if ( PAGE ) { renderLists(); return; }
 		root.querySelectorAll( '.tcc-pr__list' ).forEach( function ( ol ) {
 			var key = ol.getAttribute( 'data-key' );
 			var fresh = renderList( key, key === S.ownKey );
@@ -300,12 +421,13 @@
 		flushPlay();
 		queue = onlySongs || null;
 		S.list = LISTS[ key ]; S.idx = i; S.alt = null; S.loopA = S.loopB = null;
+		S.playPart = key.indexOf( 'now:' ) === 0 && VOICE.indexOf( LISTS[ key ].part ) === -1 ? D.part : LISTS[ key ].part;
 		loadTrack( true );
 	}
 	function current() { return S.list ? S.list.tracks[ S.idx ] : null; }
 	function altTrack() {
 		var t = current(); if ( ! t || t.song < 0 || S.list.key.indexOf( 'now:' ) !== 0 ) { return null; }
-		var pref = D.part === 'listen' ? [ 'now:accompaniment' ] : [ 'now:listen', 'now:accompaniment' ];
+		var pref = S.list.part === 'listen' ? [ 'now:accompaniment' ] : [ 'now:listen', 'now:accompaniment' ];
 		for ( var k = 0; k < pref.length; k++ ) {
 			var L = LISTS[ pref[ k ] ]; if ( ! L || pref[ k ] === S.list.key ) { continue; }
 			for ( var j = 0; j < L.tracks.length; j++ ) { if ( L.tracks[ j ].song === t.song ) { return { key: pref[ k ], track: L.tracks[ j ] }; } }
@@ -332,13 +454,14 @@
 		ui.sub.textContent = ( altLabel ? altLabel : D.partLabels[ S.list.part ] || S.list.part ) + ' · ' + S.list.cantata.year + ' ' + S.list.cantata.title;
 		ui.altBtn.classList.toggle( 'is-on', !! S.alt );
 		ui.altBtn.hidden = ! altTrack() && ! S.alt;
-		ui.altBtn.querySelector( 'span' ).textContent = S.alt ? 'Back to ' + D.partLabel : 'Everyone';
+		ui.altBtn.querySelector( 'span' ).textContent = S.alt ? 'Back to ' + partLabel( S.list.part ) : 'Everyone';
 		ui.bar.hidden = false;
 		ui.cue.classList.remove( 'is-on' ); clearTimeout( cueTimer );
 		ui.noteBtn.hidden = ! S.who || S.list.key.indexOf( 'now:' ) !== 0;
 		if ( ui.cueBtn ) { ui.cueBtn.hidden = S.list.key.indexOf( 'now:' ) !== 0; }
 		ui.form.innerHTML = '';
-		markCurrent(); paintMarks(); paintLoop();
+		markCurrent(); paintMarks(); paintLoop(); paintNotes();
+		if ( PAGE && autoplay && window.innerWidth <= 900 ) { ui.bar.scrollIntoView( { block: 'start', behavior: 'smooth' } ); }
 		if ( 'mediaSession' in navigator ) {
 			try {
 				navigator.mediaSession.metadata = new MediaMetadata( { title: t.title, artist: ( D.partLabels[ S.list.part ] || '' ) + ' — ' + S.list.cantata.title, album: 'Tilden Community Choir', artwork: D.emblem ? [ { src: D.emblem, sizes: '512x512', type: 'image/png' } ] : [] } );
@@ -389,12 +512,14 @@
 	/* ---------- cues and notes on the bar ---------- */
 	function cuesForCurrent() {
 		var t = current(); if ( ! t || t.song < 0 || S.list.key.indexOf( 'now:' ) !== 0 ) { return []; }
-		var out = D.cues.filter( function ( c ) { return c.song === t.song; } ).map( function ( c ) { return { t: c.t, text: c.text, kind: 'cue', id: c.id }; } );
+		var part = countPart();
+		var out = D.cues.filter( function ( c ) { return c.song === t.song && ( ! c.parts || ! c.parts.length || c.parts.indexOf( part ) !== -1 ); } ).map( function ( c ) { return { t: c.t, text: c.text, kind: 'cue', id: c.id }; } );
 		S.notes.filter( function ( n ) { return +n.song === t.song; } ).forEach( function ( n ) { out.push( { t: +n.t, text: n.text, kind: 'mine', id: n.id } ); } );
 		return out.sort( function ( a, b ) { return a.t - b.t; } );
 	}
 	function paintMarks() {
 		ui.marks.innerHTML = '';
+		paintNotes();
 		if ( ! audio.duration ) { return; }
 		cuesForCurrent().forEach( function ( c ) {
 			var m = h( 'button', { type: 'button', class: 'tcc-pr__mark tcc-pr__mark--' + c.kind, title: fmt( c.t ) + ' — ' + c.text, 'aria-label': 'Jump to ' + fmt( c.t ) + ': ' + c.text, onclick: function ( e ) { e.stopPropagation(); audio.currentTime = Math.max( 0, c.t - 1 ); showCue( c, true ); } } );
@@ -428,7 +553,7 @@
 		var partsBox = null;
 		if ( kind === 'cue' ) {
 			partsBox = h( 'div', { class: 'tcc-pr__form-parts' }, [ h( 'span', {}, [ 'Only for:' ] ) ] );
-			[ 'soprano', 'alto', 'tenor', 'bass' ].forEach( function ( p ) { partsBox.appendChild( h( 'label', {}, [ h( 'input', { type: 'checkbox', value: p, checked: p === D.part ? '' : null } ), ' ' + ( D.partLabels[ p ] || p ) ] ) ); } );
+			VOICE.forEach( function ( p ) { partsBox.appendChild( h( 'label', {}, [ h( 'input', { type: 'checkbox', value: p, checked: p === countPart() ? '' : null } ), ' ' + ( D.partLabels[ p ] || p ) ] ) ); } );
 			partsBox.appendChild( h( 'span', { class: 'tcc-pr__form-hint' }, [ '(none = everyone)' ] ) );
 		}
 		ui.form.appendChild( h( 'div', { class: 'tcc-pr__form-row' }, [
@@ -468,9 +593,10 @@
 		if ( secs < 3 && ! complete ) { return; }
 		var done = complete && ! S.counted ? 1 : 0;
 		if ( done ) { S.counted = true; }
-		var k = rowKey( t.song, D.part ); S.rows[ k ] = S.rows[ k ] || { plays: 0, seconds: 0 };
+		var cp = countPart();
+		var k = rowKey( t.song, cp ); S.rows[ k ] = S.rows[ k ] || { plays: 0, seconds: 0 };
 		S.rows[ k ].plays = ( +S.rows[ k ].plays || 0 ) + done; S.rows[ k ].seconds = ( +S.rows[ k ].seconds || 0 ) + secs; if ( done ) { S.rows[ k ].last_played = new Date().toISOString().slice( 0, 19 ).replace( 'T', ' ' ); }
-		api( 'play', 'POST', { cantata: D.cantata.id, song: t.song, part: D.part, seconds: secs, complete: done }, S.list.cantata.token, true );
+		api( 'play', 'POST', { cantata: D.cantata.id, song: t.song, part: cp, seconds: secs, complete: done }, S.list.cantata.token, true );
 		S.listened = 0;
 		if ( done ) { refreshLists(); }
 	}
@@ -480,7 +606,7 @@
 		S.lastT = now;
 		if ( S.loopA !== null && S.loopB !== null && now >= S.loopB ) { audio.currentTime = S.loopA; }
 		if ( ! S.counted && audio.duration && S.listened >= audio.duration * 0.6 ) { flushPlay( true ); }
-		tickCues( prev, now );
+		tickCues( prev, now ); tickNoteRows();
 		var t = current(); if ( t ) { try { localStorage.setItem( 'tcc_pos_' + ( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); } catch ( e ) {} }
 		paint();
 	} );
@@ -506,8 +632,23 @@
 	} );
 
 	/* ---------- state ---------- */
-	function loadState() {
+	function loadState( switched ) {
 		S.rows = {}; S.notes = [];
+		if ( PAGE ) {
+			api( 'me', 'GET', { cantata: D.cantata.id } ).then( function ( r ) {
+				S.who = r && r.who ? { id: r.who.id, name: r.who.name, onSeason: r.who.onSeason, part: r.who.part } : null;
+				var own = S.who ? partForVoice( S.who.part ) : '';
+				if ( own && ( switched || ! urlPart() ) ) {
+					var saved = ''; try { saved = localStorage.getItem( 'tcc_part' ) || ''; } catch ( e ) {}
+					if ( switched || ! saved || ! LISTS[ 'now:' + saved ] ) { setPart( own, true ); }
+				}
+				renderWho(); renderSwitch(); loadRows();
+			} ).catch( function () { renderWho(); refreshLists(); } );
+			return;
+		}
+		loadRows();
+	}
+	function loadRows() {
 		if ( ! S.who ) { refreshLists(); return; }
 		api( 'state', 'GET', { cantata: D.cantata.id } ).then( function ( r ) {
 			if ( ! r || ! r.who ) { S.who = null; renderWho(); refreshLists(); return; }
@@ -519,4 +660,12 @@
 
 	build();
 	loadState();
+	/* a deep link (#song-3) selects that song straight away, ready to play */
+	if ( PAGE ) {
+		var want = urlSong();
+		if ( want >= 0 && LISTS[ S.ownKey ] ) {
+			var at = -1; LISTS[ S.ownKey ].tracks.some( function ( t, i ) { if ( t.song === want ) { at = i; return true; } return false; } );
+			if ( at >= 0 ) { S.list = LISTS[ S.ownKey ]; S.idx = at; S.playPart = D.part; loadTrack( false ); }
+		}
+	}
 } )();

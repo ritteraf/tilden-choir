@@ -1,0 +1,93 @@
+/* Backstage dashboard. Reuses the next-rehearsal card, doc cards, eyebrows and tiles from the theme and stack.css. */
+.tcc-dash {
+	--tcc-ink: var(--wp--preset--color--ink, #1f1f1f);
+	--tcc-paper: var(--wp--preset--color--paper, #ffffff);
+	--tcc-slate: var(--wp--preset--color--slate, #4a4a4a);
+	--tcc-ash: var(--wp--preset--color--ash, #6b6b6b);
+	--tcc-stone: var(--wp--preset--color--stone, #c8c8c4);
+	--tcc-mist: var(--wp--preset--color--mist, #f3f3f1);
+	--tcc-red: var(--wp--preset--color--carol-red, #9c2b1a);
+	--tcc-green: var(--wp--preset--color--pine, #355635);
+	--tcc-gold: var(--wp--preset--color--gold, #d29d33);
+	--tcc-display: var(--wp--preset--font-family--zilla-slab, "Zilla Slab", Georgia, serif);
+	--tcc-body: var(--wp--preset--font-family--libre-franklin, "Libre Franklin", system-ui, sans-serif);
+	font-family: var(--tcc-body); color: var(--tcc-ink); line-height: 1.45; min-height: 200px;
+}
+.tcc-dash * { box-sizing: border-box; }
+.tcc-dash button { font-family: inherit; }
+.tcc-dash__loading { color: var(--tcc-ash); font-size: 15px; padding: 24px 0; }
+.tcc-dash__eyebrow { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tcc-ash); }
+.tcc-dash__link { background: none; border: 0; padding: 0; color: var(--tcc-red); font-size: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.tcc-dash__aside { font-size: 15px; color: var(--tcc-slate); margin: 0 0 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.tcc-dash__aside a { color: var(--tcc-red); }
+.tcc-dash__aside--director { margin-top: 36px; font-size: 14px; }
+.tcc-dash__line { font-size: 14px; color: var(--tcc-ash); margin: 0 0 18px; }
+.tcc-dash__line b { color: var(--tcc-ink); }
+.tcc-dash .tc-eyebrow { margin-top: 2.5rem; }
+.tcc-dash__sec:first-of-type .tc-eyebrow { margin-top: 2rem; }
+.tcc-focus { color: #b7861f; font-size: 0.9em; }
+.tcc-next .tcc-focus { color: var(--tcc-gold); }
+
+/* the three doors */
+.tcc-dash__choose { padding: 8px 0 12px; }
+.tcc-dash__h { margin: 6px 0 8px; font-family: var(--tcc-display); font-size: clamp(30px, 5vw, 40px); line-height: 1.05; font-weight: 700; }
+.tcc-dash__lede { margin: 0 0 24px; font-size: 17px; color: var(--tcc-slate); max-width: 640px; }
+.tcc-dash__doors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.tcc-dash__choose--back .tcc-dash__doors { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+.tcc-dash__door { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 22px 22px 20px; min-height: 120px; border-radius: 10px; border: 2px solid var(--tcc-ink); background: var(--tcc-paper); color: var(--tcc-ink); text-align: left; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+.tcc-dash__door:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(31, 31, 31, 0.14); }
+.tcc-dash__door b { font-family: var(--tcc-display); font-size: 22px; line-height: 1.1; }
+.tcc-dash__door span { font-size: 14px; color: var(--tcc-ash); }
+.tcc-dash__door--primary { border-color: var(--tcc-green); background: rgba(53, 86, 53, 0.06); }
+.tcc-dash__door--quiet { border-color: var(--tcc-stone); }
+.tcc-dash__foot { margin: 18px 0 0; font-size: 14px; color: var(--tcc-ash); }
+
+/* me */
+.tcc-dash__me { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin: 0 0 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(31, 31, 31, 0.14); }
+.tcc-dash__name { margin: 4px 0 8px; font-family: var(--tcc-display); font-size: clamp(30px, 5vw, 40px); line-height: 1.05; font-weight: 700; }
+.tcc-dash__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tcc-dash__chip { display: inline-block; padding: 3px 11px; border-radius: 20px; background: rgba(53, 86, 53, 0.1); color: var(--tcc-green); font-size: 13px; font-weight: 600; }
+.tcc-dash__chip:first-child { background: var(--tcc-green); color: #fff; }
+.tcc-dash__me-actions { font-size: 14px; padding-bottom: 4px; }
+
+/* songs */
+.tcc-dash__songs { list-style: none; margin: 0; padding: 0; border-top: 1px solid rgba(31, 31, 31, 0.14); }
+.tcc-dash__song { display: flex; align-items: center; gap: 16px; padding: 12px 8px 12px 0; border-bottom: 1px solid rgba(31, 31, 31, 0.12); }
+.tcc-dash__song.is-focus { background: linear-gradient(90deg, rgba(210, 157, 51, 0.12), rgba(210, 157, 51, 0)); }
+.tcc-dash__song-play { flex-shrink: 0; width: 48px; height: 48px; margin-left: 4px; border-radius: 50%; border: 2px solid var(--tcc-ink); background: var(--tcc-paper); color: var(--tcc-ink); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.tcc-dash__song-play svg { width: 24px; height: 24px; }
+.tcc-dash__song-play:hover { background: var(--tcc-ink); color: #fff; }
+.tcc-dash__song-text { flex: 1 1 auto; min-width: 0; }
+.tcc-dash__song-text b { display: block; font-family: var(--tcc-display); font-size: 19px; line-height: 1.2; }
+.tcc-dash__song-text > span { display: block; font-size: 14px; color: var(--tcc-ash); margin-top: 2px; }
+.tcc-dash__flag { flex-shrink: 0; padding: 5px 11px; border-radius: 20px; font-size: 12.5px; font-weight: 600; white-space: nowrap; border: 1.5px solid var(--tcc-stone); color: var(--tcc-slate); }
+.tcc-dash__flag--ok { border-color: var(--tcc-green); color: var(--tcc-green); background: rgba(53, 86, 53, 0.08); }
+.tcc-dash__flag--working { border-color: var(--tcc-gold); color: #7a5a14; background: rgba(210, 157, 51, 0.14); }
+.tcc-dash__flag--help { border-color: var(--tcc-red); color: var(--tcc-red); background: rgba(156, 43, 26, 0.08); }
+.tcc-dash__cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 18px; }
+.tcc-dash__start { display: inline-flex; align-items: center; gap: 10px; padding: 15px 26px; border-radius: 6px; background: var(--tcc-red); color: #fff; font-size: 18px; font-weight: 700; text-decoration: none; line-height: 1.1; }
+.tcc-dash__start:hover { background: #7f2214; color: #fff; }
+.tcc-dash__start svg { width: 20px; height: 20px; }
+.tcc-dash__cta-sub { font-size: 14px; color: var(--tcc-ash); }
+
+/* team */
+.tcc-dash__team { padding: 18px 22px; border-radius: 8px; background: var(--tcc-mist); display: flex; flex-direction: column; gap: 8px; }
+.tcc-dash__team p { margin: 0; font-size: 15px; }
+.tcc-dash__team-desc { color: var(--tcc-slate); }
+.tcc-dash__team-meet { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.tcc-dash__team-meet svg { width: 18px; height: 18px; color: var(--tcc-green); flex-shrink: 0; }
+.tcc-dash__team-who { color: var(--tcc-ash); font-size: 14px !important; }
+
+/* browse */
+.tcc-dash__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.tcc-dash__tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+
+@media (max-width: 720px) {
+	.tcc-dash__doors, .tcc-dash__choose--back .tcc-dash__doors { grid-template-columns: 1fr; }
+	.tcc-dash__door { min-height: 0; padding: 18px; }
+	.tcc-dash__cards { grid-template-columns: 1fr; }
+	.tcc-dash__tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	.tcc-dash__tiles .tc-tile--acc { grid-column: span 2; }
+	.tcc-dash__song-text b { font-size: 17px; }
+	.tcc-dash__flag { display: none; }
+}

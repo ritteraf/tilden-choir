@@ -238,6 +238,28 @@
 		save: function () { return null; }
 	} );
 
+	wp.blocks.registerBlockType( 'tilden/backstage-dashboard', {
+		title: 'Backstage dashboard',
+		icon: 'dashboard',
+		description: 'The whole Backstage hub: sign-in for new devices, then each person’s own next rehearsal, songs to work on, tracks, documents and team.',
+		category: 'widgets',
+		attributes: {},
+		supports: { html: false, multiple: false, align: [ 'wide' ] },
+		edit: function () { return el( 'div', useBlockProps(), el( SSR, { block: 'tilden/backstage-dashboard', attributes: {} } ) ); },
+		save: function () { return null; }
+	} );
+
+	wp.blocks.registerBlockType( 'tilden/practice', {
+		title: 'Practice page',
+		icon: 'controls-play',
+		description: 'The whole-page practice player: every part, the person’s own part first, with notes laid out under the player.',
+		category: 'widgets',
+		attributes: {},
+		supports: { html: false, multiple: false, align: [ 'wide', 'full' ] },
+		edit: function () { return el( 'div', useBlockProps(), el( SSR, { block: 'tilden/practice', attributes: {} } ) ); },
+		save: function () { return null; }
+	} );
+
 	wp.blocks.registerBlockType( 'tilden/backstage-docs', {
 		title: 'Cantata documents',
 		icon: 'media-document',

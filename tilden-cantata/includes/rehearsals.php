@@ -47,7 +47,8 @@ function tcc_rehearsal_fields(): array {
 		'who'     => [ 'Who attends', 'who', 'Leave all unticked for everyone.' ],
 		'must'    => [ 'Required to perform', 'who', 'Tick the groups who have to be at this rehearsal to take part in the performance. Leave all unticked if nobody is required.' ],
 		'full'    => [ 'Full run-through', 'check', 'Tick when the rehearsal goes through the whole work start to finish. The song list below is then ignored and the schedule shows a run-through banner instead.' ],
-		'songs'   => [ 'Songs', 'songs', 'Tick what this rehearsal covers. The list comes from the cantata\'s Song list field.' ],
+		'songs'   => [ 'Songs', 'songs', 'Tick what this rehearsal covers. The list comes from the cantata\'s Song list field. The star marks a song to focus on before this rehearsal; singers see it as a hint on their dashboard and in the player.' ],
+		'focus'   => [ 'Focus', 'focus', '' ],
 		'after'   => [ 'Afterward', 'after', 'Separate items once rehearsal ends (solo tryouts, staging team meeting), each with its own time and attendees.' ],
 		'cantata' => [ 'Cantata', 'cantata', 'Which year this belongs to. Defaults to this year\'s cantata.' ],
 	];
@@ -85,7 +86,7 @@ function tcc_sanitize_rehearsal_field( string $key, $v ) {
 		'time'     => preg_match( '/^\d{2}:\d{2}$/', (string) $v ) ? $v : '',
 		'select'   => array_key_exists( (string) $v, tcc_rehearsal_types() ) ? $v : ( $v === 'required' ? 'required' : 'rehearsal' ),
 		'who'      => tcc_sanitize_who( $v ),
-		'songs'    => tcc_sanitize_songs( $v ),
+		'songs', 'focus' => tcc_sanitize_songs( $v ),
 		'check'    => $v ? '1' : '',
 		'after'    => tcc_sanitize_after( $v ),
 		'cantata'  => absint( $v ),
@@ -157,6 +158,9 @@ function tcc_render_rehearsal_box( WP_Post $post ) {
 	wp_nonce_field( 'tcc_reh_save', 'tcc_reh_nonce' );
 	echo '<table class="form-table"><tbody>';
 	foreach ( tcc_rehearsal_fields() as $key => [ $label, $type, $desc ] ) {
+		if ( $type === 'focus' ) {
+			continue; // drawn inside the song list
+		}
 		$name = '_tcc_' . $key;
 		$val  = get_post_meta( $post->ID, $name, true );
 		echo '<tr><th scope="row"><label for="' . esc_attr( $name ) . '">' . esc_html( $label ) . '</label></th><td>';
@@ -187,6 +191,7 @@ function tcc_render_rehearsal_box( WP_Post $post ) {
 				break;
 			case 'songs':
 				$picked = array_map( 'intval', array_filter( preg_split( '/[,\s]+/', (string) $val ) ) );
+				$focus  = array_map( 'intval', array_filter( preg_split( '/[,\s]+/', (string) get_post_meta( $post->ID, '_tcc_focus', true ) ) ) );
 				$chosen = (int) get_post_meta( $post->ID, '_tcc_cantata', true ) ?: tcc_current_id();
 				foreach ( tcc_get_cantatas() as $c ) {
 					$songs = tcc_song_titles( $c->ID );
@@ -197,8 +202,8 @@ function tcc_render_rehearsal_box( WP_Post $post ) {
 					$help = function_exists( 'tcc_help_counts' ) ? tcc_help_counts( $c->ID ) : [];
 					foreach ( $songs as $i => $title ) {
 						$n = $i + 1;
-						printf( '<label style="display:block;margin:2px 0"><input type="checkbox" name="%s[]" value="%d"%s> %d. %s%s</label>', esc_attr( $name ), $n, checked( in_array( $n, $picked, true ), true, false ), $n, esc_html( $title ),
-							! empty( $help[ $i ] ) ? ' <span style="color:#9c2b1a;font-size:12px">· ' . (int) $help[ $i ] . ' asked for help</span>' : '' );
+						printf( '<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><label style="flex:1 1 auto"><input type="checkbox" name="%s[]" value="%d"%s> %d. %s%s</label><label title="Focus on this one" style="color:#8a6418;font-size:12px;white-space:nowrap"><input type="checkbox" name="_tcc_focus[]" value="%d"%s> ★ focus</label></div>', esc_attr( $name ), $n, checked( in_array( $n, $picked, true ), true, false ), $n, esc_html( $title ),
+							! empty( $help[ $i ] ) ? ' <span style="color:#9c2b1a;font-size:12px">· ' . (int) $help[ $i ] . ' asked for help</span>' : '', $n, checked( in_array( $n, $focus, true ), true, false ) );
 					}
 					echo '</div>';
 				}
@@ -248,7 +253,7 @@ add_action( 'save_post_' . TCC_REH, function ( int $post_id, WP_Post $post ) {
 	foreach ( tcc_rehearsal_fields() as $key => $f ) {
 		$name = '_tcc_' . $key;
 		if ( ! array_key_exists( $name, $_POST ) ) {
-			if ( in_array( $f[1], [ 'who', 'songs', 'check' ], true ) ) {
+			if ( in_array( $f[1], [ 'who', 'songs', 'focus', 'check' ], true ) ) {
 				delete_post_meta( $post_id, $name ); // nothing ticked
 			}
 			continue;
@@ -561,7 +566,7 @@ function tcc_rehearsal_song_titles( int $reh_id, int $cantata_id ): array {
 	$songs = tcc_song_titles( $cantata_id );
 	$nums = [];
 	foreach ( preg_split( '/[,\s]+/', $spec ) as $part ) {
-		if ( preg_match( '/^(\d+)\s*[-–]\s*(\d+)$/', $part, $m ) ) {
+		if ( preg_match( '/^(\d+)\s*(?:-|–)\s*(\d+)$/u', $part, $m ) ) {
 			$nums = array_merge( $nums, range( (int) $m[1], (int) $m[2] ) );
 		} elseif ( preg_match( '/^\d+$/', $part ) ) {
 			$nums[] = (int) $part;
@@ -570,6 +575,23 @@ function tcc_rehearsal_song_titles( int $reh_id, int $cantata_id ): array {
 	$out = [];
 	foreach ( array_unique( $nums ) as $n ) {
 		$out[] = isset( $songs[ $n - 1 ] ) ? $n . '. ' . $songs[ $n - 1 ] : 'Song ' . $n;
+	}
+	return $out;
+}
+
+/** 1-based song numbers the director starred as the ones to focus on before this rehearsal. */
+function tcc_rehearsal_focus( int $reh_id ): array {
+	return array_map( 'intval', array_filter( preg_split( '/[,\s]+/', (string) get_post_meta( $reh_id, '_tcc_focus', true ) ) ) );
+}
+
+/** A rehearsal's songs as list items, the starred ones marked. */
+function tcc_song_items_html( int $reh_id, int $cantata_id ): string {
+	$focus = tcc_rehearsal_focus( $reh_id );
+	$out   = '';
+	foreach ( tcc_rehearsal_song_titles( $reh_id, $cantata_id ) as $s ) {
+		$n  = (int) $s;
+		$is = $n && in_array( $n, $focus, true );
+		$out .= '<li' . ( $is ? ' class="is-focus"' : '' ) . '>' . esc_html( $s ) . ( $is ? ' <span class="tcc-focus" title="Focus on this one">★</span>' : '' ) . '</li>';
 	}
 	return $out;
 }
@@ -687,7 +709,7 @@ function tcc_render_rehearsal( WP_Post $r, int $cantata_id, bool $is_next ): str
 	} else {
 		$songs = tcc_rehearsal_song_titles( $r->ID, $cantata_id );
 		if ( $songs ) {
-			$out .= '<ul class="tcc-reh__songs">' . implode( '', array_map( fn( $s ) => '<li>' . esc_html( $s ) . '</li>', $songs ) ) . '</ul>';
+			$out .= '<ul class="tcc-reh__songs">' . tcc_song_items_html( $r->ID, $cantata_id ) . '</ul>';
 		}
 	}
 	$after = tcc_after_items( $r->ID );
@@ -763,7 +785,7 @@ function tcc_render_next_rehearsal( int $cantata_id = 0, string $schedule_url = 
 		$out .= '<div><dt>What we\'re working on</dt><dd class="tcc-next__songs"><span class="tcc-next__full">' . tcc_svg( 'note' ) . esc_html( apply_filters( 'tcc_full_label', 'Full run-through' ) ) . '</span> ' . esc_html( apply_filters( 'tcc_full_line', 'The whole work, start to finish.' ) ) . '</dd></div>';
 	} elseif ( $songs ) {
 		$all = count( $songs ) === count( tcc_song_titles( $cantata_id ) );
-		$out .= '<div><dt>What we\'re working on</dt><dd class="tcc-next__songs">' . ( $all ? 'The whole work' : '<ul>' . implode( '', array_map( fn( $s ) => '<li>' . esc_html( $s ) . '</li>', $songs ) ) . '</ul>' ) . '</dd></div>';
+		$out .= '<div><dt>What we\'re working on</dt><dd class="tcc-next__songs">' . ( $all ? 'The whole work' : '<ul>' . tcc_song_items_html( $next->ID, $cantata_id ) . '</ul>' ) . '</dd></div>';
 	}
 	$after = tcc_after_items( $next->ID );
 	if ( $after ) {

@@ -23,7 +23,7 @@
 	}
 
 	/* ---------- the panel ---------- */
-	function open( cfg, done ) {
+	function open( cfg, done, start ) {
 		var old = document.querySelector( '.tcc-si' ); if ( old ) { old.remove(); }
 		var panel = h( 'div', { class: 'tcc-si', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Sign in backstage' } );
 		var box = h( 'div', { class: 'tcc-si__box' } );
@@ -175,7 +175,7 @@
 			);
 		}
 
-		stepAsk();
+		if ( start === 'find' ) { stepFind(); } else if ( start === 'new' ) { stepForm( 0 ); } else { stepAsk(); }
 		panel.addEventListener( 'keydown', function ( e ) { if ( e.key === 'Escape' ) { close( null ); } } );
 	}
 

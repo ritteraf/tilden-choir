@@ -363,18 +363,10 @@ function tcc_next_rehearsal_songs( int $cantata_id ): ?array {
 	$dt = tcc_rehearsal_dt( $next->ID );
 	$count = count( tcc_song_titles( $cantata_id ) );
 	if ( tcc_rehearsal_is_full( $next->ID ) ) {
-		return [ 'date' => $dt ? $dt->format( 'l, F j' ) : '', 'songs' => range( 0, max( 0, $count - 1 ) ), 'full' => true, 'title' => get_the_title( $next ) ];
+		return [ 'date' => $dt ? $dt->format( 'l, F j' ) : '', 'songs' => range( 0, max( 0, $count - 1 ) ), 'focus' => tcc_song_indices( (string) get_post_meta( $next->ID, '_tcc_focus', true ), $count ), 'full' => true, 'title' => get_the_title( $next ) ];
 	}
-	$nums = [];
-	foreach ( preg_split( '/[,\s]+/', (string) get_post_meta( $next->ID, '_tcc_songs', true ) ) as $p ) {
-		if ( preg_match( '/^(\d+)\s*[-–]\s*(\d+)$/', $p, $m ) ) {
-			$nums = array_merge( $nums, range( (int) $m[1], (int) $m[2] ) );
-		} elseif ( preg_match( '/^\d+$/', $p ) ) {
-			$nums[] = (int) $p;
-		}
-	}
-	$idx = array_values( array_filter( array_map( fn( $n ) => $n - 1, array_unique( $nums ) ), fn( $i ) => $i >= 0 && $i < $count ) );
-	return [ 'date' => $dt ? $dt->format( 'l, F j' ) : '', 'songs' => $idx, 'full' => false, 'title' => get_the_title( $next ) ];
+	$idx = tcc_song_indices( (string) get_post_meta( $next->ID, '_tcc_songs', true ), $count );
+	return [ 'date' => $dt ? $dt->format( 'l, F j' ) : '', 'songs' => $idx, 'focus' => tcc_song_indices( (string) get_post_meta( $next->ID, '_tcc_focus', true ), $count ), 'full' => false, 'title' => get_the_title( $next ) ];
 }
 
 /* ---------- the player block ---------- */
@@ -404,8 +396,9 @@ function tcc_player_list( array $tracks, array $songs ): array {
 }
 
 function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
-	$part    = tcc_part_for_page( $attr );
-	$label   = trim( preg_replace( '/\s*\(.*$/', '', tcc_track_parts()[ $part ] ?? ucfirst( $part ) ) );
+	$page    = $attr === 'page'; // the whole-page practice player: every part, the person's own first
+	$part    = $page ? '' : tcc_part_for_page( $attr );
+	$label   = $part ? trim( preg_replace( '/\s*\(.*$/', '', tcc_track_parts()[ $part ] ?? ucfirst( $part ) ) ) : '';
 	$current = tcc_current_id();
 	if ( ! $current ) {
 		return '';
@@ -413,12 +406,12 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 	$songs  = tcc_song_titles( $current );
 	$tracks = tcc_tracks( $current );
 	$lists  = [];
-	foreach ( [ $part, 'listen', 'accompaniment', 'sections' ] as $p ) {
+	foreach ( $page ? array_keys( tcc_track_parts() ) : [ $part, 'listen', 'accompaniment', 'sections' ] as $p ) {
 		if ( ! empty( $tracks[ $p ] ) ) {
 			$lists[ $p ] = tcc_player_list( $tracks[ $p ], $songs );
 		}
 	}
-	$cues = array_values( array_filter( tcc_cues( $current ), fn( $c ) => ! $c['parts'] || in_array( $part, $c['parts'], true ) ) );
+	$cues = $page ? tcc_cues( $current ) : array_values( array_filter( tcc_cues( $current ), fn( $c ) => ! $c['parts'] || in_array( $part, $c['parts'], true ) ) );
 	$old  = [];
 	if ( $past ) {
 		foreach ( tcc_get_cantatas() as $c ) {
@@ -426,13 +419,28 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 				continue;
 			}
 			$t = tcc_tracks( $c->ID );
-			if ( ! empty( $t[ $part ] ) ) {
+			if ( $page ) {
+				$by = [];
+				foreach ( [ 'soprano', 'alto', 'tenor', 'bass', 'accompaniment', 'sections', 'listen' ] as $p ) {
+					if ( ! empty( $t[ $p ] ) ) {
+						$by[ $p ] = tcc_player_list( $t[ $p ], tcc_song_titles( $c->ID ) );
+					}
+				}
+				if ( $by ) {
+					$old[] = [ 'id' => $c->ID, 'year' => tcc_year( $c->ID ), 'title' => $c->post_title, 'parts' => $by, 'token' => tcc_practice_token( $c->ID ) ];
+				}
+			} elseif ( ! empty( $t[ $part ] ) ) {
 				$old[] = [ 'id' => $c->ID, 'year' => tcc_year( $c->ID ), 'title' => $c->post_title, 'tracks' => tcc_player_list( $t[ $part ], tcc_song_titles( $c->ID ) ), 'token' => tcc_practice_token( $c->ID ) ];
 			}
 		}
 	}
-	$who  = tcc_who();
+	$who   = tcc_who();
+	$voice = [];
+	foreach ( function_exists( 'tcc_voice_parts' ) ? tcc_voice_parts() : [] as $k => $l ) {
+		$voice[ $k ] = [ 'label' => trim( preg_replace( '/\s*\(.*$/', '', $l ) ), 'tracks' => explode( '-', $k ) ];
+	}
 	$data = [
+		'mode'      => $page ? 'page' : 'part',
 		'rest'      => esc_url_raw( rest_url( 'tcc/v1/' ) ),
 		'token'     => tcc_practice_token( $current ),
 		'nonce'     => current_user_can( 'edit_posts' ) ? wp_create_nonce( 'wp_rest' ) : '',
@@ -440,6 +448,8 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'cantata'   => [ 'id' => $current, 'year' => tcc_year( $current ), 'title' => get_the_title( $current ) ],
 		'part'      => $part,
 		'partLabel' => $label,
+		'voice'     => $voice,
+		'hub'       => home_url( '/backstage/' ),
 		'partLabels'=> array_map( fn( $l ) => trim( preg_replace( '/\s*\(.*$/', '', $l ) ), tcc_track_parts() ),
 		'songs'     => array_values( $songs ),
 		'lists'     => $lists,
@@ -448,18 +458,25 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'past'      => $old,
 		'who'       => $who ? [ 'id' => $who, 'name' => get_the_title( $who ) ] : null,
 		'emblem'    => function_exists( 'tcc_emblem_url' ) ? tcc_emblem_url() : '',
-		'empty'     => empty( $lists[ $part ] ) ? ( current_user_can( 'edit_posts' )
+		'empty'     => ! $page && empty( $lists[ $part ] ) ? ( current_user_can( 'edit_posts' )
 			? sprintf( 'No %s tracks on %s yet. This page\'s title is "%s", so the player looks for the %s list on this year\'s cantata post (Practice tracks box). Add them there, or set the part on this block in the editor. Only editors see this note.', $label, get_the_title( $current ), get_the_title(), $label )
 			: $label . ' tracks for this year aren\'t up yet. Check back soon.' ) : '',
 	];
 	$data['signin'] = function_exists( 'tcc_signin_config' ) ? tcc_signin_config( $current ) : null;
+	if ( $page ) {
+		// The practice page is the same HTML for everyone; the browser asks /me who it belongs to.
+		$data['who'] = null;
+		if ( $data['signin'] ) {
+			$data['signin']['who'] = null;
+		}
+	}
 	if ( function_exists( 'tcc_enqueue_signin_assets' ) ) {
 		tcc_enqueue_signin_assets();
 	}
 	wp_enqueue_style( 'tcc-practice', TCC_URL . 'assets/practice.css', [], TCC_VERSION );
 	wp_enqueue_script( 'tcc-practice', TCC_URL . 'assets/practice.js', [ 'tcc-signin' ], TCC_VERSION, [ 'strategy' => 'defer' ] );
 	$empty = $data['empty'] ? '<p class="tcc-practice__empty">' . esc_html( $data['empty'] ) . '</p>' : '';
-	return '<div class="tcc-practice" data-tcc-practice="' . esc_attr( wp_json_encode( $data ) ) . '">' . $empty . '<noscript><p>The practice player needs JavaScript.</p></noscript></div>';
+	return '<div class="tcc-practice' . ( $page ? ' tcc-practice--page' : '' ) . '" data-tcc-practice="' . esc_attr( wp_json_encode( $data ) ) . '">' . $empty . '<noscript><p>The practice player needs JavaScript.</p></noscript></div>';
 }
 
 add_action( 'init', function () {

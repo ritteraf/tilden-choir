@@ -416,3 +416,5 @@ body.tcc-modal-open { overflow: hidden; }
 .tcc-form__done p { margin: 0; }
 @media (max-width: 600px) { .tcc-form__row { grid-template-columns: 1fr; } }
 
+.tcc-focus { color: #b7861f; font-size: 0.85em; }
+.tcc-next .tcc-focus { color: var(--tcc-gold); }
