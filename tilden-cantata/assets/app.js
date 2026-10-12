@@ -32,6 +32,7 @@
 		pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4.5h4.2v15H6zM13.8 4.5H18v15h-4.2z"/></svg>',
 		prev: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5v14l-10-7zM5 5h2.2v14H5z"/></svg>',
 		next: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5v14l10-7zM16.8 5H19v14h-2.2z"/></svg>',
+		fwd5: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>',
 		back5: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>',
 		edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
 		x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
@@ -158,7 +159,7 @@
 				h( 'button', { type: 'button', class: 'ta-icon', 'aria-label': 'Previous song', html: I.prev, onclick: function () { step( -1 ); } } ),
 				ui.play,
 				h( 'button', { type: 'button', class: 'ta-icon', 'aria-label': 'Next song', html: I.next, onclick: function () { step( 1 ); } } ),
-				h( 'span', { class: 'ta-icon ta-icon--spacer' } )
+				h( 'button', { type: 'button', class: 'ta-icon ta-icon--dim', 'aria-label': 'Forward five seconds', html: I.fwd5, onclick: function () { seek( audio.currentTime + 5 ); } } )
 			] ),
 			h( 'div', { class: 'ta-dock__tools' }, [ ui.viewBtn, ui.rateBtn, ui.loopBtn, ui.altBtn, ui.noteBtn, ui.songsBtn ] )
 		] ) );
