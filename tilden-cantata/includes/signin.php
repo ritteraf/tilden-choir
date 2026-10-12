@@ -199,12 +199,12 @@ add_action( 'rest_api_init', function () {
 
 		setcookie( 'tcc_who', tcc_who_sign( $id ), [ 'expires' => time() + YEAR_IN_SECONDS, 'path' => '/', 'secure' => is_ssl(), 'httponly' => false, 'samesite' => 'Lax' ] );
 
-		// Tell the director.
-		if ( function_exists( 'tcc_contact_to' ) ) {
+		// Tell the director about new people only; returning members just show up as "Confirmed on the site" in the People list.
+		if ( $is_new && function_exists( 'tcc_contact_to' ) ) {
 			$parts = function_exists( 'tcc_voice_parts' ) ? tcc_voice_parts() : [];
 			$roles = function_exists( 'tcc_volunteer_roles' ) ? tcc_volunteer_roles() : [];
 			$lines = [
-				( $is_new ? 'New sign-up' : 'Returning member confirmed' ) . ': ' . get_the_title( $id ),
+				'New sign-up: ' . get_the_title( $id ),
 				'Season: ' . tcc_year( $cantata ) . ' ' . get_the_title( $cantata ),
 				'Taking part as: ' . ( $types ? implode( ', ', $types ) : '(unchanged)' ),
 				'Voice part: ' . ( $parts[ (string) get_post_meta( $id, '_tcc_part', true ) ] ?? ( $part === 'unsure' ? 'not sure yet' : '—' ) ),
@@ -216,7 +216,7 @@ add_action( 'rest_api_init', function () {
 				'',
 				'Edit: ' . admin_url( 'post.php?post=' . $id . '&action=edit' ),
 			];
-			wp_mail( tcc_contact_to(), '[' . get_bloginfo( 'name' ) . '] ' . ( $is_new ? 'New sign-up: ' : 'Signed in: ' ) . get_the_title( $id ), implode( "\n", $lines ), [ 'From: ' . get_bloginfo( 'name' ) . ' <' . tcc_contact_from() . '>', 'Content-Type: text/plain; charset=UTF-8' ] );
+			wp_mail( tcc_contact_to(), '[' . get_bloginfo( 'name' ) . '] New sign-up: ' . get_the_title( $id ), implode( "\n", $lines ), [ 'From: ' . get_bloginfo( 'name' ) . ' <' . tcc_contact_from() . '>', 'Content-Type: text/plain; charset=UTF-8' ] );
 		}
 		if ( function_exists( 'tcc_purge_home' ) ) {
 			tcc_purge_home();
