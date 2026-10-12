@@ -123,7 +123,7 @@
 		ui.eyebrow = h( 'span', { class: 'ta-top__eyebrow' } );
 		ui.ttl = h( 'span', { class: 'ta-top__title' }, [ 'Practice' ] );
 		ui.partBtn = h( 'button', { type: 'button', class: 'ta-chip', onclick: openParts, 'aria-haspopup': 'dialog' } );
-		ui.app.appendChild( h( 'header', { class: 'ta-top' }, [ ui.close, h( 'button', { type: 'button', class: 'ta-top__mid', onclick: openSongs, 'aria-haspopup': 'dialog' }, [ ui.eyebrow, ui.ttl ] ), ui.partBtn ] ) );
+		ui.app.appendChild( h( 'header', { class: 'ta-top' }, [ ui.close, h( 'button', { type: 'button', class: 'ta-top__mid', onclick: function () { if ( ui.ttl.classList.contains( 'is-note' ) ) { setView( 'notes' ); } else { openSongs(); } }, 'aria-haspopup': 'dialog' }, [ ui.eyebrow, ui.ttl ] ), ui.partBtn ] ) );
 		/* stage */
 		ui.stream = h( 'div', { class: 'ta-stream', tabindex: '-1' } );
 		ui.followBtn = h( 'button', { type: 'button', class: 'ta-follow', hidden: true, onclick: function () { setFollow( true ); scrollToActive( true ); } }, [ 'Back to now' ] );
@@ -179,6 +179,7 @@
 	function paintTop() {
 		var t = current();
 		ui.eyebrow.textContent = ( S.list ? ( S.list.now ? '' : S.list.cantata.year + ' · ' ) : '' ) + ( S.list ? S.list.cantata.title : D.cantata.title );
+		ui.ttl.className = 'ta-top__title'; ui.ttl.removeAttribute( 'data-n' );
 		ui.ttl.textContent = t ? ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title : 'Choose a song';
 		ui.partBtn.innerHTML = '';
 		ui.partBtn.appendChild( h( 'span', {}, [ S.alt && altTrack() ? 'Full choir' : shortLabel( S.list ? S.list.part : S.part ) ] ) );
@@ -363,7 +364,7 @@
 	function buildMusic() {
 		ui.music.innerHTML = '';
 		/* no bar over the music: the page number lives in the top bar, looking ahead is a swipe */
-		ui.pageNow = h( 'button', { type: 'button', class: 'ta-follow ta-music__now', hidden: true, onclick: function () { M.manual = null; tickMusic( true ); } }, [ 'Back to now' ] );
+		ui.pageNow = h( 'button', { type: 'button', class: 'ta-follow ta-music__now', hidden: true, onclick: function () { M.manual = null; M.userAt = 0; tickMusic( true ); } }, [ 'Back to now' ] );
 		ui.recBtn = D.canEdit ? h( 'button', { type: 'button', class: 'ta-music__set', onclick: startRec }, [ 'Set page turns' ] ) : null;
 		ui.pages = h( 'div', { class: 'ta-pages' } );
 		ui.pagesIn = h( 'div', { class: 'ta-pages__in' } );
@@ -375,7 +376,7 @@
 		ui.recBar = h( 'div', { class: 'ta-rec', hidden: true } );
 		ui.music.appendChild( ui.recBar );
 		gestures( ui.pages );
-		window.addEventListener( 'resize', function () { M.shown = ''; tickMusic( true ); } );
+		window.addEventListener( 'resize', function () { M.shown = ''; M.zoom = 1; tickMusic( true ); } );
 	}
 	function manualPage( d ) {
 		var r = scoreRange(); if ( ! r ) { return; }
@@ -424,8 +425,9 @@
 		ui.pageNow.hidden = M.manual === null;
 		M.cur = p;
 		markCurrent2();
-		var key = pages.join( ',' ) + '|' + ui.pages.clientWidth + 'x' + ui.pages.clientHeight + '|' + M.zoom;
-		if ( key === M.shown ) { return; }
+		topNote();
+		var key = pages.join( ',' ) + '|' + ui.pages.clientWidth + 'x' + ui.pages.clientHeight;
+		if ( key === M.shown ) { follow( pages, p, now ); return; }
 		var turned = M.shown && M.shown.split( '|' )[ 0 ] !== pages.join( ',' );
 		M.shown = key;
 		drawPages( pages, turned );
@@ -436,82 +438,164 @@
 		var two = ui.pagesIn.classList.contains( 'is-spread' );
 		ui.pagesIn.querySelectorAll( '.ta-page' ).forEach( function ( c ) { c.classList.toggle( 'is-current', two && +c.getAttribute( 'data-page' ) === M.cur ); } );
 	}
+	/* ---------- the page viewer: our own pan / pinch / double-tap, so the browser never fights us ---------- */
+	M.zoom = 1; M.tx = 0; M.ty = 0; M.base = { w: 0, h: 0 }; M.drawnZoom = 1; M.userAt = 0; M.pages = [];
+	function fitWidth( n ) { return n === 1 && ui.pages.clientWidth < ui.pages.clientHeight; } // phone held upright: fill the width
 	function drawPages( pages, turned ) {
-		var W = ui.pages.clientWidth - 16, H = ui.pages.clientHeight - 16;
+		var W = ui.pages.clientWidth, H = ui.pages.clientHeight, gap = 12, pad = 8;
 		var dpr = Math.min( 3, window.devicePixelRatio || 1 );
+		M.pages = pages;
 		Promise.all( pages.map( function ( n ) { return M.pdf.getPage( n ); } ) ).then( function ( list ) {
+			if ( M.pages !== pages ) { return; } // a newer draw started
 			var vp = list[ 0 ].getViewport( { scale: 1 } );
-			var fit = Math.min( W / ( vp.width * list.length + ( list.length - 1 ) * 12 ), H / vp.height );
-			if ( ! ( fit > 0 ) ) { return; }
-			var scale = fit * M.zoom;
+			var n = list.length;
+			var sW = ( W - pad * 2 - ( n - 1 ) * gap ) / ( vp.width * n ), sH = ( H - pad * 2 ) / vp.height;
+			var s = fitWidth( n ) ? ( W - pad * 2 ) / vp.width : Math.min( sW, sH );
+			if ( ! ( s > 0 ) ) { return; }
+			var pw = vp.width * s, ph = vp.height * s;
+			/* sharpness follows the zoom, within what a phone's canvas can hold */
+			var rz = Math.min( M.zoom, Math.sqrt( 14e6 / ( pw * ph * dpr * dpr ) ) );
+			rz = Math.max( 1, rz );
 			var frag = document.createDocumentFragment();
 			list.forEach( function ( page, k ) {
-				var v = page.getViewport( { scale: scale * dpr } );
+				var v = page.getViewport( { scale: s * rz * dpr } );
 				var c = document.createElement( 'canvas' );
 				c.width = Math.floor( v.width ); c.height = Math.floor( v.height );
-				c.style.width = Math.floor( v.width / dpr ) + 'px'; c.style.height = Math.floor( v.height / dpr ) + 'px';
+				c.style.width = pw + 'px'; c.style.height = ph + 'px';
 				c.className = 'ta-page';
 				c.setAttribute( 'data-page', pages[ k ] );
 				page.render( { canvasContext: c.getContext( '2d' ), viewport: v } );
 				frag.appendChild( c );
 			} );
 			ui.pagesIn.innerHTML = '';
-			ui.pagesIn.classList.toggle( 'is-spread', pages.length > 1 );
+			ui.pagesIn.style.width = ( pw * n + gap * ( n - 1 ) ) + 'px';
+			ui.pagesIn.style.height = ph + 'px';
+			ui.pagesIn.classList.toggle( 'is-spread', n > 1 );
 			ui.pagesIn.appendChild( frag );
 			markCurrent2();
-			ui.pagesIn.classList.toggle( 'is-zoomed', M.zoom > 1 );
-			ui.pages.classList.toggle( 'is-zoomed', M.zoom > 1 );
-			if ( turned && ! reduceMotion ) { ui.pagesIn.classList.remove( 'is-turn' ); void ui.pagesIn.offsetWidth; ui.pagesIn.classList.add( 'is-turn' ); }
-			if ( M.zoom === 1 ) { ui.pages.scrollTop = 0; ui.pages.scrollLeft = 0; }
-			// get the next page ready so the turn is instant
-			var after = pages[ pages.length - 1 ] + 1;
+			M.base = { w: pw * n + gap * ( n - 1 ), h: ph };
+			M.drawnZoom = rz;
+			if ( turned ) {
+				M.ty = -Infinity; M.tx = -Infinity; // top of the new page (clamped below), keeping any zoom
+				M.ty = M.zoom > 1 || M.base.h > H ? pad : M.ty; M.tx = M.zoom > 1 ? pad : M.tx;
+				M.userAt = 0;
+				if ( ! reduceMotion ) { ui.pagesIn.classList.remove( 'is-turn' ); void ui.pagesIn.offsetWidth; ui.pagesIn.classList.add( 'is-turn' ); }
+			}
+			applyT( false );
+			var after = pages[ pages.length - 1 ] + 1; // get the next page ready so the turn is instant
 			if ( after <= M.pdf.numPages ) { M.pdf.getPage( after ); }
 		} );
 	}
-	/* pinch to zoom, double-tap to zoom, swipe for pages */
-	function gestures( el ) {
-		var pts = {}, start = null, tap = 0, swipe = null;
-		el.addEventListener( 'pointerdown', function ( e ) {
-			pts[ e.pointerId ] = { x: e.clientX, y: e.clientY };
-			var ids = Object.keys( pts );
-			if ( ids.length === 2 ) { var a = pts[ ids[ 0 ] ], b = pts[ ids[ 1 ] ]; start = { d: Math.hypot( a.x - b.x, a.y - b.y ), z: M.zoom }; swipe = null; }
-			else if ( ids.length === 1 ) { swipe = M.zoom === 1 ? { x: e.clientX, y: e.clientY, t: Date.now() } : null; }
-		} );
-		el.addEventListener( 'pointermove', function ( e ) {
-			if ( ! pts[ e.pointerId ] ) { return; }
-			pts[ e.pointerId ] = { x: e.clientX, y: e.clientY };
-			var ids = Object.keys( pts );
-			if ( ids.length === 2 && start ) {
-				var a = pts[ ids[ 0 ] ], b = pts[ ids[ 1 ] ];
-				var z = Math.max( 1, Math.min( 4, start.z * Math.hypot( a.x - b.x, a.y - b.y ) / start.d ) );
-				ui.pagesIn.style.transform = 'scale(' + ( z / M.zoom ) + ')';
-				start.next = z;
-			}
-		} );
-		function end( e ) {
-			var had = pts[ e.pointerId ]; delete pts[ e.pointerId ];
-			if ( start && Object.keys( pts ).length < 2 ) {
-				ui.pagesIn.style.transform = '';
-				if ( start.next ) { zoomTo( start.next ); }
-				start = null; return;
-			}
-			if ( swipe && had ) {
-				var dx = had.x - swipe.x, dy = had.y - swipe.y, dt = Date.now() - swipe.t;
-				if ( Math.abs( dx ) > 60 && Math.abs( dx ) > Math.abs( dy ) * 1.5 && dt < 600 ) { manualPage( dx < 0 ? 1 : -1 ); swipe = null; return; }
-				if ( Math.abs( dx ) < 10 && Math.abs( dy ) < 10 ) {
-					if ( Date.now() - tap < 320 ) { zoomTo( M.zoom > 1 ? 1 : 2.2 ); tap = 0; } else { tap = Date.now(); }
-				}
-			}
-			swipe = null;
-		}
-		el.addEventListener( 'pointerup', end ); el.addEventListener( 'pointercancel', end );
+	function applyT( glide ) {
+		var W = ui.pages.clientWidth, H = ui.pages.clientHeight, pad = 8;
+		var cw = M.base.w * M.zoom, ch = M.base.h * M.zoom;
+		M.tx = cw + pad * 2 <= W ? ( W - cw ) / 2 : Math.min( pad, Math.max( W - cw - pad, isFinite( M.tx ) ? M.tx : pad ) );
+		M.ty = ch + pad * 2 <= H ? ( H - ch ) / 2 : Math.min( pad, Math.max( H - ch - pad, isFinite( M.ty ) ? M.ty : pad ) );
+		ui.pagesIn.classList.toggle( 'is-glide', !! glide );
+		ui.pagesIn.style.transform = 'translate(' + M.tx + 'px,' + M.ty + 'px) scale(' + ( M.zoom / M.drawnZoom * M.drawnZoom ) + ')';
 	}
-	function zoomTo( z ) {
-		var el = ui.pages, cx = el.scrollLeft + el.clientWidth / 2, cy = el.scrollTop + el.clientHeight / 2, ratio = z / M.zoom;
-		M.zoom = Math.round( z * 100 ) / 100;
-		M.shown = '';
-		tickMusic( true );
-		setTimeout( function () { el.scrollLeft = cx * ratio - el.clientWidth / 2; el.scrollTop = cy * ratio - el.clientHeight / 2; }, 60 );
+	/* when the page is taller than the screen, drift down it as the music moves through it */
+	function follow( pages, p, now ) {
+		if ( M.zoom > 1.01 || M.manual !== null || pages.length > 1 || Date.now() - M.userAt < 5000 ) { return; }
+		var H = ui.pages.clientHeight, over = M.base.h - ( H - 16 );
+		if ( over <= 4 ) { return; }
+		var turns = turnsFor(), start = 0, end = audio.duration || 0;
+		turns.forEach( function ( t ) { if ( t <= now ) { start = Math.max( start, t ); } else if ( t < end ) { end = t; } } );
+		if ( ! end || end <= start ) { return; }
+		var f = ( now - start ) / ( end - start );
+		f = Math.max( 0, Math.min( 1, ( f - 0.25 ) / 0.6 ) ); // stay at the top for a bit, reach the bottom before the turn
+		var target = 8 - over * f;
+		if ( Math.abs( target - M.ty ) < 2 ) { return; }
+		M.ty = target; applyT( true );
+	}
+	var resTimer = null;
+	function sharpenSoon() {
+		clearTimeout( resTimer );
+		resTimer = setTimeout( function () {
+			var want = Math.min( M.zoom, 4 );
+			if ( Math.abs( want - M.drawnZoom ) > 0.2 && M.pages.length ) { drawPages( M.pages, false ); }
+		}, 220 );
+	}
+	function zoomAt( z, x, y ) {
+		z = Math.max( 1, Math.min( 4, z ) );
+		var fx = ( x - M.tx ) / M.zoom, fy = ( y - M.ty ) / M.zoom;
+		M.zoom = z; M.tx = x - fx * z; M.ty = y - fy * z;
+		applyT( false );
+	}
+	function gestures( el ) {
+		var g = null, lastTap = { t: 0, x: 0, y: 0 };
+		function rel( t ) { var r = el.getBoundingClientRect(); return { x: t.clientX - r.left, y: t.clientY - r.top }; }
+		function startPan( t ) { var q = rel( t ); g = { mode: 'pan', sx: q.x, sy: q.y, tx: M.tx, ty: M.ty, t0: Date.now(), moved: false, x: q.x, y: q.y }; }
+		function startPinch( a, b ) {
+			var p = rel( a ), q = rel( b ), mx = ( p.x + q.x ) / 2, my = ( p.y + q.y ) / 2;
+			g = { mode: 'pinch', d: Math.hypot( p.x - q.x, p.y - q.y ) || 1, z: M.zoom, fx: ( mx - M.tx ) / M.zoom, fy: ( my - M.ty ) / M.zoom };
+		}
+		el.addEventListener( 'touchstart', function ( e ) {
+			e.preventDefault(); M.userAt = Date.now(); ui.pagesIn.classList.remove( 'is-glide' );
+			if ( e.touches.length >= 2 ) { startPinch( e.touches[ 0 ], e.touches[ 1 ] ); } else { startPan( e.touches[ 0 ] ); }
+		}, { passive: false } );
+		el.addEventListener( 'touchmove', function ( e ) {
+			e.preventDefault(); M.userAt = Date.now();
+			if ( ! g ) { return; }
+			if ( g.mode === 'pinch' && e.touches.length >= 2 ) {
+				var p = rel( e.touches[ 0 ] ), q = rel( e.touches[ 1 ] ), mx = ( p.x + q.x ) / 2, my = ( p.y + q.y ) / 2;
+				var z = Math.max( 1, Math.min( 4, g.z * Math.hypot( p.x - q.x, p.y - q.y ) / g.d ) );
+				M.zoom = z; M.tx = mx - g.fx * z; M.ty = my - g.fy * z; applyT( false );
+			} else if ( g.mode === 'pan' && e.touches.length === 1 ) {
+				var r = rel( e.touches[ 0 ] ); g.x = r.x; g.y = r.y;
+				var dx = r.x - g.sx, dy = r.y - g.sy;
+				if ( Math.abs( dx ) > 8 || Math.abs( dy ) > 8 ) { g.moved = true; }
+				M.tx = g.tx + dx; M.ty = g.ty + dy; applyT( false );
+			}
+		}, { passive: false } );
+		function end( e ) {
+			e.preventDefault();
+			if ( ! g ) { return; }
+			if ( g.mode === 'pinch' ) {
+				if ( e.touches.length === 1 ) { startPan( e.touches[ 0 ] ); g.moved = true; } else { g = null; }
+				sharpenSoon(); return;
+			}
+			if ( e.touches.length ) { return; }
+			var dx = g.x - g.sx, dy = g.y - g.sy, dt = Date.now() - g.t0;
+			if ( ! g.moved && dt < 300 ) {
+				if ( Date.now() - lastTap.t < 320 && Math.hypot( g.x - lastTap.x, g.y - lastTap.y ) < 40 ) {
+					zoomAt( M.zoom > 1.05 ? 1 : 2.2, g.x, g.y ); sharpenSoon(); lastTap.t = 0;
+				} else { lastTap = { t: Date.now(), x: g.x, y: g.y }; }
+			} else if ( M.zoom <= 1.01 && Math.abs( dx ) > 60 && Math.abs( dx ) > Math.abs( dy ) * 1.5 && dt < 700 ) {
+				manualPage( dx < 0 ? 1 : -1 );
+			}
+			g = null;
+		}
+		el.addEventListener( 'touchend', end, { passive: false } );
+		el.addEventListener( 'touchcancel', end, { passive: false } );
+		/* computers: trackpad pinch (ctrl+wheel) zooms, scrolling pans, double-click zooms, drag pans */
+		el.addEventListener( 'wheel', function ( e ) {
+			e.preventDefault(); M.userAt = Date.now(); ui.pagesIn.classList.remove( 'is-glide' );
+			var r = rel( e );
+			if ( e.ctrlKey ) { zoomAt( M.zoom * Math.exp( -e.deltaY * 0.01 ), r.x, r.y ); sharpenSoon(); }
+			else { M.tx -= e.deltaX; M.ty -= e.deltaY; applyT( false ); }
+		}, { passive: false } );
+		el.addEventListener( 'dblclick', function ( e ) { var r = rel( e ); zoomAt( M.zoom > 1.05 ? 1 : 2.2, r.x, r.y ); sharpenSoon(); } );
+		var drag = null;
+		el.addEventListener( 'mousedown', function ( e ) { drag = { x: e.clientX, y: e.clientY, tx: M.tx, ty: M.ty }; M.userAt = Date.now(); } );
+		window.addEventListener( 'mousemove', function ( e ) { if ( ! drag ) { return; } M.tx = drag.tx + e.clientX - drag.x; M.ty = drag.ty + e.clientY - drag.y; applyT( false ); M.userAt = Date.now(); } );
+		window.addEventListener( 'mouseup', function () { drag = null; } );
+	}
+	/* phones: the note that's happening now takes the song title's place in the top bar for a few seconds */
+	function topNote() {
+		if ( ! ui.ttl ) { return; }
+		var narrow = window.innerWidth < 700;
+		var c = S.view === 'music' && narrow && S.active >= 0 ? CUES[ S.active ] : null;
+		var now = audio.currentTime || 0;
+		if ( c && now - c.t < 9 ) {
+			if ( ui.ttl.getAttribute( 'data-n' ) !== String( S.active ) ) {
+				ui.ttl.textContent = c.text; ui.ttl.setAttribute( 'data-n', String( S.active ) );
+				ui.ttl.className = 'ta-top__title is-note' + ( c.kind === 'mine' ? ' is-mine' : '' );
+				ui.viewBtn.classList.remove( 'is-ping' ); void ui.viewBtn.offsetWidth; ui.viewBtn.classList.add( 'is-ping' );
+			}
+		} else if ( ui.ttl.classList.contains( 'is-note' ) ) {
+			ui.ttl.className = 'ta-top__title'; ui.ttl.removeAttribute( 'data-n' ); paintTop();
+		}
 	}
 	/* the current note, as one line above the controls */
 	function paintStrip( a ) {
