@@ -287,7 +287,7 @@
 			h( 'div', {}, [
 				h( 'b', {}, [ steps.app ? 'Open this in your browser first' : 'Put Backstage on your home screen' ] ),
 				h( 'p', { html: steps.html } ),
-				steps.app ? null : h( 'p', { class: 'tcc-db__a2hs-why' }, [ 'You get a Choir icon, and the music gets the whole screen — no address bar.' ] ),
+				steps.app ? null : h( 'p', { class: 'tcc-db__a2hs-why' }, [ 'You get a Tilden Community Choir icon, and the music gets the whole screen — no address bar.' ] ),
 				h( 'div', { class: 'tcc-db__a2hs-go' }, [
 					installEvt && ! steps.app ? h( 'button', { type: 'button', class: 'tcc-db__btn', onclick: function () { installEvt.prompt(); installEvt.userChoice.then( function () { store( 'ls', 'tcc_a2hs', '1' ); card.remove(); } ); } }, [ 'Add it now' ] ) : null,
 					h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { store( 'ls', 'tcc_a2hs', '1' ); card.remove(); paintA2hsLink(); } }, [ 'Got it' ] )

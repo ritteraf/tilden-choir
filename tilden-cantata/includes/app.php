@@ -21,7 +21,7 @@ add_action( 'init', function () {
 	echo wp_json_encode( [
 		'id'               => $start,
 		'name'             => get_bloginfo( 'name' ) . ' — Backstage',
-		'short_name'       => 'Choir',
+		'short_name'       => 'Tilden Community Choir',
 		'description'      => 'Rehearsals, practice tracks and notes for this year\'s cantata.',
 		'start_url'        => $start,
 		'scope'            => '/',
@@ -51,7 +51,7 @@ add_action( 'wp', function () {
 		echo '<link rel="apple-touch-icon" href="' . esc_url( $icons . 'apple-touch-icon.png' ) . '">' . "\n";
 		echo '<meta name="apple-mobile-web-app-capable" content="yes">' . "\n";
 		echo '<meta name="mobile-web-app-capable" content="yes">' . "\n";
-		echo '<meta name="apple-mobile-web-app-title" content="Choir">' . "\n";
+		echo '<meta name="apple-mobile-web-app-title" content="Tilden Community Choir">' . "\n";
 		echo '<meta name="apple-mobile-web-app-status-bar-style" content="black">' . "\n";
 		echo '<meta name="theme-color" content="#1f1f1f">' . "\n";
 	}, 0 );
