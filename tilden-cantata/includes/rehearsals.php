@@ -105,7 +105,7 @@ function tcc_sanitize_songs( $v ): string {
 	$nums = [];
 	foreach ( is_array( $v ) ? $v : preg_split( '/[,\s]+/', (string) $v ) as $part ) {
 		$part = trim( (string) $part );
-		if ( preg_match( '/^(\d+)\s*[-–]\s*(\d+)$/', $part, $m ) ) {
+		if ( preg_match( '/^(\d+)\s*(?:-|–)\s*(\d+)$/u', $part, $m ) ) {
 			$nums = array_merge( $nums, range( (int) $m[1], (int) $m[2] ) );
 		} elseif ( preg_match( '/^\d+$/', $part ) ) {
 			$nums[] = (int) $part;

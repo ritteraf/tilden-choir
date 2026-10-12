@@ -28,7 +28,7 @@ function tcc_volunteer_role_info(): array {
 	$raw = tcc_option( 'roles', tcc_default_roles() );
 	$out = [];
 	foreach ( array_filter( array_map( 'trim', explode( "\n", $raw ) ) ) as $line ) {
-		$bits  = preg_split( '/\s+[—–-]\s+|:\s+/', $line, 2 );
+		$bits  = preg_split( '/\s+(?:—|–|-)\s+|:\s+/u', $line, 2 );
 		$label = trim( $bits[0] );
 		if ( $label !== '' ) {
 			$out[ sanitize_title( $label ) ] = [ 'label' => $label, 'desc' => trim( $bits[1] ?? '' ) ];
