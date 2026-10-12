@@ -984,7 +984,7 @@
 		var was = keepTime ? audio.currentTime : null;
 		audio.src = src.url;
 		audio.playbackRate = S.rate;
-		S.listened = 0; S.counted = false; S.lastT = 0;
+		S.listened = 0; S.heard = 0; S.counted = false; S.lastT = 0; // heard: this song's whole listen, through any pauses
 		var resume = parseFloat( ls( 'tcc_pos_' + src.id ) || '0' );
 		audio.addEventListener( 'loadedmetadata', function once() {
 			audio.removeEventListener( 'loadedmetadata', once );
@@ -1122,15 +1122,15 @@
 	}
 	audio.addEventListener( 'timeupdate', function () {
 		var now = audio.currentTime, prev = S.lastT;
-		if ( ! audio.paused && now > prev && now - prev < 2 ) { S.listened += now - prev; }
+		if ( ! audio.paused && now > prev && now - prev < 2 ) { S.listened += now - prev; S.heard = ( S.heard || 0 ) + ( now - prev ); }
 		S.lastT = now;
 		if ( S.loopA !== null && S.loopB !== null && now >= S.loopB ) { heat( 'loop', S.loopA, S.loopB ); audio.currentTime = S.loopA; }
-		if ( ! S.counted && audio.duration && S.listened >= audio.duration * 0.6 ) { flushPlay( true ); }
+		if ( ! S.counted && audio.duration && S.heard >= audio.duration * 0.6 ) { flushPlay( true ); }
 		var t = current(); if ( t ) { ls( 'tcc_pos_' + ( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); }
 		paintScrub(); tickStream();
 	} );
 	audio.addEventListener( 'ended', function () {
-		var heardEnough = S.counted || ( audio.duration && S.listened >= audio.duration * 0.6 );
+		var heardEnough = S.counted || ( audio.duration && S.heard >= audio.duration * 0.6 );
 		flushPlay( true );
 		var t = current(); if ( t ) { ls( 'tcc_pos_' + t.id, null ); }
 		if ( S.loopA !== null ) { audio.currentTime = S.loopA; audio.play(); return; }
