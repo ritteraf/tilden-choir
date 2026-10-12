@@ -15,3 +15,6 @@
 Thumbs.db
 *.swp
 node_modules/
+
+# Never commit scores either — they are the publisher's copyright
+*.pdf
