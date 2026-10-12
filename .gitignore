@@ -1,0 +1,17 @@
+# Never commit audio — practice tracks live only in the WordPress media library.
+*.mp3
+*.m4a
+*.wav
+*.aac
+*.ogg
+*.flac
+*.aiff
+*.aif
+*.wma
+*.opus
+
+# Local noise
+.DS_Store
+Thumbs.db
+*.swp
+node_modules/

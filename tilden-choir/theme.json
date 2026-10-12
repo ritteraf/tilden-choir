@@ -1,0 +1,98 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"settings": {
+		"appearanceTools": true,
+		"layout": { "contentSize": "820px", "wideSize": "1280px" },
+		"color": {
+			"defaultPalette": false,
+			"defaultGradients": false,
+			"palette": [
+				{ "slug": "paper", "name": "Paper", "color": "#ffffff" },
+				{ "slug": "mist", "name": "Mist", "color": "#f3f3f1" },
+				{ "slug": "stone", "name": "Stone", "color": "#c8c8c4" },
+				{ "slug": "ash", "name": "Ash", "color": "#6b6b6b" },
+				{ "slug": "slate", "name": "Slate", "color": "#4a4a4a" },
+				{ "slug": "ink", "name": "Ink", "color": "#1f1f1f" },
+				{ "slug": "carol-red", "name": "Carol red", "color": "#9c2b1a" },
+				{ "slug": "pine", "name": "Pine", "color": "#355635" },
+				{ "slug": "gold", "name": "Gold", "color": "#d29d33" }
+			]
+		},
+		"typography": {
+			"defaultFontSizes": false,
+			"fluid": true,
+			"fontFamilies": [
+				{
+					"slug": "zilla-slab", "name": "Zilla Slab", "fontFamily": "\"Zilla Slab\", Georgia, serif",
+					"fontFace": [
+						{ "fontFamily": "Zilla Slab", "fontWeight": "500", "fontStyle": "normal", "fontDisplay": "swap", "src": [ "file:./assets/fonts/zilla-slab-latin-500-normal.woff2" ] },
+						{ "fontFamily": "Zilla Slab", "fontWeight": "500", "fontStyle": "italic", "fontDisplay": "swap", "src": [ "file:./assets/fonts/zilla-slab-latin-500-italic.woff2" ] },
+						{ "fontFamily": "Zilla Slab", "fontWeight": "600", "fontStyle": "normal", "fontDisplay": "swap", "src": [ "file:./assets/fonts/zilla-slab-latin-600-normal.woff2" ] },
+						{ "fontFamily": "Zilla Slab", "fontWeight": "700", "fontStyle": "normal", "fontDisplay": "swap", "src": [ "file:./assets/fonts/zilla-slab-latin-700-normal.woff2" ] }
+					]
+				},
+				{
+					"slug": "libre-franklin", "name": "Libre Franklin", "fontFamily": "\"Libre Franklin\", system-ui, sans-serif",
+					"fontFace": [
+						{ "fontFamily": "Libre Franklin", "fontWeight": "400", "fontStyle": "normal", "fontDisplay": "swap", "src": [ "file:./assets/fonts/libre-franklin-latin-400-normal.woff2" ] },
+						{ "fontFamily": "Libre Franklin", "fontWeight": "500", "fontStyle": "normal", "fontDisplay": "swap", "src": [ "file:./assets/fonts/libre-franklin-latin-500-normal.woff2" ] },
+						{ "fontFamily": "Libre Franklin", "fontWeight": "600", "fontStyle": "normal", "fontDisplay": "swap", "src": [ "file:./assets/fonts/libre-franklin-latin-600-normal.woff2" ] }
+					]
+				}
+			],
+			"fontSizes": [
+				{ "slug": "small", "name": "Small", "size": "0.9rem" },
+				{ "slug": "medium", "name": "Medium", "size": "1.0625rem" },
+				{ "slug": "large", "name": "Large", "size": "1.25rem" },
+				{ "slug": "x-large", "name": "Extra large", "size": "1.75rem", "fluid": { "min": "1.5rem", "max": "2rem" } },
+				{ "slug": "xx-large", "name": "Display", "size": "3rem", "fluid": { "min": "2.25rem", "max": "3.5rem" } }
+			]
+		},
+		"spacing": {
+			"units": [ "px", "rem", "vw", "%" ],
+			"spacingSizes": [
+				{ "slug": "20", "size": "0.5rem", "name": "1" },
+				{ "slug": "30", "size": "1rem", "name": "2" },
+				{ "slug": "40", "size": "1.5rem", "name": "3" },
+				{ "slug": "50", "size": "2.5rem", "name": "4" },
+				{ "slug": "60", "size": "4rem", "name": "5" },
+				{ "slug": "70", "size": "5.5rem", "name": "6" }
+			]
+		},
+		"useRootPaddingAwareAlignments": true
+	},
+	"styles": {
+		"color": { "background": "var(--wp--preset--color--paper)", "text": "var(--wp--preset--color--ink)" },
+		"typography": { "fontFamily": "var(--wp--preset--font-family--libre-franklin)", "fontSize": "var(--wp--preset--font-size--medium)", "lineHeight": "1.55" },
+		"spacing": { "padding": { "left": "clamp(20px, 5.5vw, 80px)", "right": "clamp(20px, 5.5vw, 80px)" }, "blockGap": "1.25rem" },
+		"elements": {
+			"link": { "color": { "text": "var(--wp--preset--color--carol-red)" }, ":hover": { "color": { "text": "#6e1d11" } } },
+			"heading": { "typography": { "fontFamily": "var(--wp--preset--font-family--zilla-slab)", "fontWeight": "700", "lineHeight": "1.05" }, "color": { "text": "var(--wp--preset--color--ink)" } },
+			"h1": { "typography": { "fontSize": "var(--wp--preset--font-size--xx-large)" } },
+			"h2": { "typography": { "fontSize": "var(--wp--preset--font-size--x-large)" } },
+			"h3": { "typography": { "fontSize": "var(--wp--preset--font-size--large)", "fontWeight": "600" } },
+			"button": {
+				"color": { "background": "var(--wp--preset--color--carol-red)", "text": "var(--wp--preset--color--paper)" },
+				"typography": { "fontWeight": "600", "fontSize": "1rem" },
+				"border": { "radius": "4px" },
+				"spacing": { "padding": { "top": "0.85rem", "bottom": "0.85rem", "left": "1.4rem", "right": "1.4rem" } },
+				":hover": { "color": { "background": "#7f2214", "text": "var(--wp--preset--color--paper)" } }
+			}
+		},
+		"blocks": {
+			"core/site-title": { "typography": { "fontFamily": "var(--wp--preset--font-family--zilla-slab)", "fontWeight": "700", "fontSize": "1.5rem", "letterSpacing": "0.02em" }, "elements": { "link": { "color": { "text": "var(--wp--preset--color--ink)" }, ":hover": { "color": { "text": "var(--wp--preset--color--carol-red)" } } } } },
+			"core/navigation": { "typography": { "fontWeight": "500", "fontSize": "1rem" }, "elements": { "link": { "color": { "text": "var(--wp--preset--color--ink)" } } } },
+			"core/post-title": { "typography": { "fontFamily": "var(--wp--preset--font-family--zilla-slab)", "fontWeight": "700" } },
+			"core/quote": { "typography": { "fontFamily": "var(--wp--preset--font-family--zilla-slab)", "fontStyle": "italic", "fontSize": "var(--wp--preset--font-size--large)" }, "border": { "left": { "color": "var(--wp--preset--color--gold)", "width": "3px", "style": "solid" } } }
+		}
+	},
+	"templateParts": [
+		{ "name": "header", "title": "Header", "area": "header" },
+		{ "name": "footer", "title": "Footer", "area": "footer" },
+		{ "name": "cantata-interlude", "title": "Under this year's cantata", "area": "uncategorized" }
+	],
+	"customTemplates": [
+		{ "name": "page-backstage", "title": "Backstage page", "postTypes": [ "page" ] }
+	]
+}
