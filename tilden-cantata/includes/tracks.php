@@ -192,6 +192,12 @@ function tcc_cue_measure( $v ): string {
 	return mb_substr( $v, 0, 12 );
 }
 
+/** How long a note stays lit, in seconds; 0 means the app's default (8 s). */
+function tcc_cue_dur( $v ): float {
+	$v = round( (float) $v, 1 );
+	return $v <= 0 ? 0.0 : min( 120.0, max( 2.0, $v ) );
+}
+
 /** An icon key, if it is one of ours. */
 function tcc_cue_icon( $v ): string {
 	$v = (string) $v;
@@ -203,7 +209,7 @@ function tcc_cues( int $cantata_id ): array {
 	$out = [];
 	foreach ( (array) get_post_meta( $cantata_id, '_tcc_cues', true ) as $c ) {
 		if ( is_array( $c ) && isset( $c['t'], $c['text'] ) ) {
-			$out[] = [ 'id' => (string) ( $c['id'] ?? '' ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => (float) $c['t'], 'text' => (string) $c['text'], 'parts' => array_values( (array) ( $c['parts'] ?? [] ) ), 'm' => (string) ( $c['m'] ?? '' ), 'icon' => (string) ( $c['icon'] ?? '' ) ];
+			$out[] = [ 'id' => (string) ( $c['id'] ?? '' ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => (float) $c['t'], 'text' => (string) $c['text'], 'parts' => array_values( (array) ( $c['parts'] ?? [] ) ), 'm' => (string) ( $c['m'] ?? '' ), 'icon' => (string) ( $c['icon'] ?? '' ), 'd' => (float) ( $c['d'] ?? 0 ) ];
 		}
 	}
 	usort( $out, fn( $a, $b ) => [ $a['song'], $a['t'] ] <=> [ $b['song'], $b['t'] ] );
@@ -399,6 +405,7 @@ add_action( 'rest_api_init', function () {
 						$c['parts'] = $parts;
 						$c['m'] = tcc_cue_measure( $r->get_param( 'm' ) );
 						$c['icon'] = tcc_cue_icon( $r->get_param( 'icon' ) );
+						$c['d'] = tcc_cue_dur( $r->get_param( 'd' ) );
 						$cue = $c;
 					}
 				}
@@ -409,7 +416,7 @@ add_action( 'rest_api_init', function () {
 				update_post_meta( $cantata, '_tcc_cues', $cues );
 				return [ 'ok' => true, 'cue' => $cue ];
 			}
-			$cue = [ 'id' => wp_generate_password( 8, false ), 'song' => (int) $r->get_param( 'song' ), 't' => round( (float) $r->get_param( 't' ), 1 ), 'text' => $text, 'parts' => $parts, 'm' => tcc_cue_measure( $r->get_param( 'm' ) ), 'icon' => tcc_cue_icon( $r->get_param( 'icon' ) ) ];
+			$cue = [ 'id' => wp_generate_password( 8, false ), 'song' => (int) $r->get_param( 'song' ), 't' => round( (float) $r->get_param( 't' ), 1 ), 'text' => $text, 'parts' => $parts, 'm' => tcc_cue_measure( $r->get_param( 'm' ) ), 'icon' => tcc_cue_icon( $r->get_param( 'icon' ) ), 'd' => tcc_cue_dur( $r->get_param( 'd' ) ) ];
 			$cues[] = $cue;
 			update_post_meta( $cantata, '_tcc_cues', $cues );
 			return [ 'ok' => true, 'cue' => $cue ];
@@ -632,7 +639,7 @@ function tcc_store_tracks( int $post_id, $tracks_json, $cues_json ): array {
 		foreach ( $cues as $c ) {
 			$text = sanitize_text_field( (string) ( $c['text'] ?? '' ) );
 			if ( $text !== '' ) {
-				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => array_values( array_intersect( array_keys( tcc_track_parts() ), (array) ( $c['parts'] ?? [] ) ) ), 'm' => tcc_cue_measure( $c['m'] ?? '' ), 'icon' => tcc_cue_icon( $c['icon'] ?? '' ) ];
+				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => array_values( array_intersect( array_keys( tcc_track_parts() ), (array) ( $c['parts'] ?? [] ) ) ), 'm' => tcc_cue_measure( $c['m'] ?? '' ), 'icon' => tcc_cue_icon( $c['icon'] ?? '' ), 'd' => tcc_cue_dur( $c['d'] ?? 0 ) ];
 			}
 		}
 		update_post_meta( $post_id, '_tcc_cues', $clean );

@@ -62,11 +62,11 @@
 		// cues
 		html += '<div style="margin:18px 0 6px;padding:12px 14px;border:1px solid #dcdcde;border-radius:4px;background:#fff"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><strong style="font-size:14px">Timestamp notes</strong><span class="description">Shown to singers at that moment in the track. Add them from the practice page while logged in, or here.</span><button type="button" class="button tcc-cue-add" style="margin-left:auto">Add a note</button></div>';
 		if ( cues.length ) {
-			html += '<table class="widefat striped"><thead><tr><th style="width:40%">Song</th><th style="width:80px">At</th><th style="width:70px">Measure</th><th>Note</th><th style="width:150px">Icon</th><th style="width:220px">Only for</th><th style="width:60px"></th></tr></thead><tbody>';
+			html += '<table class="widefat striped"><thead><tr><th style="width:40%">Song</th><th style="width:80px">At</th><th style="width:70px">Measure</th><th style="width:70px">Shows for</th><th>Note</th><th style="width:150px">Icon</th><th style="width:220px">Only for</th><th style="width:60px"></th></tr></thead><tbody>';
 			cues.forEach( function ( c, i ) {
 				html += '<tr data-i="' + i + '"><td><select class="tcc-cue-song" style="width:100%">';
 				songs.forEach( function ( s, j ) { html += '<option value="' + j + '"' + ( c.song === j ? ' selected' : '' ) + '>' + ( j + 1 ) + '. ' + esc( s ) + '</option>'; } );
-				html += '</select></td><td><input type="text" class="tcc-cue-t" value="' + esc( fmt( c.t ) ) + '" style="width:70px"></td><td><input type="text" class="tcc-cue-m" value="' + esc( c.m || '' ) + '" placeholder="42" maxlength="12" style="width:60px"></td><td><input type="text" class="tcc-cue-text regular-text" value="' + esc( c.text ) + '" style="width:100%"></td><td><select class="tcc-cue-icon" style="width:100%"><option value="">—</option>';
+				html += '</select></td><td><input type="text" class="tcc-cue-t" value="' + esc( fmt( c.t ) ) + '" style="width:70px"></td><td><input type="text" class="tcc-cue-m" value="' + esc( c.m || '' ) + '" placeholder="42" maxlength="12" style="width:60px"></td><td><input type="number" class="tcc-cue-d" min="2" max="120" step="1" value="' + esc( c.d > 0 ? String( c.d ) : '' ) + '" placeholder="8" style="width:60px"> s</td><td><input type="text" class="tcc-cue-text regular-text" value="' + esc( c.text ) + '" style="width:100%"></td><td><select class="tcc-cue-icon" style="width:100%"><option value="">—</option>';
 				Object.keys( icons ).forEach( function ( k ) { html += '<option value="' + esc( k ) + '"' + ( c.icon === k ? ' selected' : '' ) + '>' + esc( icons[ k ] ) + '</option>'; } );
 				html += '</select></td><td>';
 				[ 'soprano', 'alto', 'tenor', 'bass' ].forEach( function ( p ) { html += '<label style="margin-right:8px;white-space:nowrap"><input type="checkbox" class="tcc-cue-part" value="' + p + '"' + ( ( c.parts || [] ).indexOf( p ) !== -1 ? ' checked' : '' ) + '> ' + esc( parts[ p ] || p ) + '</label>'; } );
@@ -116,6 +116,7 @@
 		else if ( el.classList.contains( 'tcc-cue-text' ) ) { cues[ i ].text = el.value; sync( true ); }
 		else if ( el.classList.contains( 'tcc-cue-m' ) ) { cues[ i ].m = el.value.trim(); sync( true ); }
 		else if ( el.classList.contains( 'tcc-cue-icon' ) ) { cues[ i ].icon = el.value; sync( true ); }
+		else if ( el.classList.contains( 'tcc-cue-d' ) ) { cues[ i ].d = parseFloat( el.value ) || 0; sync( true ); }
 		else if ( el.classList.contains( 'tcc-cue-part' ) ) {
 			cues[ i ].parts = Array.prototype.map.call( row.querySelectorAll( '.tcc-cue-part:checked' ), function ( c ) { return c.value; } ); sync( true );
 		}

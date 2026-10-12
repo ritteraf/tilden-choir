@@ -251,19 +251,26 @@ body.tcc-app-on { overflow: hidden; }
 .ta-mark--turn { top: 2px; height: 6px; background: rgba(255, 255, 255, 0.55); }
 
 /* the note strip above the controls, in music view */
-.ta-strip { display: flex; align-items: baseline; gap: 10px; width: 100%; margin: -2px auto 8px; padding: 10px 14px; border: 0; border-left: 3px solid var(--gold); border-radius: 8px; background: rgba(210, 157, 51, 0.12); text-align: left; cursor: pointer; min-height: 46px; }
-.ta-strip .ta-strip__k { flex-shrink: 0; }
-.ta-strip .ta-strip__t { flex: 1 1 auto; min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.ta-stripnext { border: 0; background: transparent; text-align: left; font: inherit; cursor: pointer; border-radius: 8px; }
-.ta-stripnext:active, .ta-strip:active { filter: brightness(1.25); }
-.ta-stripnext { display: none; }
-.ta-strip--mine { border-left-color: var(--green); background: rgba(143, 196, 143, 0.1); }
-.ta-strip--quiet { border-left-color: var(--line); background: rgba(255, 255, 255, 0.04); }
-.ta-strip__k { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
-.ta-strip--mine .ta-strip__k { color: var(--green); }
-.ta-strip--quiet .ta-strip__k { color: var(--faint); }
-.ta-strip__t { font-size: 16px; line-height: 1.32; color: var(--ink); }
-.ta-strip--quiet .ta-strip__t { color: var(--dim); }
+.ta-flow { width: 100%; margin: -2px auto 8px; }
+.ta-flow[hidden] { display: none; }
+.ta-flow__empty { margin: 0; padding: 12px 14px; border-left: 3px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, 0.04); font-size: 15px; color: var(--dim); }
+/* narrow (tablet upright): just the lead note, as one box */
+.ta-flow__i { display: none; align-items: flex-start; border-left: 3px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, 0.04); min-height: 46px; }
+.ta-flow__i.is-lead { display: flex; }
+.ta-flow__i.is-on { border-left-color: var(--gold); background: rgba(210, 157, 51, 0.12); }
+.ta-flow__i--mine.is-on { border-left-color: var(--green); background: rgba(143, 196, 143, 0.1); }
+.ta-strip__go { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ta-strip__go .ta-strip__k { flex-shrink: 0; }
+.ta-strip__go:active { filter: brightness(1.25); }
+.ta-strip__ed { flex-shrink: 0; width: 48px; height: 48px; margin: 0 2px 0 0; border: 0; border-radius: 50%; background: transparent; color: var(--dim); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.ta-strip__ed svg { width: 19px; height: 19px; }
+.ta-strip__ed:active { background: rgba(255, 255, 255, 0.1); }
+.ta-strip__k { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+.ta-flow__i.is-on .ta-strip__k { color: var(--gold); }
+.ta-flow__i--mine.is-on .ta-strip__k { color: var(--green); }
+.ta-flow__in { margin-left: 8px; color: rgba(210, 157, 51, 0.75); }
+.ta-strip__t { flex: 1 1 auto; min-width: 0; font-size: 16px; line-height: 1.32; color: var(--dim); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ta-flow__i.is-on .ta-strip__t { color: var(--ink); }
 
 /* recording page turns */
 .ta-rec { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid rgba(210, 157, 51, 0.4); background: #1d1a12; }
@@ -290,11 +297,19 @@ body.tcc-app-on { overflow: hidden; }
 	.ta.is-music .ta-side { display: none; }
 	.ta.is-music .ta-dock { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); border-top: 0; border-left: 1px solid var(--line); overflow-y: auto; }
 	.ta.is-music .ta-dock > * { max-width: none; width: 100%; margin: 0; }
-	.ta.is-music .ta-strip { flex-direction: column; gap: 4px; min-height: 0; padding: 14px 16px; margin: 0 0 auto; }
-	.ta.is-music .ta-strip .ta-strip__t { white-space: normal; font-size: 19px; line-height: 1.35; }
-	.ta.is-music .ta-stripnext { display: flex; flex-direction: column; gap: 3px; padding: 0 16px 0 19px; }
-	.ta.is-music .ta-stripnext .ta-strip__k { color: var(--faint); }
-	.ta.is-music .ta-stripnext .ta-strip__t { font-size: 16px; color: var(--dim); }
+	/* beside the music: a steady flow — the next few wait below, the lit one sits on top, the finished one fades away */
+	.ta.is-music .ta-flow { flex: 1 1 auto; min-height: 0; margin: 0; display: flex; flex-direction: column; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent); }
+	.ta.is-music .ta-flow__i { display: flex; flex-shrink: 0; min-height: 0; max-height: 260px; margin: 0 0 10px; overflow: hidden; background: transparent; border-left-color: transparent; transition: opacity 0.6s ease, max-height 0.6s ease, margin 0.6s ease, transform 0.6s ease, background 0.4s, border-color 0.4s; }
+	.ta.is-music .ta-flow__i.is-gone { opacity: 0; max-height: 0; margin: 0; transform: translateY(-14px); pointer-events: none; }
+	.ta.is-music .ta-flow__i.is-later { opacity: 0; max-height: 0; margin: 0; transform: translateY(14px); pointer-events: none; }
+	.ta.is-music .ta-flow__i.is-soon { opacity: 0.85; }
+	.ta.is-music .ta-flow__i.is-soon ~ .ta-flow__i.is-soon ~ .ta-flow__i.is-soon { opacity: 0.55; }
+	.ta.is-music .ta-flow__i.is-on { opacity: 1; border-left-color: var(--gold); background: rgba(210, 157, 51, 0.12); }
+	.ta.is-music .ta-flow__i--mine.is-on { border-left-color: var(--green); background: rgba(143, 196, 143, 0.1); }
+	.ta.is-music .ta-strip__go { flex-direction: column; align-items: stretch; gap: 5px; padding: 12px 14px; }
+	.ta.is-music .ta-strip__ed { margin-top: 4px; }
+	.ta.is-music .ta-strip__t { font-size: 16px; display: block; -webkit-line-clamp: unset; overflow: visible; }
+	.ta.is-music .ta-flow__i.is-on .ta-strip__t { font-size: 20px; line-height: 1.35; font-weight: 600; }
 	.ta.is-music .ta-dock__main { max-width: none; justify-content: space-between; }
 	.ta.is-music .ta-play { width: 80px; height: 80px; }
 	.ta.is-music .ta-play svg { width: 38px; height: 38px; }
@@ -308,7 +323,7 @@ body.tcc-app-on { overflow: hidden; }
 
 /* phones in Music view: no note strip — every pixel goes to the music; the note shows in the top bar instead */
 @media (max-width: 699px) {
-	.ta.is-music .ta-strip, .ta.is-music .ta-stripnext { display: none !important; }
+	.ta.is-music .ta-flow { display: none !important; }
 	.ta.is-music .ta-dock { padding-top: 6px; }
 }
 .ta-top__title.is-note { font-family: var(--body); font-size: 15px; font-weight: 700; color: var(--gold); }
@@ -319,17 +334,21 @@ body.tcc-app-on { overflow: hidden; }
 /* ---------- director notes: gist icon + measure ---------- */
 .ta-note__m { font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--faint); font-variant-numeric: tabular-nums; }
 .ta-note__line { display: flex; align-items: flex-start; gap: 12px; }
-.ta-gist { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: rgba(210, 157, 51, 0.14); color: var(--gold); transition: width 0.3s, height 0.3s; }
-.ta-gist svg { width: 22px; height: 22px; }
-.ta-note__line .ta-gist { margin-top: -3px; }
-.ta-note.is-on .ta-gist { width: 48px; height: 48px; background: rgba(210, 157, 51, 0.22); }
-.ta-note.is-on .ta-gist svg { width: 28px; height: 28px; }
-.ta-note.is-past .ta-gist { background: rgba(255, 255, 255, 0.06); color: var(--dim); }
-.ta-strip .ta-gist, .ta-strip__line .ta-gist { width: 30px; height: 30px; align-self: center; }
-.ta-strip .ta-gist svg, .ta-strip__line .ta-gist svg { width: 18px; height: 18px; }
-.ta-strip__line { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
-.ta-gist--top { width: 24px; height: 24px; margin-right: 8px; vertical-align: -6px; background: transparent; }
-.ta-gist--top svg { width: 20px; height: 20px; }
+.ta-gist { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--gold); line-height: 0; }
+.ta-gist svg { width: 32px; height: 32px; transition: width 0.3s, height 0.3s; }
+.ta-note__line .ta-gist { margin-top: -2px; }
+.ta-note.is-on .ta-gist svg { width: 42px; height: 42px; }
+.ta-note.is-past .ta-gist { color: var(--dim); }
+.ta-strip__line .ta-gist { align-self: center; }
+.ta-strip__line .ta-gist svg { width: 24px; height: 24px; }
+.ta.is-music .ta-flow__i.is-on .ta-gist svg { width: 34px; height: 34px; }
+.ta-flow__i:not(.is-on) .ta-gist { color: var(--dim); }
+.ta-strip__line { display: flex; align-items: center; gap: 12px; flex: 1 1 auto; min-width: 0; }
+.ta-gist--top { margin-right: 8px; vertical-align: -6px; }
+.ta-gist--top svg { width: 22px; height: 22px; }
+.ta-extras__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.ta-extras__d { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--dim); }
+.ta-extras__d .ta-at__t { min-width: 40px; text-align: center; }
 .ta-extras { display: flex; flex-direction: column; gap: 12px; }
 .ta-extras[hidden] { display: none; }
 .ta-extras__m { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--dim); }
@@ -341,3 +360,7 @@ body.tcc-app-on { overflow: hidden; }
 .ta-icpick__b { display: inline-flex; align-items: center; justify-content: center; height: 50px; border: 1.5px solid var(--line); border-radius: 12px; background: transparent; color: var(--dim); cursor: pointer; }
 .ta-icpick__b svg { width: 24px; height: 24px; }
 .ta-icpick__b.is-on { border-color: var(--gold); background: rgba(210, 157, 51, 0.18); color: var(--gold); }
+
+.ta-top__ed { color: var(--gold) !important; }
+.ta-top__ed[hidden] { display: none !important; }
+.ta-top__end { display: flex; align-items: center; gap: 4px; }
