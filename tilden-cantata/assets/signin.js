@@ -115,7 +115,7 @@
 			var save = h( 'button', { type: 'button', class: 'tcc-si__btn', onclick: submit }, [ isNew ? 'Sign me up' : 'That’s right — save' ] );
 			show(
 				head( isNew ? 'Tell us about you' : 'Is this still right?', isNew ? stepAsk : stepFind ),
-				isNew ? null : h( 'p', { class: 'tcc-si__lede' }, [ 'We’ve got this from last time. Change anything that’s different; your phone and email aren’t shown here, so only type them if they’ve changed.' ] ),
+				isNew ? null : h( 'p', { class: 'tcc-si__lede' }, [ ( hints.phone || hints.email ) ? 'We’ve got this from last time. Change anything that’s different; your phone and email aren’t shown here, so only type them if they’ve changed.' : 'We’ve got this from last time. Change anything that’s different — and we don’t have a phone or email for you yet, so please add those.' ] ),
 				h( 'div', { class: 'tcc-si__form' }, [
 					h( 'label', { class: 'tcc-si__field' }, [ h( 'span', {}, [ 'Your name' ] ), f.name ] ),
 					h( 'div', { class: 'tcc-si__field' }, [ h( 'span', {}, [ 'This year I’ll be…' ] ), types ] ),
