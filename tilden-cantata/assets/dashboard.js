@@ -160,40 +160,16 @@
 	/* Coming up: the next rehearsal, opened up, and a row that goes to the full schedule. Nothing in between,
 	   so it never looks like there's nothing between now and a later date. */
 	function comingUp( list, personal, skipped ) {
-		var rows = h( 'ol', { class: 'tcc-db__cal' } );
 		var r = list[ 0 ];
-		if ( r ) {
-			var req = personal ? requiredOfMe( r ) : !! ( r.must && r.must.length );
-			var bits = [];
-			var rel = relDay( r.date ); if ( rel ) { bits.push( rel ); }
-			if ( req ) { bits.push( personal ? 'Required for you' : 'Attendance required' ); }
-			if ( r.full ) { bits.push( 'Full run-through' ); }
-			var covers = null;
-			if ( ! r.full && r.songs.length ) {
-				var fc = r.focus.filter( function ( i ) { return r.songs.indexOf( i ) !== -1; } ).length;
-				covers = personal && isSinger() && myTrackParts().length
-					? h( 'a', { class: 'tcc-db__covers', href: '#tcc-songs' }, [ r.songs.length + ( r.songs.length === 1 ? ' song' : ' songs' ) + ( fc ? ', ' + fc + ' starred' : '' ) + ' — tagged ' + r.dow + ' in Your songs' ] )
-					: h( 'p', { class: 'tcc-db__covers' }, [ 'Songs ' + r.songs.map( function ( i ) { return ( i + 1 ) + ( r.focus.indexOf( i ) !== -1 ? '★' : '' ); } ).join( ', ' ) ] );
-			}
-			var after = r.after.filter( function ( a ) { return ! personal || forMe( a.who ); } );
-			rows.appendChild( h( 'li', { class: 'tcc-db__cal-next' }, [
-				h( 'span', { class: 'tcc-db__cal-d' }, [ h( 'span', {}, [ r.mon ] ), h( 'b', {}, [ r.day ] ), h( 'span', {}, [ r.dow ] ) ] ),
-				h( 'div', { class: 'tcc-db__cal-body' }, [
-					h( 'h3', { class: 'tcc-db__cal-t' }, [ r.title ] ),
-					h( 'p', { class: 'tcc-db__cal-when' }, [ r.long + ( r.time ? ' · ' + r.time : '' ) ] ),
-					bits.length ? h( 'p', { class: 'tcc-db__cal-bits' }, [ bits.join( ' · ' ) ] ) : null,
-					personal ? null : h( 'div', { class: 'tcc-db__whofor' }, [ 'For ', pills( r.who ) ] ),
-					covers,
-					after.length ? h( 'ul', { class: 'tcc-db__after' }, after.map( function ( a ) { return h( 'li', {}, [ h( 'span', { class: 'tcc-db__after-i', html: W.icons.then } ), h( 'span', {}, [ a.time ? a.time + ' · ' : 'Afterward · ', a.what ] ), personal ? null : pills( a.who ) ] ); } ) ) : null,
-					r.note ? h( 'blockquote', { class: 'tcc-db__note' }, [ h( 'span', { class: 'tcc-db__note-k' }, [ 'From the director' ] ), h( 'div', { html: r.note } ) ] ) : null
-				] )
-			] ) );
-		}
-		if ( ! r && ! rows.children.length ) { rows.appendChild( h( 'li', { class: 'tcc-db__cal-row tcc-db__cal-row--empty' }, [ 'Nothing on the calendar for you right now.' ] ) ); }
-		if ( W.urls.schedule ) {
-			rows.appendChild( h( 'li', { class: 'tcc-db__cal-more' }, [ h( 'a', { href: W.urls.schedule }, [ h( 'span', {}, [ 'Full schedule' ] ), h( 'span', { class: 'tcc-db__cal-arrow', html: ICON.arrow } ) ] ) ] ) );
-		}
-		return h( 'section', { class: 'tcc-db__sec tcc-db__sec--first' }, [ eyebrow( 'Coming up' ), skipped || null, rows ] );
+		var body = r
+			? h( 'div', { class: 'tcc-schedule tcc-db__reh' + ( personal && isSinger() && myTrackParts().length ? ' tcc-db__reh--tiles' : '' ), html: '<ol class="tcc-schedule__list">' + r.html + '</ol>' } )
+			: h( 'p', { class: 'tcc-db__skip' }, [ 'Nothing on the calendar for you right now.' ] );
+		return h( 'section', { class: 'tcc-db__sec tcc-db__sec--first' }, [
+			eyebrow( 'Coming up' ),
+			skipped || null,
+			body,
+			W.urls.schedule ? h( 'a', { class: 'tcc-db__more', href: W.urls.schedule }, [ h( 'span', {}, [ 'Full schedule' ] ), h( 'span', { class: 'tcc-db__more-i', html: ICON.arrow } ) ] ) : null
+		] );
 	}
 
 	/* your songs: the whole work, one tile per song */

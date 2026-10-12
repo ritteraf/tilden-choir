@@ -72,38 +72,13 @@
 .tcc-db__ios svg { width: 16px; height: 16px; color: #0a7aff; }
 .tcc-db__a2hs-go { display: flex; align-items: center; gap: 16px; margin-top: 10px; font-size: 14px; }
 
-/* coming up: one list — the next rehearsal opened up, quiet rows after it, then the way to the schedule */
-.tcc-db__cal { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-.tcc-db__cal > li { border-bottom: 1px solid var(--line); }
-.tcc-db__cal-next { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 18px; padding: 18px 0 20px; }
-.tcc-db__cal-d { display: flex; flex-direction: column; align-items: center; line-height: 1; padding-top: 3px; }
-.tcc-db__cal-d span { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tcc-ash); }
-.tcc-db__cal-d b { font-family: var(--tcc-display); font-size: 32px; margin: 4px 0 5px; }
-.tcc-db__cal-d--sm b { font-size: 22px; margin: 3px 0 4px; }
-.tcc-db__cal-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.tcc-db__cal-t { margin: 0; font-family: var(--tcc-display); font-size: 24px; line-height: 1.15; font-weight: 700; }
-.tcc-db__cal-when { margin: 0; font-size: 16px; color: var(--tcc-slate); }
-.tcc-db__cal-bits { margin: 0; font-size: 14px; font-weight: 600; color: var(--tcc-ash); }
-.tcc-db__cal-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 12px 0; }
-.tcc-db__cal-row--empty { display: block; color: var(--tcc-ash); font-size: 15px; }
-.tcc-db__cal-rt { min-width: 0; display: flex; flex-direction: column; }
-.tcc-db__cal-rt b { font-size: 16px; font-weight: 600; }
-.tcc-db__cal-rt span { font-size: 14px; color: var(--tcc-ash); }
-.tcc-db__cal-r { font-size: 13px; font-weight: 600; color: var(--tcc-ash); white-space: nowrap; }
-.tcc-db__cal-more a { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 4px 0 74px; color: var(--tcc-ink); font-size: 16px; font-weight: 700; text-decoration: none; }
-.tcc-db__cal-more a:hover { color: var(--tcc-red); }
-.tcc-db__cal-arrow svg { width: 20px; height: 20px; }
+/* coming up: the schedule page's own entry for the next rehearsal, then the way to the full schedule */
+.tcc-db__reh .tcc-reh { border-top: 1px solid var(--line); }
+.tcc-db__reh--tiles .tcc-reh__songs { display: none; } /* Your songs, right below, already tags these */
+.tcc-db__more { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--tcc-ink); font-size: 16px; font-weight: 700; text-decoration: none; }
+.tcc-db__more:hover { color: var(--tcc-red); }
+.tcc-db__more-i svg { width: 20px; height: 20px; }
 .tcc-db__whofor { font-size: 14px; color: var(--tcc-slate); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.tcc-db__covers { margin: 0; font-size: 15px; color: var(--tcc-slate); text-decoration: none; }
-a.tcc-db__covers { color: var(--tcc-slate); text-decoration: underline; text-decoration-color: var(--tcc-stone); text-underline-offset: 3px; }
-.tcc-db__after { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--tcc-slate); }
-.tcc-db__after li { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.tcc-db__after-i svg { width: 16px; height: 16px; color: var(--tcc-ash); }
-.tcc-db__note { margin: 6px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--tcc-gold); font-size: 16px; line-height: 1.55; color: var(--tcc-ink); }
-.tcc-db__note-k { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 600; color: var(--tcc-ash); }
-.tcc-db__note p { margin: 0 0 6px; }
-.tcc-db__note p:last-child { margin: 0; }
-.tcc-db__note a { color: var(--tcc-red); }
 .tcc-db__sec--first { margin-top: 36px; }
 
 /* your songs */
@@ -184,8 +159,4 @@ a.tcc-db__tile:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba
 	.tcc-db__go-t { font-size: 17px; }
 	.tcc-db__sec { margin-top: 40px; }
 	.tcc-db__eyebrow > span:first-child { font-size: 22px; }
-	.tcc-db__cal-next { grid-template-columns: 44px minmax(0, 1fr); gap: 14px; }
-	.tcc-db__cal-row { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; }
-	.tcc-db__cal-more a { padding-left: 58px; }
-	.tcc-db__cal-t { font-size: 22px; }
 }

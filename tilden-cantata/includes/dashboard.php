@@ -67,6 +67,7 @@ function tcc_rehearsals_data( int $cantata_id ): array {
 	$count = count( $songs );
 	$now   = new DateTimeImmutable( 'now', wp_timezone() );
 	$out   = [];
+	$next  = tcc_next_rehearsal( $cantata_id );
 	foreach ( tcc_get_rehearsals( $cantata_id ) as $r ) {
 		$dt = tcc_rehearsal_dt( $r->ID );
 		if ( ! $dt ) {
@@ -103,6 +104,8 @@ function tcc_rehearsals_data( int $cantata_id ): array {
 			'focus' => tcc_song_indices( (string) get_post_meta( $r->ID, '_tcc_focus', true ), $count ),
 			'after' => $after,
 			'note'  => trim( $r->post_content ) ? apply_filters( 'the_content', $r->post_content ) : '',
+			// the schedule page's own entry, so the dashboard reads exactly like the schedule
+			'html'  => tcc_render_rehearsal( $r, $cantata_id, $next && $next->ID === $r->ID ),
 		];
 	}
 	return $out;
