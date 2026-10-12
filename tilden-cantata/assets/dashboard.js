@@ -224,7 +224,7 @@
 					return a - b;
 				} );
 				if ( full ) { pool = pool.slice( 0, 6 ); }
-				var title = next ? ( full ? ( next.full ? 'Full run-through ' + next.long + ' — least practiced first' : 'Least practiced' ) : 'Songs for ' + next.long ) : 'Least practiced';
+				var title = next ? ( full ? ( next.full ? 'Least practiced — full run-through ' + next.dow + ' ' + next.mon + ' ' + next.day : 'Least practiced' ) : 'Songs for ' + next.long ) : 'Least practiced';
 				var list = h( 'ol', { class: 'tcc-dash__songs' } );
 				pool.forEach( function ( i ) {
 					var st = statFor( i ), cues = cuesFor( i ), notes = noteCounts[ i ] || 0, isF = focus.indexOf( i ) !== -1;
