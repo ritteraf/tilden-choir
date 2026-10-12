@@ -253,9 +253,9 @@ body.tcc-app-on { overflow: hidden; }
 /* the note strip above the controls, in music view */
 .ta-strip { display: flex; align-items: baseline; gap: 10px; width: 100%; margin: -2px auto 8px; padding: 10px 14px; border: 0; border-left: 3px solid var(--gold); border-radius: 8px; background: rgba(210, 157, 51, 0.12); text-align: left; cursor: pointer; min-height: 46px; }
 .ta-strip .ta-strip__k { flex-shrink: 0; }
-.ta-strip .ta-strip__t { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-.ta-strip.is-open { flex-direction: column; gap: 2px; }
-.ta-strip.is-open .ta-strip__t { white-space: normal; }
+.ta-strip .ta-strip__t { flex: 1 1 auto; min-width: 0; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ta-stripnext { border: 0; background: transparent; text-align: left; font: inherit; cursor: pointer; border-radius: 8px; }
+.ta-stripnext:active, .ta-strip:active { filter: brightness(1.25); }
 .ta-stripnext { display: none; }
 .ta-strip--mine { border-left-color: var(--green); background: rgba(143, 196, 143, 0.1); }
 .ta-strip--quiet { border-left-color: var(--line); background: rgba(255, 255, 255, 0.04); }

@@ -147,8 +147,8 @@
 		ui.noteBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: openNote }, [ h( 'b', { html: I.pen } ), h( 'span', {}, [ D.canEdit ? 'Note' : 'My note' ] ) ] );
 		ui.songsBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--songs', onclick: openSongs }, [ h( 'b', { html: I.list } ), h( 'span', {}, [ 'Songs' ] ) ] );
 		ui.viewBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: function () { setView( S.view === 'music' ? 'notes' : 'music' ); } }, [ h( 'b', { html: I.score } ), h( 'span', {}, [ 'Music' ] ) ] );
-		ui.strip = h( 'button', { type: 'button', class: 'ta-strip', hidden: true, 'aria-expanded': 'false', onclick: function () { var open = ! ui.strip.classList.contains( 'is-open' ); ui.strip.classList.toggle( 'is-open', open ); ui.strip.setAttribute( 'aria-expanded', open ? 'true' : 'false' ); } } );
-		ui.stripNext = h( 'div', { class: 'ta-stripnext', hidden: true } );
+		ui.strip = h( 'button', { type: 'button', class: 'ta-strip', hidden: true, onclick: function () { if ( ui.strip._c ) { jumpTo( ui.strip._c ); } } } );
+		ui.stripNext = h( 'button', { type: 'button', class: 'ta-stripnext', hidden: true, onclick: function () { if ( ui.stripNext._c ) { jumpTo( ui.stripNext._c ); } } } );
 		ui.app.appendChild( h( 'footer', { class: 'ta-dock' }, [
 			ui.strip, ui.stripNext,
 			h( 'div', { class: 'ta-dock__scrub' }, [ ui.tcur, ui.scrub, ui.tdur ] ),
@@ -237,7 +237,7 @@
 			CUES.forEach( function ( c, i ) {
 				var canX = ( c.kind === 'mine' && S.who ) || ( c.kind === 'cue' && D.canEdit );
 				ol.appendChild( h( 'li', { class: 'ta-note ta-note--' + c.kind, 'data-i': i }, [
-					h( 'button', { type: 'button', class: 'ta-note__body', onclick: function () { seek( c.t - 1.5 ); if ( audio.paused ) { audio.play().catch( function () {} ); } setFollow( true ); } }, [
+					h( 'button', { type: 'button', class: 'ta-note__body', 'aria-label': 'Play from just before this note', onclick: function () { jumpTo( c ); } }, [
 						h( 'span', { class: 'ta-note__meta' }, [ h( 'span', { class: 'ta-note__t' }, [ fmt( c.t ) ] ), h( 'span', { class: 'ta-note__who' }, [ c.kind === 'cue' ? ( c.parts.length && c.parts.length < 4 ? 'Director · ' + c.parts.map( shortLabel ).join( ', ' ) : 'Director' ) : 'Your note' ] ), h( 'span', { class: 'ta-note__in' } ) ] ),
 						h( 'span', { class: 'ta-note__text' }, [ c.text ] )
 					] ),
@@ -602,9 +602,11 @@
 	function paintStrip( a ) {
 		if ( ! ui.strip || ui.strip.hidden ) { return; }
 		ui.strip.innerHTML = '';
-		ui.strip.classList.remove( 'is-open' );
 		var c = a >= 0 ? CUES[ a ] : null;
 		var nx = CUES[ a + 1 ] || null;
+		ui.strip._c = c || nx; ui.stripNext._c = c && nx ? nx : null;
+		ui.strip.title = ui.strip._c ? 'Play from just before ' + fmt( ui.strip._c.t ) : '';
+		ui.stripNext.title = ui.stripNext._c ? 'Play from just before ' + fmt( ui.stripNext._c.t ) : '';
 		/* beside the music on a tablet there is room for what's coming, too */
 		ui.stripNext.innerHTML = '';
 		if ( c && nx ) { ui.stripNext.appendChild( h( 'span', { class: 'ta-strip__k' }, [ 'Next · ' + fmt( nx.t ) ] ) ); ui.stripNext.appendChild( h( 'span', { class: 'ta-strip__t' }, [ nx.text ] ) ); }
@@ -885,6 +887,12 @@
 			if ( ! queue || queue.indexOf( S.list.tracks[ n ].song ) !== -1 ) { break; }
 		}
 		S.idx = n; S.loopA = S.loopB = null; loadTrack( true );
+	}
+	/* Tapping a note plays from a few seconds before it, so you hear the lead-in. */
+	var LEAD_IN = 4;
+	function jumpTo( c ) {
+		function go() { seek( c.t - LEAD_IN ); if ( audio.paused ) { audio.play().catch( function () {} ); } setFollow( true ); }
+		if ( audio.duration ) { go(); } else { audio.addEventListener( 'loadedmetadata', go, { once: true } ); audio.load(); }
 	}
 	function seek( t ) { if ( ! audio.duration ) { return; } audio.currentTime = Math.max( 0, Math.min( audio.duration - 0.2, t ) ); paintScrub(); tickStream( true ); }
 	function cycleRate() {
