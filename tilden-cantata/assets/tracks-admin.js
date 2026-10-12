@@ -3,7 +3,7 @@
 	var app = document.getElementById( 'tcc-tracks-app' );
 	if ( ! app ) { return; }
 	var data = JSON.parse( app.getAttribute( 'data-tcc-tracks' ) || '{}' );
-	var songs = data.songs || [], parts = data.parts || {}, tracks = ( data.tracks && ! Array.isArray( data.tracks ) ) ? data.tracks : {}, cues = Array.isArray( data.cues ) ? data.cues : [];
+	var songs = data.songs || [], parts = data.parts || {}, tracks = ( data.tracks && ! Array.isArray( data.tracks ) ) ? data.tracks : {}, cues = Array.isArray( data.cues ) ? data.cues : [], icons = data.icons && ! Array.isArray( data.icons ) ? data.icons : {};
 	var jsonTracks = document.getElementById( 'tcc_tracks_json' ), jsonCues = document.getElementById( 'tcc_cues_json' );
 
 	function esc( s ) { return String( s == null ? '' : s ).replace( /[&<>"']/g, function ( c ) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ c ]; } ); }
@@ -62,11 +62,13 @@
 		// cues
 		html += '<div style="margin:18px 0 6px;padding:12px 14px;border:1px solid #dcdcde;border-radius:4px;background:#fff"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><strong style="font-size:14px">Timestamp notes</strong><span class="description">Shown to singers at that moment in the track. Add them from the practice page while logged in, or here.</span><button type="button" class="button tcc-cue-add" style="margin-left:auto">Add a note</button></div>';
 		if ( cues.length ) {
-			html += '<table class="widefat striped"><thead><tr><th style="width:40%">Song</th><th style="width:80px">At</th><th>Note</th><th style="width:220px">Only for</th><th style="width:60px"></th></tr></thead><tbody>';
+			html += '<table class="widefat striped"><thead><tr><th style="width:40%">Song</th><th style="width:80px">At</th><th style="width:70px">Measure</th><th>Note</th><th style="width:150px">Icon</th><th style="width:220px">Only for</th><th style="width:60px"></th></tr></thead><tbody>';
 			cues.forEach( function ( c, i ) {
 				html += '<tr data-i="' + i + '"><td><select class="tcc-cue-song" style="width:100%">';
 				songs.forEach( function ( s, j ) { html += '<option value="' + j + '"' + ( c.song === j ? ' selected' : '' ) + '>' + ( j + 1 ) + '. ' + esc( s ) + '</option>'; } );
-				html += '</select></td><td><input type="text" class="tcc-cue-t" value="' + esc( fmt( c.t ) ) + '" style="width:70px"></td><td><input type="text" class="tcc-cue-text regular-text" value="' + esc( c.text ) + '" style="width:100%"></td><td>';
+				html += '</select></td><td><input type="text" class="tcc-cue-t" value="' + esc( fmt( c.t ) ) + '" style="width:70px"></td><td><input type="text" class="tcc-cue-m" value="' + esc( c.m || '' ) + '" placeholder="42" maxlength="12" style="width:60px"></td><td><input type="text" class="tcc-cue-text regular-text" value="' + esc( c.text ) + '" style="width:100%"></td><td><select class="tcc-cue-icon" style="width:100%"><option value="">—</option>';
+				Object.keys( icons ).forEach( function ( k ) { html += '<option value="' + esc( k ) + '"' + ( c.icon === k ? ' selected' : '' ) + '>' + esc( icons[ k ] ) + '</option>'; } );
+				html += '</select></td><td>';
 				[ 'soprano', 'alto', 'tenor', 'bass' ].forEach( function ( p ) { html += '<label style="margin-right:8px;white-space:nowrap"><input type="checkbox" class="tcc-cue-part" value="' + p + '"' + ( ( c.parts || [] ).indexOf( p ) !== -1 ? ' checked' : '' ) + '> ' + esc( parts[ p ] || p ) + '</label>'; } );
 				html += '<br><span class="description">None ticked = everyone</span></td><td><button type="button" class="button-link-delete tcc-cue-remove">Remove</button></td></tr>';
 			} );
@@ -98,7 +100,7 @@
 		} else if ( btn.classList.contains( 'tcc-tr-remove' ) ) {
 			tracks[ part ].splice( i, 1 ); render();
 		} else if ( btn.classList.contains( 'tcc-cue-add' ) ) {
-			cues.push( { id: Math.random().toString( 36 ).slice( 2, 10 ), song: 0, t: 0, text: '', parts: [] } ); render();
+			cues.push( { id: Math.random().toString( 36 ).slice( 2, 10 ), song: 0, t: 0, text: '', parts: [], m: '', icon: '' } ); render();
 			var last = app.querySelector( '.tcc-cue-text:last-of-type' ); if ( last ) { last.focus(); }
 		} else if ( btn.classList.contains( 'tcc-cue-remove' ) ) {
 			cues.splice( i, 1 ); render();
@@ -112,6 +114,8 @@
 		} else if ( el.classList.contains( 'tcc-cue-song' ) ) { cues[ i ].song = parseInt( el.value, 10 ); sync( true ); }
 		else if ( el.classList.contains( 'tcc-cue-t' ) ) { cues[ i ].t = parseTime( el.value ); el.value = fmt( cues[ i ].t ); sync( true ); }
 		else if ( el.classList.contains( 'tcc-cue-text' ) ) { cues[ i ].text = el.value; sync( true ); }
+		else if ( el.classList.contains( 'tcc-cue-m' ) ) { cues[ i ].m = el.value.trim(); sync( true ); }
+		else if ( el.classList.contains( 'tcc-cue-icon' ) ) { cues[ i ].icon = el.value; sync( true ); }
 		else if ( el.classList.contains( 'tcc-cue-part' ) ) {
 			cues[ i ].parts = Array.prototype.map.call( row.querySelectorAll( '.tcc-cue-part:checked' ), function ( c ) { return c.value; } ); sync( true );
 		}

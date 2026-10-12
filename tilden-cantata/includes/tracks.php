@@ -151,12 +151,59 @@ function tcc_match_by_track_number( array $tracks ): array {
 	return $tracks;
 }
 
+/**
+ * Gist icons for director notes: one glance tells a singer what the note is about
+ * (a turtle for slowing down, a speaker with waves for getting louder…). Key => [label, inner SVG].
+ */
+function tcc_cue_icons(): array {
+	$raw = [
+		'slower' => [ 'Slower', '<path d="M3 16a7.5 7.5 0 0 1 15 0z"/><path d="M18 14.2c.6-1.6 1.6-2.7 2.8-2.7a1.8 1.8 0 0 1 0 3.6H18"/><path d="M6 16v2.5M15 16v2.5"/><path d="M8 9.8 9.6 16M13 9.8 11.4 16"/>' ],
+		'faster' => [ 'Faster', '<path d="M15 19.5H8.5a5.2 5.2 0 1 1 3.6-9"/><circle cx="15.8" cy="10.8" r="3.2"/><path d="M14.3 7.9c-1.3-2.4-1.4-5.2-.1-5.3 1.3-.1 2 2.6 1.8 5"/><path d="M17 7.7c.6-2.6 1.9-5 3-4.6 1.1.5.2 3.2-1.3 5.2"/><path d="M15 19.5c-.6-1.4-.5-2.6.4-3.5"/><circle cx="2.9" cy="13.6" r="1" fill="currentColor" stroke="none"/><circle cx="16.9" cy="10.4" r=".7" fill="currentColor" stroke="none"/>' ],
+		'louder' => [ 'Louder', '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15 9.5a3.5 3.5 0 0 1 0 5"/><path d="M17.8 7a7 7 0 0 1 0 10"/><path d="M20.6 4.5a10.5 10.5 0 0 1 0 15"/>' ],
+		'softer' => [ 'Softer', '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15 10a2.8 2.8 0 0 1 0 4"/>' ],
+		'breathe' => [ 'Breathe', '<path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h6"/>' ],
+		'hold' => [ 'Hold (fermata)', '<path d="M3.5 16.5a8.5 8.5 0 0 1 17 0"/><circle cx="12" cy="15" r="1.7" fill="currentColor" stroke="none"/>' ],
+		'cutoff' => [ 'Cut-off', '<circle cx="6" cy="6.5" r="3"/><circle cx="6" cy="17.5" r="3"/><path d="M20 4.5 8.4 15.6M14.6 14.4 20 19.5M8.4 8.4l3.4 3.2"/>' ],
+		'entrance' => [ 'Entrance', '<path d="M3 12h11M10 7.5l4.5 4.5-4.5 4.5"/><path d="M19.5 4.5v15"/>' ],
+		'watch' => [ 'Watch me', '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>' ],
+		'listen' => [ 'Listen & blend', '<path d="M6.5 9a5.5 5.5 0 1 1 11 0c0 3.2-2.7 4-2.7 6.8a3.3 3.3 0 0 1-6.3 1.4"/><path d="M9.6 9.2a2.4 2.4 0 1 1 4.8 0c0 1.3-1.2 1.8-1.4 3"/>' ],
+		'higher' => [ 'Higher / stay up', '<path d="M12 19.5V5M5.5 11.5 12 5l6.5 6.5"/>' ],
+		'lower' => [ 'Lower', '<path d="M12 4.5V19M5.5 12.5 12 19l6.5-6.5"/>' ],
+		'short' => [ 'Short & crisp', '<circle cx="5.5" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.8" fill="currentColor" stroke="none"/>' ],
+		'smooth' => [ 'Smooth & connected', '<path d="M2.5 13.5c3.2-5.5 6.3-5.5 9.5 0s6.3 5.5 9.5 0"/>' ],
+		'count' => [ 'Count / tempo', '<path d="M6.5 20.5 10 3.5h4l3.5 17z"/><path d="M6 20.5h12"/><path d="M12 15.5l5.5-8"/><circle cx="12" cy="15.5" r=".9" fill="currentColor" stroke="none"/>' ],
+		'smile' => [ 'Smile / expression', '<circle cx="12" cy="12" r="9.5"/><path d="M8 14.2a4.8 4.8 0 0 0 8 0"/><circle cx="9" cy="9.6" r=".9" fill="currentColor" stroke="none"/><circle cx="15" cy="9.6" r=".9" fill="currentColor" stroke="none"/>' ],
+		'words' => [ 'Words & diction', '<path d="M21 11.5a8.5 8 0 0 1-12.2 7.2L3 20.5l1.9-5A8.5 8 0 1 1 21 11.5z"/><path d="M8.5 10h7M8.5 13.5h4.5"/>' ],
+		'star' => [ 'Important', '<path d="M12 3.2l2.7 5.5 6 .9-4.35 4.25 1 6L12 17l-5.35 2.85 1-6L3.3 9.6l6-.9z"/>' ],
+	];
+	$out = [];
+	foreach ( $raw as $k => [ $label, $inner ] ) {
+		$out[ $k ] = [ 'label' => $label, 'svg' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $inner . '</svg>' ];
+	}
+	return $out;
+}
+
+/** A measure reference as the director typed it: "42", "42–44", "12a". Short, plain characters only. */
+function tcc_cue_measure( $v ): string {
+	$v = trim( wp_strip_all_tags( (string) $v ) );
+	$v = preg_replace( '/^(?:measures?|meas|bars?|mm?|ms)\.?\s*/i', '', $v ); // the app adds "m." itself
+	$v = preg_replace( '/[^0-9A-Za-z ,\-–]/u', '', $v );
+	$v = trim( preg_replace( '/\s+/', ' ', str_replace( '-', '–', $v ) ) );
+	return mb_substr( $v, 0, 12 );
+}
+
+/** An icon key, if it is one of ours. */
+function tcc_cue_icon( $v ): string {
+	$v = (string) $v;
+	return isset( tcc_cue_icons()[ $v ] ) ? $v : '';
+}
+
 /** Director's timestamp notes. */
 function tcc_cues( int $cantata_id ): array {
 	$out = [];
 	foreach ( (array) get_post_meta( $cantata_id, '_tcc_cues', true ) as $c ) {
 		if ( is_array( $c ) && isset( $c['t'], $c['text'] ) ) {
-			$out[] = [ 'id' => (string) ( $c['id'] ?? '' ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => (float) $c['t'], 'text' => (string) $c['text'], 'parts' => array_values( (array) ( $c['parts'] ?? [] ) ) ];
+			$out[] = [ 'id' => (string) ( $c['id'] ?? '' ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => (float) $c['t'], 'text' => (string) $c['text'], 'parts' => array_values( (array) ( $c['parts'] ?? [] ) ), 'm' => (string) ( $c['m'] ?? '' ), 'icon' => (string) ( $c['icon'] ?? '' ) ];
 		}
 	}
 	usort( $out, fn( $a, $b ) => [ $a['song'], $a['t'] ] <=> [ $b['song'], $b['t'] ] );
@@ -350,6 +397,8 @@ add_action( 'rest_api_init', function () {
 						$c['t'] = round( max( 0, (float) $r->get_param( 't' ) ), 1 );
 						$c['text'] = $text;
 						$c['parts'] = $parts;
+						$c['m'] = tcc_cue_measure( $r->get_param( 'm' ) );
+						$c['icon'] = tcc_cue_icon( $r->get_param( 'icon' ) );
 						$cue = $c;
 					}
 				}
@@ -360,7 +409,7 @@ add_action( 'rest_api_init', function () {
 				update_post_meta( $cantata, '_tcc_cues', $cues );
 				return [ 'ok' => true, 'cue' => $cue ];
 			}
-			$cue = [ 'id' => wp_generate_password( 8, false ), 'song' => (int) $r->get_param( 'song' ), 't' => round( (float) $r->get_param( 't' ), 1 ), 'text' => $text, 'parts' => $parts ];
+			$cue = [ 'id' => wp_generate_password( 8, false ), 'song' => (int) $r->get_param( 'song' ), 't' => round( (float) $r->get_param( 't' ), 1 ), 'text' => $text, 'parts' => $parts, 'm' => tcc_cue_measure( $r->get_param( 'm' ) ), 'icon' => tcc_cue_icon( $r->get_param( 'icon' ) ) ];
 			$cues[] = $cue;
 			update_post_meta( $cantata, '_tcc_cues', $cues );
 			return [ 'ok' => true, 'cue' => $cue ];
@@ -476,6 +525,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'songs'     => array_values( $songs ),
 		'lists'     => $lists,
 		'cues'      => $cues,
+		'cueIcons'  => tcc_cue_icons(),
 		'next'      => tcc_next_rehearsal_songs( $current ),
 		'past'      => $old,
 		'who'       => $who ? [ 'id' => $who, 'name' => get_the_title( $who ) ] : null,
@@ -538,7 +588,7 @@ function tcc_render_tracks_box( WP_Post $post ) {
 	$songs  = tcc_song_titles( $post->ID );
 	$tracks = tcc_tracks( $post->ID );
 	$cues   = tcc_cues( $post->ID );
-	$data   = [ 'songs' => array_values( $songs ), 'parts' => tcc_track_parts(), 'tracks' => $tracks, 'cues' => $cues ];
+	$data   = [ 'songs' => array_values( $songs ), 'parts' => tcc_track_parts(), 'tracks' => $tracks, 'cues' => $cues, 'icons' => array_map( fn( $i ) => $i['label'], tcc_cue_icons() ) ];
 	foreach ( $data['tracks'] as $part => &$list ) {
 		foreach ( $list as &$t ) {
 			$t['file'] = basename( (string) get_attached_file( $t['id'] ) );
@@ -582,7 +632,7 @@ function tcc_store_tracks( int $post_id, $tracks_json, $cues_json ): array {
 		foreach ( $cues as $c ) {
 			$text = sanitize_text_field( (string) ( $c['text'] ?? '' ) );
 			if ( $text !== '' ) {
-				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => array_values( array_intersect( array_keys( tcc_track_parts() ), (array) ( $c['parts'] ?? [] ) ) ) ];
+				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => array_values( array_intersect( array_keys( tcc_track_parts() ), (array) ( $c['parts'] ?? [] ) ) ), 'm' => tcc_cue_measure( $c['m'] ?? '' ), 'icon' => tcc_cue_icon( $c['icon'] ?? '' ) ];
 			}
 		}
 		update_post_meta( $post_id, '_tcc_cues', $clean );

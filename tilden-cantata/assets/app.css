@@ -315,3 +315,29 @@ body.tcc-app-on { overflow: hidden; }
 .ta-top__title.is-note.is-mine { color: var(--green); }
 .ta-tool.is-ping b { animation: ta-ping 1.6s ease-out 2; }
 @keyframes ta-ping { 0% { transform: scale(1); color: var(--gold); } 30% { transform: scale(1.3); color: var(--gold); } 100% { transform: scale(1); } }
+
+/* ---------- director notes: gist icon + measure ---------- */
+.ta-note__m { font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--faint); font-variant-numeric: tabular-nums; }
+.ta-note__line { display: flex; align-items: flex-start; gap: 12px; }
+.ta-gist { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: rgba(210, 157, 51, 0.14); color: var(--gold); transition: width 0.3s, height 0.3s; }
+.ta-gist svg { width: 22px; height: 22px; }
+.ta-note__line .ta-gist { margin-top: -3px; }
+.ta-note.is-on .ta-gist { width: 48px; height: 48px; background: rgba(210, 157, 51, 0.22); }
+.ta-note.is-on .ta-gist svg { width: 28px; height: 28px; }
+.ta-note.is-past .ta-gist { background: rgba(255, 255, 255, 0.06); color: var(--dim); }
+.ta-strip .ta-gist, .ta-strip__line .ta-gist { width: 30px; height: 30px; align-self: center; }
+.ta-strip .ta-gist svg, .ta-strip__line .ta-gist svg { width: 18px; height: 18px; }
+.ta-strip__line { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
+.ta-gist--top { width: 24px; height: 24px; margin-right: 8px; vertical-align: -6px; background: transparent; }
+.ta-gist--top svg { width: 20px; height: 20px; }
+.ta-extras { display: flex; flex-direction: column; gap: 12px; }
+.ta-extras[hidden] { display: none; }
+.ta-extras__m { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--dim); }
+.ta-extras__mm { display: inline-flex; align-items: center; gap: 6px; color: var(--faint); font-weight: 700; }
+.ta-input.ta-input--m { width: 110px; min-height: 48px; padding: 10px 12px; font-size: 18px; }
+.ta-extras__k { font-size: 14px; color: var(--dim); }
+.ta-icpick__name { color: var(--ink); font-weight: 700; }
+.ta-icpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; margin-top: 8px; }
+.ta-icpick__b { display: inline-flex; align-items: center; justify-content: center; height: 50px; border: 1.5px solid var(--line); border-radius: 12px; background: transparent; color: var(--dim); cursor: pointer; }
+.ta-icpick__b svg { width: 24px; height: 24px; }
+.ta-icpick__b.is-on { border-color: var(--gold); background: rgba(210, 157, 51, 0.18); color: var(--gold); }

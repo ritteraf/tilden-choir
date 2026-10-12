@@ -189,10 +189,16 @@
 	}
 
 	/* ---------- the stream ---------- */
+	var ICONS = D.cueIcons || {};
+	/* the director's gist icon for a note, as a small badge */
+	function gist( c, cls ) {
+		var ic = c && c.icon && ICONS[ c.icon ];
+		return ic ? h( 'span', { class: cls || 'ta-gist', role: 'img', 'aria-label': ic.label, title: ic.label, html: ic.svg } ) : null;
+	}
 	function cuesForCurrent() {
 		var t = current(); if ( ! t || t.song < 0 || ! S.list.now ) { return []; }
 		var part = countPart();
-		var out = ( D.cues || [] ).filter( function ( c ) { return c.song === t.song && ( ! c.parts || ! c.parts.length || c.parts.indexOf( part ) !== -1 ); } ).map( function ( c ) { return { t: +c.t, text: c.text, kind: 'cue', id: c.id, parts: c.parts || [] }; } );
+		var out = ( D.cues || [] ).filter( function ( c ) { return c.song === t.song && ( ! c.parts || ! c.parts.length || c.parts.indexOf( part ) !== -1 ); } ).map( function ( c ) { return { t: +c.t, text: c.text, kind: 'cue', id: c.id, parts: c.parts || [], m: c.m || '', icon: c.icon || '' }; } );
 		S.notes.filter( function ( n ) { return +n.song === t.song; } ).forEach( function ( n ) { out.push( { t: +n.t, text: n.text, kind: 'mine', id: n.id } ); } );
 		return out.sort( function ( a, b ) { return a.t - b.t; } );
 	}
@@ -238,8 +244,8 @@
 				var canX = ( c.kind === 'mine' && S.who ) || ( c.kind === 'cue' && D.canEdit );
 				ol.appendChild( h( 'li', { class: 'ta-note ta-note--' + c.kind, 'data-i': i }, [
 					h( 'button', { type: 'button', class: 'ta-note__body', 'aria-label': 'Play from just before this note', onclick: function () { jumpTo( c ); } }, [
-						h( 'span', { class: 'ta-note__meta' }, [ h( 'span', { class: 'ta-note__t' }, [ fmt( c.t ) ] ), h( 'span', { class: 'ta-note__who' }, [ c.kind === 'cue' ? ( c.parts.length && c.parts.length < 4 ? 'Director · ' + c.parts.map( shortLabel ).join( ', ' ) : 'Director' ) : 'Your note' ] ), h( 'span', { class: 'ta-note__in' } ) ] ),
-						h( 'span', { class: 'ta-note__text' }, [ c.text ] )
+						h( 'span', { class: 'ta-note__meta' }, [ h( 'span', { class: 'ta-note__t' }, [ fmt( c.t ) ] ), h( 'span', { class: 'ta-note__who' }, [ c.kind === 'cue' ? ( c.parts.length && c.parts.length < 4 ? 'Director · ' + c.parts.map( shortLabel ).join( ', ' ) : 'Director' ) : 'Your note' ] ), c.m ? h( 'span', { class: 'ta-note__m' }, [ 'm. ' + c.m ] ) : null, h( 'span', { class: 'ta-note__in' } ) ] ),
+						h( 'span', { class: 'ta-note__line' }, [ gist( c ), h( 'span', { class: 'ta-note__text' }, [ c.text ] ) ] )
 					] ),
 					canX ? h( 'button', { type: 'button', class: 'ta-note__x', 'aria-label': 'Edit this note', title: 'Edit', html: I.edit, onclick: function () { openNote( c ); } } ) : null
 				] ) );
@@ -590,7 +596,7 @@
 		var now = audio.currentTime || 0;
 		if ( c && now - c.t < 9 ) {
 			if ( ui.ttl.getAttribute( 'data-n' ) !== String( S.active ) ) {
-				ui.ttl.textContent = c.text; ui.ttl.setAttribute( 'data-n', String( S.active ) );
+				ui.ttl.innerHTML = ''; var g = gist( c, 'ta-gist ta-gist--top' ); if ( g ) { ui.ttl.appendChild( g ); } ui.ttl.appendChild( document.createTextNode( c.text ) ); ui.ttl.setAttribute( 'data-n', String( S.active ) );
 				ui.ttl.className = 'ta-top__title is-note' + ( c.kind === 'mine' ? ' is-mine' : '' );
 				ui.viewBtn.classList.remove( 'is-ping' ); void ui.viewBtn.offsetWidth; ui.viewBtn.classList.add( 'is-ping' );
 			}
@@ -609,15 +615,16 @@
 		ui.stripNext.title = ui.stripNext._c ? 'Play from just before ' + fmt( ui.stripNext._c.t ) : '';
 		/* beside the music on a tablet there is room for what's coming, too */
 		ui.stripNext.innerHTML = '';
-		if ( c && nx ) { ui.stripNext.appendChild( h( 'span', { class: 'ta-strip__k' }, [ 'Next · ' + fmt( nx.t ) ] ) ); ui.stripNext.appendChild( h( 'span', { class: 'ta-strip__t' }, [ nx.text ] ) ); }
+		function mOf( x ) { return x.m ? ' · m. ' + x.m : ''; }
+		if ( c && nx ) { ui.stripNext.appendChild( h( 'span', { class: 'ta-strip__k' }, [ 'Next · ' + fmt( nx.t ) + mOf( nx ) ] ) ); ui.stripNext.appendChild( h( 'span', { class: 'ta-strip__line' }, [ gist( nx ), h( 'span', { class: 'ta-strip__t' }, [ nx.text ] ) ] ) ); }
 		if ( c ) {
 			ui.strip.className = 'ta-strip ta-strip--' + c.kind;
-			ui.strip.appendChild( h( 'span', { class: 'ta-strip__k' }, [ fmt( c.t ) + ( c.kind === 'cue' ? ' · Director' : ' · You' ) ] ) );
-			ui.strip.appendChild( h( 'span', { class: 'ta-strip__t' }, [ c.text ] ) );
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__k' }, [ fmt( c.t ) + ( c.kind === 'cue' ? ' · Director' : ' · You' ) + mOf( c ) ] ) );
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__line' }, [ gist( c ), h( 'span', { class: 'ta-strip__t' }, [ c.text ] ) ] ) );
 		} else if ( nx ) {
 			ui.strip.className = 'ta-strip ta-strip--quiet';
-			ui.strip.appendChild( h( 'span', { class: 'ta-strip__k' }, [ 'First note at ' + fmt( nx.t ) ] ) );
-			ui.strip.appendChild( h( 'span', { class: 'ta-strip__t' }, [ nx.text ] ) );
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__k' }, [ 'First note at ' + fmt( nx.t ) + mOf( nx ) ] ) );
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__line' }, [ gist( nx ), h( 'span', { class: 'ta-strip__t' }, [ nx.text ] ) ] ) );
 		} else {
 			ui.strip.className = 'ta-strip ta-strip--quiet';
 			ui.strip.appendChild( h( 'span', { class: 'ta-strip__t' }, [ CUES.length ? '' : 'No notes on this song yet.' ] ) );
@@ -769,8 +776,8 @@
 		if ( D.canEdit && kind !== 'mine' || D.canEdit && ! edit ) {
 			var asMine = false;
 			kindRow = edit ? null : h( 'div', { class: 'ta-seg' }, [
-				h( 'button', { type: 'button', class: 'ta-seg__b is-on', onclick: function ( e ) { asMine = false; seg( e.currentTarget ); partsRow.hidden = false; } }, [ 'For the singers' ] ),
-				S.who ? h( 'button', { type: 'button', class: 'ta-seg__b', onclick: function ( e ) { asMine = true; seg( e.currentTarget ); partsRow.hidden = true; } }, [ 'Just for me' ] ) : null
+				h( 'button', { type: 'button', class: 'ta-seg__b is-on', onclick: function ( e ) { asMine = false; seg( e.currentTarget ); partsRow.hidden = false; extras.hidden = false; } }, [ 'For the singers' ] ),
+				S.who ? h( 'button', { type: 'button', class: 'ta-seg__b', onclick: function ( e ) { asMine = true; seg( e.currentTarget ); partsRow.hidden = true; extras.hidden = true; } }, [ 'Just for me' ] ) : null
 			] );
 			partsRow = h( 'div', { class: 'ta-checks' }, [ h( 'span', {}, [ 'Who sees it:' ] ) ] );
 			VOICE.forEach( function ( p ) {
@@ -781,6 +788,26 @@
 			if ( ! edit ) { kind = function () { return asMine ? 'mine' : 'cue'; }; }
 		}
 		function seg( b ) { b.parentNode.querySelectorAll( '.ta-seg__b' ).forEach( function ( x ) { x.classList.toggle( 'is-on', x === b ); } ); }
+		/* director notes: a measure number and a gist icon */
+		var extras = null, mInput = null, icon = edit && edit.icon || '';
+		if ( partsRow ) {
+			mInput = h( 'input', { type: 'text', class: 'ta-input ta-input--m', maxlength: '12', placeholder: 'e.g. 42', 'aria-label': 'Measure number', autocomplete: 'off' } );
+			if ( edit && edit.m ) { mInput.value = edit.m; }
+			var icName = h( 'span', { class: 'ta-icpick__name' }, [] );
+			var grid = h( 'div', { class: 'ta-icpick', role: 'radiogroup', 'aria-label': 'Icon' } );
+			var paintIc = function () {
+				grid.querySelectorAll( '.ta-icpick__b' ).forEach( function ( b ) { var on = b.getAttribute( 'data-k' ) === icon; b.classList.toggle( 'is-on', on ); b.setAttribute( 'aria-checked', on ? 'true' : 'false' ); } );
+				icName.textContent = icon && ICONS[ icon ] ? ICONS[ icon ].label : 'none — tap one to add';
+			};
+			Object.keys( ICONS ).forEach( function ( k ) {
+				grid.appendChild( h( 'button', { type: 'button', class: 'ta-icpick__b', role: 'radio', 'data-k': k, title: ICONS[ k ].label, 'aria-label': ICONS[ k ].label, html: ICONS[ k ].svg, onclick: function () { icon = icon === k ? '' : k; paintIc(); } } ) );
+			} );
+			paintIc();
+			extras = h( 'div', { class: 'ta-extras' }, [
+				h( 'label', { class: 'ta-extras__m' }, [ h( 'span', {}, [ 'Measure' ] ), h( 'span', { class: 'ta-extras__mm' }, [ 'm.', mInput ] ) ] ),
+				h( 'div', { class: 'ta-extras__ic' }, [ h( 'span', { class: 'ta-extras__k' }, [ 'Icon: ', icName ] ), grid ] )
+			] );
+		}
 		var atRow = h( 'div', { class: 'ta-at' }, [ h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'One second earlier', onclick: function () { nudge( -1 ); } }, [ '−1s' ] ), h( 'span', {}, [ 'at ', when ] ), h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'One second later', onclick: function () { nudge( 1 ); } }, [ '+1s' ] ) ] );
 		var nowBtn = edit ? h( 'button', { type: 'button', class: 'ta-link ta-at__now', onclick: function () { setAt( audio.currentTime ); } }, [ 'Move it to where the music is now' ] ) : null;
 		var delBtn = null, armed = false;
@@ -792,11 +819,11 @@
 		}
 		var body = h( 'div', { class: 'ta-noteform' }, [
 			atRow, nowBtn,
-			kindRow, input, partsRow,
+			kindRow, input, extras, partsRow,
 			h( 'div', { class: 'ta-noteform__go' }, [ h( 'button', { type: 'button', class: 'ta-btn ta-btn--gold', onclick: save }, [ edit ? 'Save changes' : 'Save note' ] ), edit ? delBtn : h( 'span', { class: 'ta-fine' }, [ audio.paused ? '' : 'The music keeps playing.' ] ) ] )
 		] );
 		input.addEventListener( 'keydown', function ( e ) { if ( e.key === 'Enter' && ! e.shiftKey ) { e.preventDefault(); save(); } } );
-		openSheet( edit ? ( kind === 'cue' ? 'Edit director note' : 'Edit your note' ) : D.canEdit ? 'New note' : 'Note to self', body );
+		openSheet( edit ? ( kind === 'cue' ? 'Edit director note' : 'Edit your note' ) : D.canEdit ? 'New note' : 'Note to self', body, extras ? 'ta-sheet--tall' : '' );
 		if ( edit ) { setTimeout( function () { try { input.focus(); input.setSelectionRange( input.value.length, input.value.length ); } catch ( e ) {} }, 60 ); }
 		function save() {
 			var text = input.value.trim(); if ( ! text ) { input.focus(); return; }
@@ -804,7 +831,7 @@
 			var done = edit ? 'Note updated' : 'Note saved at ' + fmt( at );
 			if ( k === 'cue' ) {
 				var parts = Array.prototype.map.call( partsRow.querySelectorAll( 'input:checked' ), function ( c ) { return c.value; } );
-				var req = { cantata: D.cantata.id, song: t.song, t: at, text: text, parts: parts };
+				var req = { cantata: D.cantata.id, song: t.song, t: at, text: text, parts: parts, m: mInput ? mInput.value.trim() : '', icon: icon };
 				if ( edit ) { req.id = edit.id; }
 				api( 'cue', 'POST', req ).then( function ( r ) {
 					if ( r && r.cue ) {
