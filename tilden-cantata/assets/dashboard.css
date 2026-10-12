@@ -71,6 +71,7 @@
 .tcc-db__ios { display: inline-block; vertical-align: -3px; }
 .tcc-db__ios svg { width: 16px; height: 16px; color: #0a7aff; }
 .tcc-db__a2hs-go { display: flex; align-items: center; gap: 16px; margin-top: 10px; font-size: 14px; }
+.tcc-db__a2hs p.tcc-db__a2hs-why { margin-top: 6px; font-size: 13px; color: var(--tcc-ash); }
 
 /* coming up: the schedule page's own entry for the next rehearsal, then the way to the full schedule */
 .tcc-db__reh .tcc-reh { border-top: 1px solid var(--line); }

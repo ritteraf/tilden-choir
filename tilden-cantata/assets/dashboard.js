@@ -252,23 +252,62 @@
 	/* "Put Backstage on your home screen" */
 	var installEvt = null;
 	window.addEventListener( 'beforeinstallprompt', function ( e ) { e.preventDefault(); installEvt = e; } );
-	function homeScreenCard() {
-		var standalone = ( window.matchMedia && window.matchMedia( '(display-mode: standalone)' ).matches ) || window.navigator.standalone;
-		var touch = window.matchMedia && window.matchMedia( '(pointer: coarse)' ).matches;
-		if ( standalone || ! touch || store( 'ls', 'tcc_a2hs' ) ) { return null; }
-		var ios = /iphone|ipad|ipod/i.test( navigator.userAgent ) || ( navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 );
+	/* which phone and browser this is, and the exact taps to put Backstage on the home screen */
+	function a2hsSteps() {
+		var ua = navigator.userAgent || '';
+		var ios = /iphone|ipad|ipod/i.test( ua ) || ( navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 );
+		var android = /android/i.test( ua );
+		var share = '<span class="tcc-db__ios">' + ICON.share + '</span>';
+		var inApp = /FBAN|FBAV|FB_IAB|Instagram|Messenger|Line\//i.test( ua );
+		if ( inApp ) {
+			return { app: true, html: 'You’re in ' + ( /Instagram/i.test( ua ) ? 'Instagram' : 'Facebook' ) + '’s built-in browser, which can’t do this. Tap its <b>⋯</b> menu, choose <b>Open in ' + ( ios ? 'Safari' : 'browser' ) + '</b>, and come back to this page there.' };
+		}
+		if ( ios ) {
+			var where = /iPad/i.test( ua ) || ( navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 ) ? 'at the top' : '';
+			if ( /CriOS/i.test( ua ) ) { return { html: 'In Chrome, tap ' + share + ' <b>Share</b> in the address bar, then <b>Add to Home Screen</b>. It opens like an app — you’ll enter the password and pick your name once more there.' }; }
+			if ( /FxiOS/i.test( ua ) ) { return { html: 'In Firefox, tap the <b>≡</b> menu, then ' + share + ' <b>Share</b>, then <b>Add to Home Screen</b>. It opens like an app — you’ll enter the password and pick your name once more there.' }; }
+			if ( /EdgiOS/i.test( ua ) ) { return { html: 'In Edge, tap ' + share + ' <b>Share</b>, then <b>Add to Home Screen</b>. It opens like an app — you’ll enter the password and pick your name once more there.' }; }
+			return { html: 'In Safari, tap ' + share + ' <b>Share</b>' + ( where ? ' ' + where : '' ) + ', then <b>Add to Home Screen</b>. It opens like an app — you’ll enter the password and pick your name once more there.' };
+		}
+		if ( android ) {
+			if ( /SamsungBrowser/i.test( ua ) ) { return { html: 'Tap the <b>≡</b> menu at the bottom, then <b>Add page to</b>, then <b>Home screen</b>. It opens like an app.' }; }
+			if ( /Firefox/i.test( ua ) ) { return { html: 'Tap the <b>⋮</b> menu, then <b>Install</b> (or <b>Add to Home screen</b>). It opens like an app.' }; }
+			if ( /EdgA/i.test( ua ) ) { return { html: 'Tap the <b>⋯</b> menu at the bottom, then <b>Add to phone</b>. It opens like an app.' }; }
+			return { html: 'Tap the <b>⋮</b> menu at the top right, then <b>Add to Home screen</b> and <b>Install</b> (some phones say <b>Install app</b>). It opens like an app.' };
+		}
+		return { html: 'Use your browser’s menu and look for <b>Add to Home Screen</b> or <b>Install</b>. It opens like an app.' };
+	}
+	function isStandalone() { return ( window.matchMedia && window.matchMedia( '(display-mode: standalone)' ).matches ) || window.navigator.standalone; }
+	function isTouch() { return window.matchMedia && window.matchMedia( '(pointer: coarse)' ).matches; }
+	function homeScreenCard( force ) {
+		if ( isStandalone() || ! isTouch() || ( store( 'ls', 'tcc_a2hs' ) && ! force ) ) { return null; }
+		var steps = a2hsSteps();
 		var card = h( 'section', { class: 'tcc-db__a2hs' }, [
 			h( 'img', { src: W.icon, alt: '', width: '52', height: '52' } ),
 			h( 'div', {}, [
-				h( 'b', {}, [ 'Put Backstage on your home screen' ] ),
-				h( 'p', { html: ios ? 'In Safari, tap <span class="tcc-db__ios">' + ICON.share + '</span> <b>Share</b>, then <b>Add to Home Screen</b>. It opens like an app — you’ll enter the password once more there.' : 'Tap your browser’s <b>⋮</b> menu, then <b>Add to Home screen</b> (or <b>Install app</b>). It opens like an app.' } ),
+				h( 'b', {}, [ steps.app ? 'Open this in your browser first' : 'Put Backstage on your home screen' ] ),
+				h( 'p', { html: steps.html } ),
+				steps.app ? null : h( 'p', { class: 'tcc-db__a2hs-why' }, [ 'You get a Choir icon, and the music gets the whole screen — no address bar.' ] ),
 				h( 'div', { class: 'tcc-db__a2hs-go' }, [
-					! ios && installEvt ? h( 'button', { type: 'button', class: 'tcc-db__btn', onclick: function () { installEvt.prompt(); installEvt.userChoice.then( function () { store( 'ls', 'tcc_a2hs', '1' ); card.remove(); } ); } }, [ 'Add it now' ] ) : null,
-					h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { store( 'ls', 'tcc_a2hs', '1' ); card.remove(); } }, [ ios || ! installEvt ? 'Got it' : 'Not now' ] )
+					installEvt && ! steps.app ? h( 'button', { type: 'button', class: 'tcc-db__btn', onclick: function () { installEvt.prompt(); installEvt.userChoice.then( function () { store( 'ls', 'tcc_a2hs', '1' ); card.remove(); } ); } }, [ 'Add it now' ] ) : null,
+					h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { store( 'ls', 'tcc_a2hs', '1' ); card.remove(); paintA2hsLink(); } }, [ 'Got it' ] )
 				] )
 			] )
 		] );
 		return card;
+	}
+	/* once the card is dismissed, a quiet way to bring it back */
+	function a2hsLink() {
+		if ( isStandalone() || ! isTouch() || ! store( 'ls', 'tcc_a2hs' ) ) { return null; }
+		return h( 'button', { type: 'button', class: 'tcc-dash__link tcc-db__a2hs-again', onclick: function () {
+			var c = homeScreenCard( true ); if ( ! c ) { return; }
+			var head = root.querySelector( '.tcc-db__hello' ); if ( head ) { head.after( c ); } else { root.prepend( c ); }
+			c.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+		} }, [ 'Add Backstage to your home screen' ] );
+	}
+	function paintA2hsLink() {
+		var foot = root.querySelector( '.tcc-db__foot' );
+		if ( foot && ! foot.querySelector( '.tcc-db__a2hs-again' ) ) { var l = a2hsLink(); if ( l ) { foot.appendChild( document.createTextNode( ' · ' ) ); foot.appendChild( l ); } }
 	}
 
 	/* the person's own dashboard */
@@ -310,6 +349,7 @@
 
 		nodes.push( h( 'p', { class: 'tcc-db__foot' }, [ 'Signed in as ' + who.name + '. ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ), W.canEdit && W.admin ? ' · ' : '', W.canEdit && W.admin ? h( 'a', { href: W.admin }, [ 'Director: what the choir is practicing' ] ) : null ] ) );
 		show( nodes );
+		paintA2hsLink();
 	}
 
 	/* ---------- go ---------- */
