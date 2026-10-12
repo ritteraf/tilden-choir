@@ -165,7 +165,7 @@
 			nodes.push( h( 'section', { class: 'tcc-dash__choose tcc-db__welcome' }, [
 				h( 'span', { class: 'tcc-dash__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ),
 				h( 'h2', { class: 'tcc-dash__h' }, [ 'Come on in — we’re glad you’re here.' ] ),
-				h( 'p', { class: 'tcc-dash__lede' }, [ 'Someone in the choir shared this page with you, so consider yourself invited. This is Backstage: where the Tilden Community Choir gets ready for ', h( 'i', {}, [ W.cantata.title ] ), when ? ', on ' + when + '.' : '.', ' Have a look around — the schedule, the music we’re learning, and the tracks our singers practice with.' ] ),
+				h( 'p', { class: 'tcc-dash__lede' }, [ 'Someone in the choir shared the password with you, so consider yourself invited. This is Backstage: where the Tilden Community Choir gets ready for ', h( 'i', {}, [ W.cantata.title ] ), when ? ', on ' + when + '.' : '.', ' Have a look around — the schedule, the music we’re learning, and the tracks our singers practice with.' ] ),
 				h( 'div', { class: 'tcc-db__invite' }, [
 					h( 'p', { class: 'tcc-db__invite-k' }, [ 'Thinking about singing with us?' ] ),
 					h( 'p', { class: 'tcc-db__invite-big' }, [ 'There’s only one requirement: you must love to sing.' ] ),
