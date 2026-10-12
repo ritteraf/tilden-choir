@@ -380,8 +380,17 @@
 	function manualPage( d ) {
 		var r = scoreRange(); if ( ! r ) { return; }
 		var base = M.manual !== null ? M.manual : pageAt( audio.currentTime );
+		if ( spread() ) { base = leftOf( base ); d *= 2; } // a whole spread at a time, like turning a book's page
 		M.manual = Math.max( 1, Math.min( SC.pages, base + d ) );
 		tickMusic( true );
+	}
+	/* the book's layout: even pages on the left, odd on the right (page 1 stands alone on the right) */
+	function leftOf( p ) { return p % 2 === 0 ? p : p - 1; }
+	function spreadOf( p ) {
+		var l = leftOf( p );
+		if ( l < 1 ) { return [ p ]; }
+		var r = Math.min( M.pdf.numPages, l + 1 );
+		return r === l ? [ l ] : [ l, r ];
 	}
 	/* two pages side by side only when each would still be a good size */
 	function spread() {
@@ -397,23 +406,35 @@
 		if ( M.manual !== null && M.manual === live ) { M.manual = null; }
 		var p = M.manual !== null ? M.manual : live;
 		var two = spread();
-		var pages = two ? [ p, Math.min( M.pdf.numPages, p + 1 ) ] : [ p ];
-		if ( two && pages[ 1 ] === pages[ 0 ] ) { pages = [ p ]; }
-		/* the little line above the page: where we are and when it turns */
-		var turns = turnsFor(), nextT = null;
-		for ( var i = 0; i < turns.length; i++ ) { if ( turns[ i ] > now ) { nextT = turns[ i ]; break; } }
-		var info = 'p. ' + printedNo( p ) + ( two && pages[ 1 ] ? '–' + printedNo( pages[ 1 ] ) : '' );
+		/* two pages: show the open book, and only flip when the music leaves the right-hand page */
+		var pages = two ? spreadOf( p ) : [ p ];
+		/* the line in the top bar: where we are and when the view next changes */
+		var turns = turnsFor(), nextT = null, key0 = pages.join( ',' );
+		for ( var i = 0; i < turns.length; i++ ) {
+			if ( turns[ i ] <= now ) { continue; }
+			var np = pageAt( turns[ i ] );
+			if ( ( two ? spreadOf( np ).join( ',' ) : String( np ) ) !== key0 ) { nextT = turns[ i ]; break; }
+		}
+		var info = 'p. ' + printedNo( pages[ 0 ] ) + ( pages.length > 1 ? '–' + printedNo( pages[ 1 ] ) : '' );
 		if ( M.rec ) { info += ' · recording turns'; }
 		else if ( M.manual !== null ) { info += ' · looking ahead'; }
-		else if ( nextT !== null && pageAt( nextT ) !== p ) { info += ' · turns in ' + fmt( Math.ceil( nextT - now ) ); }
+		else if ( nextT !== null ) { info += ' · turns in ' + fmt( Math.ceil( nextT - now ) ); }
 		else if ( ! turns.length && r.b > r.a ) { info += D.canEdit ? ' · page turns not set yet' : ''; }
 		ui.eyebrow.textContent = info;
 		ui.pageNow.hidden = M.manual === null;
+		M.cur = p;
+		markCurrent2();
 		var key = pages.join( ',' ) + '|' + ui.pages.clientWidth + 'x' + ui.pages.clientHeight + '|' + M.zoom;
 		if ( key === M.shown ) { return; }
 		var turned = M.shown && M.shown.split( '|' )[ 0 ] !== pages.join( ',' );
 		M.shown = key;
 		drawPages( pages, turned );
+	}
+	/* a thin gold line over the page being sung, only when two are showing */
+	function markCurrent2() {
+		if ( ! ui.pagesIn ) { return; }
+		var two = ui.pagesIn.classList.contains( 'is-spread' );
+		ui.pagesIn.querySelectorAll( '.ta-page' ).forEach( function ( c ) { c.classList.toggle( 'is-current', two && +c.getAttribute( 'data-page' ) === M.cur ); } );
 	}
 	function drawPages( pages, turned ) {
 		var W = ui.pages.clientWidth - 16, H = ui.pages.clientHeight - 16;
@@ -429,12 +450,15 @@
 				var c = document.createElement( 'canvas' );
 				c.width = Math.floor( v.width ); c.height = Math.floor( v.height );
 				c.style.width = Math.floor( v.width / dpr ) + 'px'; c.style.height = Math.floor( v.height / dpr ) + 'px';
-				c.className = 'ta-page' + ( k === 0 ? ' is-current' : '' );
+				c.className = 'ta-page';
+				c.setAttribute( 'data-page', pages[ k ] );
 				page.render( { canvasContext: c.getContext( '2d' ), viewport: v } );
 				frag.appendChild( c );
 			} );
 			ui.pagesIn.innerHTML = '';
+			ui.pagesIn.classList.toggle( 'is-spread', pages.length > 1 );
 			ui.pagesIn.appendChild( frag );
+			markCurrent2();
 			ui.pagesIn.classList.toggle( 'is-zoomed', M.zoom > 1 );
 			ui.pages.classList.toggle( 'is-zoomed', M.zoom > 1 );
 			if ( turned && ! reduceMotion ) { ui.pagesIn.classList.remove( 'is-turn' ); void ui.pagesIn.offsetWidth; ui.pagesIn.classList.add( 'is-turn' ); }

@@ -240,7 +240,8 @@ body.tcc-app-on { overflow: hidden; }
 .ta-pages__in.is-zoomed { margin: 0; }
 .ta-pages.is-zoomed { touch-action: pan-x pan-y; }
 .ta-page { display: block; background: #fff; border-radius: 2px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5); }
-.ta-page + .ta-page { opacity: 0.94; }
+.ta-pages__in.is-spread .ta-page { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 -5px 0 -1px transparent; transition: box-shadow 0.25s; }
+.ta-pages__in.is-spread .ta-page.is-current { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 -5px 0 0 var(--gold); }
 .ta-pages__in.is-turn { animation: ta-turn 0.28s ease-out; }
 @keyframes ta-turn { from { opacity: 0.35; transform: translateX(14px); } to { opacity: 1; transform: none; } }
 .ta-mark--turn { top: 2px; height: 6px; background: rgba(255, 255, 255, 0.55); }
