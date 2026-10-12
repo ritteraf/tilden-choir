@@ -778,8 +778,8 @@ function tcc_render_tracks_page() {
 		<h2 style="margin-top:32px">What the choir is practicing
 			<form method="get" style="display:inline;margin-left:12px;font-weight:normal"><input type="hidden" name="page" value="tcc-tracks"><select name="cantata" onchange="this.form.submit()"><?php foreach ( $cantatas as $c ) : ?><option value="<?php echo $c->ID; ?>"<?php selected( $view, $c->ID ); ?>><?php echo esc_html( tcc_year( $c->ID ) . ' · ' . $c->post_title ); ?></option><?php endforeach; ?></select></form>
 		</h2>
-		<p><strong><?php echo $active; ?></strong> of <?php echo $people_total; ?> people on this season's roster have practiced on the site. Flags are what singers set themselves: <em>help</em> means "I need help with this".</p>
-		<table class="widefat striped" style="max-width:1100px"><thead><tr><th>Song</th><th>Plays</th><th>People</th><th style="color:#9c2b1a">Need help</th><th>Working on it</th><th>Got it</th><th>By part</th></tr></thead><tbody>
+		<p><strong><?php echo $active; ?></strong> of <?php echo $people_total; ?> people on this season's roster have practiced on the site. Marks are what singers set themselves; <em>tricky</em> means they marked the song “Tricky spots”. The Director page in Backstage has the full report.</p>
+		<table class="widefat striped" style="max-width:1100px"><thead><tr><th>Song</th><th>Plays</th><th>People</th><th style="color:#9c2b1a">Tricky spots</th><th>Getting there</th><th>Feeling good</th><th>By part</th></tr></thead><tbody>
 		<?php foreach ( $songs as $i => $title ) :
 			$plays = 0; $people = 0; $help = 0; $working = 0; $ok = 0; $bits = [];
 			foreach ( $by[ $i ] ?? [] as $part => $r ) { $plays += $r['plays']; $people = max( $people, (int) $r['people'] ); $help += $r['help']; $working += $r['working']; $ok += $r['ok']; if ( $r['plays'] ) { $bits[] = esc_html( trim( preg_replace( '/\s*\(.*$/', '', $parts[ $part ] ?? $part ) ) ) . ' ' . (int) $r['plays'] . ( $r['help'] ? ' <span style="color:#9c2b1a">(' . (int) $r['help'] . ' help)</span>' : '' ); } } ?>
@@ -787,7 +787,7 @@ function tcc_render_tracks_page() {
 		<?php endforeach; ?>
 		</tbody></table>
 		<?php if ( $helpers ) : ?>
-			<p class="description" style="margin-top:8px">Asking for help: <?php
+			<p class="description" style="margin-top:8px">Marked tricky: <?php
 				$names = [];
 				foreach ( $helpers as $h ) { $names[ $h['person_id'] ][] = ( $songs[ $h['song'] ] ?? 'Song ' . ( $h['song'] + 1 ) ); }
 				$lines = [];

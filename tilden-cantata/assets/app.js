@@ -48,7 +48,7 @@
 		right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>'
 	};
 	/* the gentle states — the only "progress" a singer ever sees */
-	var STATE = { none: 'Not started', some: 'Getting there', good: 'Feeling good', help: 'Asked for help' };
+	var STATE = { none: 'Not started', some: 'Getting there', good: 'Feeling good', help: 'Tricky spots' };
 	function ring( st ) {
 		if ( st === 'good' ) { return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="currentColor"/></svg>'; }
 		if ( st === 'some' ) { return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5a7.5 7.5 0 0 1 0 15z" fill="currentColor"/></svg>'; }
@@ -265,7 +265,7 @@
 		paintMarks(); tickStream( true );
 	}
 	/* ---------- feedback: how is this song coming? (a tap, never a form) ---------- */
-	var FEEL = [ [ 'good', 'ok', 'Feeling good', 'I know my part' ], [ 'some', 'working', 'Getting there', 'Still learning it' ], [ 'help', 'help', 'I’d like help', 'The director will see your name' ] ];
+	var FEEL = [ [ 'good', 'ok', 'Feeling good', 'I know my part' ], [ 'some', 'working', 'Getting there', 'Still learning it' ], [ 'help', 'help', 'Tricky spots', 'Parts of this one are hard for me' ] ];
 	function canFeel() { var t = current(); return !! ( t && S.list && S.list.now && t.song >= 0 ); }
 	function paintFeelBtn() {
 		if ( ! ui.viewBtn ) { return; }
@@ -285,7 +285,7 @@
 		} );
 		return box;
 	}
-	var FEEL_FINE = '“Feeling good” and “Getting there” are counted by part, without names. If you ask for help, the director sees your name so they can help.';
+	var FEEL_FINE = 'Your marks help the director decide what to work on at rehearsal.';
 	function openFeel() {
 		var t = current(); if ( ! canFeel() ) { return; }
 		if ( ! S.who ) { signIn(); return; }
@@ -328,7 +328,7 @@
 	}
 	function feelRow( song, st ) {
 		var row = h( 'div', { class: 'ta-feel', role: 'group', 'aria-label': 'How is this song going?' } );
-		[ [ 'some', 'working', 'Getting there' ], [ 'good', 'ok', 'Feeling good' ], [ 'help', 'help', 'I’d like help' ] ].forEach( function ( o ) {
+		[ [ 'some', 'working', 'Getting there' ], [ 'good', 'ok', 'Feeling good' ], [ 'help', 'help', 'Tricky spots' ] ].forEach( function ( o ) {
 			var on = st === o[ 0 ];
 			row.appendChild( h( 'button', { type: 'button', class: 'ta-feel__b ta-feel__b--' + o[ 0 ] + ( on ? ' is-on' : '' ), 'aria-pressed': on ? 'true' : 'false', onclick: function () { setFlag( song, on ? '' : o[ 1 ] ); } }, [ h( 'span', { html: ring( o[ 0 ] ) } ), o[ 2 ] ] ) );
 		} );
@@ -342,8 +342,7 @@
 		paintSide(); paintFeelBtn();
 		if ( flag ) { ls( 'tcc_ask_' + D.cantata.id + '_' + song, today() ); } // already told us today: don't ask again when it ends
 		api( 'flag', 'POST', { cantata: D.cantata.id, song: song, part: p, flag: flag } );
-		if ( flag === 'help' ) { toast( 'Noted — the director will see you asked for help.' ); }
-		else if ( flag ) { toast( 'Thanks — marked “' + STATE[ flag === 'ok' ? 'good' : 'some' ] + '”.' ); }
+		if ( flag ) { toast( 'Got it — that helps plan rehearsal.' ); }
 	}
 	function nextInList() { if ( ! S.list ) { return null; } return S.list.tracks[ S.idx + 1 ] || null; }
 
@@ -772,7 +771,7 @@
 			var PL = LISTS[ k ];
 			wrap.appendChild( h( 'details', { class: 'ta-year', open: S.list && S.list.key === k ? true : null }, [ h( 'summary', {}, [ PL.cantata.year + ' · ' + PL.cantata.title ] ), trackRows( PL, false ) ] ) );
 		} );
-		if ( inSheet ) { wrap.appendChild( h( 'p', { class: 'ta-fine' }, [ S.who ? 'The circles are your marks — tap Feedback while a song plays. They help the director plan rehearsals: “I’d like help” shows your name; the others are counted by part, without names.' : '' ] ) ); }
+		if ( inSheet ) { wrap.appendChild( h( 'p', { class: 'ta-fine' }, [ S.who ? 'The circles are your marks — tap Feedback while a song plays. They help the director decide what to work on at rehearsal.' : '' ] ) ); }
 		return wrap;
 	}
 	function trackRows( L, now ) {

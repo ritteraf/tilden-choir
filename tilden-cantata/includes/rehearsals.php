@@ -203,7 +203,7 @@ function tcc_render_rehearsal_box( WP_Post $post ) {
 					foreach ( $songs as $i => $title ) {
 						$n = $i + 1;
 						printf( '<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><label style="flex:1 1 auto"><input type="checkbox" name="%s[]" value="%d"%s> %d. %s%s</label><label title="Focus on this one" style="color:#8a6418;font-size:12px;white-space:nowrap"><input type="checkbox" name="_tcc_focus[]" value="%d"%s> ★ focus</label></div>', esc_attr( $name ), $n, checked( in_array( $n, $picked, true ), true, false ), $n, esc_html( $title ),
-							! empty( $help[ $i ] ) ? ' <span style="color:#9c2b1a;font-size:12px">· ' . (int) $help[ $i ] . ' asked for help</span>' : '', $n, checked( in_array( $n, $focus, true ), true, false ) );
+							! empty( $help[ $i ] ) ? ' <span style="color:#9c2b1a;font-size:12px">· ' . (int) $help[ $i ] . ' marked tricky</span>' : '', $n, checked( in_array( $n, $focus, true ), true, false ) );
 					}
 					echo '</div>';
 				}

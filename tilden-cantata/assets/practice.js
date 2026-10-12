@@ -43,7 +43,7 @@
 		check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
 		x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
 	};
-	var FLAGS = { '': 'How’s it going?', ok: 'Got it', working: 'Working on it', help: 'I need help' };
+	var FLAGS = { '': 'How’s it going?', ok: 'Got it', working: 'Working on it', help: 'Tricky spots' };
 
 	/* ---------- API ---------- */
 	function api( path, method, body, token, beacon ) {
@@ -263,7 +263,7 @@
 			ui.who.appendChild( h( 'div', { class: 'tcc-pr__who-line' }, [ h( 'span', { html: SVG.people } ), 'Practicing as ', h( 'b', {}, [ S.who.name ] ), h( 'button', { type: 'button', class: 'tcc-pr__link', onclick: openPicker }, [ 'not you?' ] ) ] ) );
 		} else if ( ! localStorage.getItem( 'tcc_who_skip' ) ) {
 			ui.who.appendChild( h( 'div', { class: 'tcc-pr__who-card' }, [
-				h( 'div', {}, [ h( 'b', {}, [ 'Who’s practicing?' ] ), h( 'p', {}, [ D.signin ? 'Sign in once on this device — it puts you on this year’s list, replaces the paper sign-up sheet, and lets the site keep track of what you’ve practiced. You can still play everything without it.' : 'Choose your name once and this device will remember what you’ve practiced and let you mark songs you want help with. You can still play everything without it.' ] ) ] ),
+				h( 'div', {}, [ h( 'b', {}, [ 'Who’s practicing?' ] ), h( 'p', {}, [ D.signin ? 'Sign in once on this device — it puts you on this year’s list, replaces the paper sign-up sheet, and lets the site keep track of what you’ve practiced. You can still play everything without it.' : 'Choose your name once and this device will remember what you’ve practiced and let you mark songs that are tricky for you. You can still play everything without it.' ] ) ] ),
 				h( 'div', { class: 'tcc-pr__who-actions' }, [
 					h( 'button', { type: 'button', class: 'tcc-pr__btn tcc-pr__btn--primary', onclick: openPicker }, [ D.signin ? 'Sign in' : 'Choose my name' ] ),
 					h( 'button', { type: 'button', class: 'tcc-pr__link', onclick: function () { try { localStorage.setItem( 'tcc_who_skip', '1' ); } catch ( e ) {} renderWho(); } }, [ 'Not now' ] )

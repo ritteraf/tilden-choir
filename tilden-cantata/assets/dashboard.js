@@ -237,7 +237,7 @@
 		W.songs.forEach( function ( title, i ) {
 			var ok = have[ i ], st = ok ? markOf( i ) : '', pl = ok ? playsOf( i ) : null, inNext = nextSongs.indexOf( i ) !== -1, isF = focus.indexOf( i ) !== -1;
 			var inner = [
-				h( 'span', { class: 'tcc-db__tile-top' }, [ h( 'span', { class: 'tcc-db__tile-n' }, [ String( i + 1 ) ] ), st ? h( 'span', { class: 'tcc-db__ring tcc-db__ring--' + st, title: { none: 'Not marked yet', some: 'You marked: getting there', good: 'You marked: feeling good', help: 'You asked for help' }[ st ], html: ring( st ) } ) : null ] ),
+				h( 'span', { class: 'tcc-db__tile-top' }, [ h( 'span', { class: 'tcc-db__tile-n' }, [ String( i + 1 ) ] ), st ? h( 'span', { class: 'tcc-db__ring tcc-db__ring--' + st, title: { none: 'Not marked yet', some: 'You marked: getting there', good: 'You marked: feeling good', help: 'You marked: tricky spots' }[ st ], html: ring( st ) } ) : null ] ),
 				h( 'span', { class: 'tcc-db__tile-t' }, [ title ] ),
 				( inNext || isF ) ? h( 'span', { class: 'tcc-db__tile-tags' }, [ inNext ? h( 'span', { class: 'tcc-db__tile-tag' }, [ tag ] ) : null, isF ? h( 'span', { class: 'tcc-db__tile-star', title: 'The director says: focus on this one' }, [ '★ Focus' ] ) : null ] ) : null,
 				ok ? h( 'span', { class: 'tcc-db__tile-plays' + ( pl.n ? '' : ' is-none' ) }, [ pl.n ? 'Played ' + pl.n + '×' + ( pl.last ? ' · ' + whenShort( pl.last ) : '' ) : 'Not played yet' ] ) : h( 'span', { class: 'tcc-db__tile-plays is-none' }, [ 'No track for your part' ] )
@@ -262,7 +262,7 @@
 			h( 'p', { class: 'tcc-db__legend' }, [
 				h( 'span', { class: 'tcc-db__ring tcc-db__ring--some', html: ring( 'some' ) } ), 'Getting there',
 				h( 'span', { class: 'tcc-db__ring tcc-db__ring--good', html: ring( 'good' ) } ), 'Feeling good',
-				h( 'span', { class: 'tcc-db__ring tcc-db__ring--help', html: ring( 'help' ) } ), 'Asked for help',
+				h( 'span', { class: 'tcc-db__ring tcc-db__ring--help', html: ring( 'help' ) } ), 'Tricky spots',
 				h( 'span', { class: 'tcc-db__legend-note' }, [ 'Your own marks — set them on a song in the practice app. Only you see this.' ] )
 			] )
 		] );

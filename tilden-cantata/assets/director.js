@@ -32,7 +32,7 @@
 	function feelDots( f ) {
 		f = f || {};
 		var out = h( 'span', { class: 'tcc-dir__feel' } );
-		[ [ 'ok', 'good', 'Feeling good' ], [ 'working', 'some', 'Getting there' ], [ 'help', 'help', 'Asked for help' ] ].forEach( function ( o ) {
+		[ [ 'ok', 'good', 'Feeling good' ], [ 'working', 'some', 'Getting there' ], [ 'help', 'help', 'Tricky spots' ] ].forEach( function ( o ) {
 			if ( f[ o[ 0 ] ] ) { out.appendChild( h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--' + o[ 1 ], title: f[ o[ 0 ] ] + ' · ' + o[ 2 ] }, [ String( f[ o[ 0 ] ] ) ] ) ); }
 		} );
 		return out.children.length ? out : null;
@@ -69,7 +69,7 @@
 		root.appendChild( h( 'div', { class: 'tcc-dir__tiles' }, [
 			tile( R.active + ( D.singers ? ' of ' + D.singers : '' ), 'singers practiced' ),
 			tile( mins( R.minutes ), 'of listening' ),
-			tile( String( openHelp ), openHelp === 1 ? 'request for help' : 'requests for help', openHelp ? 'is-alert' : '' ),
+			tile( String( openHelp ), openHelp === 1 ? 'song marked tricky' : 'songs marked tricky', openHelp ? 'is-alert' : '' ),
 			tile( String( silent.length ), silent.length === 1 ? 'song nobody practiced' : 'songs nobody practiced', silent.length ? 'is-warn' : '' )
 		] ) );
 
@@ -107,7 +107,7 @@
 			] );
 			help.appendChild( li );
 		} );
-		root.appendChild( sec( 'Asking for help', R.help.length ? 'Singers who marked a song “I’d like help”. Tick one off once you’ve dealt with it; if they ask again, it comes back.' : null, [ R.help.length ? help : h( 'p', { class: 'tcc-dir__none' }, [ 'Nobody has asked for help.' ] ) ] ) );
+		root.appendChild( sec( 'Tricky spots — who to check in with', R.help.length ? 'Singers who marked a song “Tricky spots”. Tick one off once you’ve worked on it with them; if they mark it again later, it comes back.' : null, [ R.help.length ? help : h( 'p', { class: 'tcc-dir__none' }, [ 'Nobody has marked a song tricky.' ] ) ] ) );
 
 		/* song by part */
 		var grid = h( 'div', { class: 'tcc-dir__grid', role: 'table' } );
@@ -117,7 +117,7 @@
 			grid.appendChild( h( 'div', { class: 'tcc-dir__grid-row', role: 'row' }, [ h( 'span', { class: 'tcc-dir__grid-t', role: 'rowheader' }, [ h( 'b', {}, [ ( i + 1 ) + '. ' + title ] ), c.otherMins ? h( 'small', {}, [ mins( c.otherMins ) + ' with the accompaniment' ] ) : null ] ) ].concat( SECT.map( function ( s ) { return h( 'span', { role: 'cell' }, [ cell( c[ s.id ], s.size ) ] ); } ) ) ) );
 		} );
 		root.appendChild( sec( 'Every song, every section', 'How many in each section practiced the song (of those signed up for that part), and how they marked it: ', [
-			h( 'p', { class: 'tcc-dir__legend' }, [ h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--good' }, [ '3' ] ), ' feeling good ', h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--some' }, [ '2' ] ), ' getting there ', h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--help' }, [ '1' ] ), ' asked for help. Marks are as they stood at the end of the week.' ] ),
+			h( 'p', { class: 'tcc-dir__legend' }, [ h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--good' }, [ '3' ] ), ' feeling good ', h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--some' }, [ '2' ] ), ' getting there ', h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--help' }, [ '1' ] ), ' tricky spots. Marks are as they stood at the end of the week.' ] ),
 			h( 'div', { class: 'tcc-dir__scroll' }, [ grid ] )
 		] ) );
 
