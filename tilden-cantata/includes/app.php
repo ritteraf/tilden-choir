@@ -85,7 +85,7 @@ add_action( 'wp', function () {
 		$cfg  = [
 			'hub'     => $hub ? wp_make_link_relative( get_permalink( $hub ) ) : '/backstage/',
 			'isHub'   => $hub && get_queried_object_id() === $hub,
-			'title'   => wp_strip_all_tags( get_the_title( get_queried_object_id() ) ),
+			'title'   => wp_strip_all_tags( get_post_field( 'post_title', get_queried_object_id() ) ),
 			'noBar'   => has_block( 'tilden/practice', get_queried_object_id() ),
 			'members' => tcc_members_paths(),
 		];
