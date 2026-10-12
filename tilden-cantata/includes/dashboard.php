@@ -153,7 +153,7 @@ function tcc_world( int $cantata_id ): array {
 		$voice[ $k ] = [ 'label' => trim( preg_replace( '/\s*\(.*$/', '', $l ) ), 'tracks' => explode( '-', $k ) ];
 	}
 	return [
-		'cantata'    => [ 'id' => $cantata_id, 'year' => $e['year'], 'title' => $e['title'], 'perf' => $e['perf_long'], 'perfTime' => $e['perf_time'], 'days' => $e['days'], 'cover' => $e['cover'] ? tcc_cover_img( $e, 'tcc-cover', 'medium' ) : '', 'tint' => $e['tint'], 'wash' => $e['wash'] ],
+		'cantata'    => [ 'id' => $cantata_id, 'year' => $e['year'], 'title' => $e['title'], 'perf' => $e['perf_long'], 'perfTime' => $e['perf_time'], 'days' => $e['days'], 'perfDate' => $e['perf'] ? $e['perf']->format( 'Y-m-d' ) : '', 'perfDay' => $e['perf'] ? [ $e['perf']->format( 'D' ), $e['perf']->format( 'j' ), $e['perf']->format( 'M' ) ] : null, 'cover' => $e['cover'] ? tcc_cover_img( $e, 'tcc-cover', 'medium' ) : '', 'tint' => $e['tint'], 'wash' => $e['wash'] ],
 		'rehearsals' => tcc_rehearsals_data( $cantata_id ),
 		'songs'      => $songs,
 		'parts'      => $parts,

@@ -157,49 +157,67 @@
 
 	/* ---------- pieces ---------- */
 
-	/* Coming up: the next date opened up with everything about it, then the rest as plain rows */
+	/* Coming up: every date-ish thing in one list. The next rehearsal is opened up; after it, quiet rows for
+	   the next date that's required for you (when that's a different one) and the performance with its countdown;
+	   the last row goes to the full schedule. */
 	function comingUp( list, personal, skipped ) {
-		if ( ! list.length ) {
-			return h( 'section', { class: 'tcc-db__sec' }, [ eyebrow( 'Coming up' ), h( 'p', { class: 'tcc-db__skip' }, [ 'Nothing on the calendar for you right now.' ] ) ] );
-		}
+		var rows = h( 'ol', { class: 'tcc-db__cal' } );
 		var r = list[ 0 ];
-		var req = personal ? requiredOfMe( r ) : !! ( r.must && r.must.length );
-		var rel = relDay( r.date );
-		var tags = [];
-		if ( rel ) { tags.push( h( 'span', { class: 'tcc-db__tag tcc-db__tag--when' }, [ rel ] ) ); }
-		if ( r.type === 'performance' ) { tags.push( h( 'span', { class: 'tcc-db__tag' }, [ 'Performance' ] ) ); }
-		if ( req ) { tags.push( h( 'span', { class: 'tcc-db__tag tcc-db__tag--req' }, [ personal ? 'Required for you' : 'Attendance required' ] ) ); }
-		if ( r.full ) { tags.push( h( 'span', { class: 'tcc-db__tag tcc-db__tag--full' }, [ 'Full run-through' ] ) ); }
-		var covers = null;
-		if ( ! r.full && r.songs.length ) {
-			var fc = r.focus.filter( function ( i ) { return r.songs.indexOf( i ) !== -1; } ).length;
-			covers = personal && isSinger() && myTrackParts().length
-				? h( 'a', { class: 'tcc-db__covers', href: '#tcc-songs' }, [ 'Working on ' + r.songs.length + ( r.songs.length === 1 ? ' song' : ' songs' ) + ( fc ? ', ' + fc + ' starred' : '' ) + ' — tagged ' + r.dow + ' in Your songs' ] )
-				: h( 'p', { class: 'tcc-db__covers' }, [ 'Working on ' + r.songs.map( function ( i ) { return ( i + 1 ) + ( r.focus.indexOf( i ) !== -1 ? '★' : '' ); } ).join( ', ' ) ] );
+		if ( r ) {
+			var req = personal ? requiredOfMe( r ) : !! ( r.must && r.must.length );
+			var bits = [];
+			var rel = relDay( r.date ); if ( rel ) { bits.push( rel ); }
+			if ( req ) { bits.push( personal ? 'Required for you' : 'Attendance required' ); }
+			if ( r.full ) { bits.push( 'Full run-through' ); }
+			var covers = null;
+			if ( ! r.full && r.songs.length ) {
+				var fc = r.focus.filter( function ( i ) { return r.songs.indexOf( i ) !== -1; } ).length;
+				covers = personal && isSinger() && myTrackParts().length
+					? h( 'a', { class: 'tcc-db__covers', href: '#tcc-songs' }, [ r.songs.length + ( r.songs.length === 1 ? ' song' : ' songs' ) + ( fc ? ', ' + fc + ' starred' : '' ) + ' — tagged ' + r.dow + ' in Your songs' ] )
+					: h( 'p', { class: 'tcc-db__covers' }, [ 'Songs ' + r.songs.map( function ( i ) { return ( i + 1 ) + ( r.focus.indexOf( i ) !== -1 ? '★' : '' ); } ).join( ', ' ) ] );
+			}
+			var after = r.after.filter( function ( a ) { return ! personal || forMe( a.who ); } );
+			rows.appendChild( h( 'li', { class: 'tcc-db__cal-next' }, [
+				h( 'span', { class: 'tcc-db__cal-d' }, [ h( 'span', {}, [ r.mon ] ), h( 'b', {}, [ r.day ] ), h( 'span', {}, [ r.dow ] ) ] ),
+				h( 'div', { class: 'tcc-db__cal-body' }, [
+					h( 'h3', { class: 'tcc-db__cal-t' }, [ r.title ] ),
+					h( 'p', { class: 'tcc-db__cal-when' }, [ r.long + ( r.time ? ' · ' + r.time : '' ) ] ),
+					bits.length ? h( 'p', { class: 'tcc-db__cal-bits' }, [ bits.join( ' · ' ) ] ) : null,
+					personal ? null : h( 'div', { class: 'tcc-db__whofor' }, [ 'For ', pills( r.who ) ] ),
+					covers,
+					after.length ? h( 'ul', { class: 'tcc-db__after' }, after.map( function ( a ) { return h( 'li', {}, [ h( 'span', { class: 'tcc-db__after-i', html: W.icons.then } ), h( 'span', {}, [ a.time ? a.time + ' · ' : 'Afterward · ', a.what ] ), personal ? null : pills( a.who ) ] ); } ) ) : null,
+					r.note ? h( 'blockquote', { class: 'tcc-db__note' }, [ h( 'span', { class: 'tcc-db__note-k' }, [ 'From the director' ] ), h( 'div', { html: r.note } ) ] ) : null
+				] )
+			] ) );
 		}
-		var after = r.after.filter( function ( a ) { return ! personal || forMe( a.who ); } );
-		var first = h( 'article', { class: 'tcc-db__evt' + ( req ? ' is-req' : '' ) }, [
-			h( 'div', { class: 'tcc-db__day' }, [ h( 'span', {}, [ r.mon ] ), h( 'b', {}, [ r.day ] ), h( 'span', {}, [ r.dow ] ) ] ),
-			h( 'div', { class: 'tcc-db__evt-body' }, [
-				h( 'h3', { class: 'tcc-db__evt-t' }, [ r.title ] ),
-				h( 'p', { class: 'tcc-db__evt-when' }, [ r.long + ( r.time ? ' · ' + r.time : '' ) ] ),
-				tags.length ? h( 'div', { class: 'tcc-db__tags' }, tags ) : null,
-				personal ? null : h( 'div', { class: 'tcc-db__whofor' }, [ 'For ', pills( r.who ) ] ),
-				covers,
-				after.length ? h( 'ul', { class: 'tcc-db__after' }, after.map( function ( a ) { return h( 'li', {}, [ h( 'span', { class: 'tcc-db__after-i', html: W.icons.then } ), h( 'span', {}, [ a.time ? h( 'b', {}, [ a.time + ' ' ] ) : 'Afterward: ', a.what ] ), personal ? null : pills( a.who ) ] ); } ) ) : null,
-				r.note ? h( 'blockquote', { class: 'tcc-db__note' }, [ h( 'span', { class: 'tcc-db__note-k' }, [ 'From the director' ] ), h( 'div', { html: r.note } ) ] ) : null
-			] )
-		] );
-		/* only the next date lives here; the one exception is a later date that's required for you */
-		var reqLater = null;
-		if ( ! req ) { list.slice( 1 ).some( function ( x ) { if ( personal ? requiredOfMe( x ) : ( x.must && x.must.length ) ) { reqLater = x; return true; } return false; } ); }
-		return h( 'section', { class: 'tcc-db__sec' }, [
-			eyebrow( 'Coming up' ),
-			skipped || null,
-			first,
-			reqLater ? h( 'p', { class: 'tcc-db__reqnext' }, [ h( 'b', {}, [ 'Next required: ' ] ), reqLater.dow + ' ' + reqLater.mon + ' ' + reqLater.day + ' · ' + ( reqLater.type === 'performance' ? 'Performance' : reqLater.full ? 'Full run-through' : reqLater.title ) ] ) : null,
-			W.urls.schedule ? h( 'a', { class: 'tcc-db__schedbtn', href: W.urls.schedule }, [ h( 'span', { html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>' } ), 'Full schedule' ] ) : null
-		] );
+		function row( d, title, sub, right ) {
+			return h( 'li', { class: 'tcc-db__cal-row' }, [
+				h( 'span', { class: 'tcc-db__cal-d tcc-db__cal-d--sm' }, [ h( 'span', {}, [ d[ 2 ] ] ), h( 'b', {}, [ d[ 1 ] ] ), h( 'span', {}, [ d[ 0 ] ] ) ] ),
+				h( 'span', { class: 'tcc-db__cal-rt' }, [ h( 'b', {}, [ title ] ), sub ? h( 'span', {}, [ sub ] ) : null ] ),
+				right ? h( 'span', { class: 'tcc-db__cal-r' }, [ right ] ) : null
+			] );
+		}
+		/* the next date you must be at, if it isn't the one above (and isn't the performance itself) */
+		var perfR = null;
+		list.some( function ( x ) { if ( x.type === 'performance' ) { perfR = x; return true; } return false; } );
+		if ( r && ! ( personal ? requiredOfMe( r ) : ( r.must && r.must.length ) ) ) {
+			var rq = null;
+			list.slice( 1 ).some( function ( x ) { if ( x.type !== 'performance' && ( personal ? requiredOfMe( x ) : ( x.must && x.must.length ) ) ) { rq = x; return true; } return false; } );
+			if ( rq ) { rows.appendChild( row( [ rq.dow, rq.day, rq.mon ], rq.full ? 'Full run-through' : rq.title, rq.time ? rq.dow + ' · ' + rq.time : '', 'Required' ) ); }
+		}
+		/* the performance, with the countdown */
+		var days = W.cantata.days;
+		var countdown = days === null || days === undefined || days < 0 ? '' : days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : 'in ' + days + ' days';
+		if ( perfR && perfR !== r ) {
+			rows.appendChild( row( [ perfR.dow, perfR.day, perfR.mon ], W.cantata.title, 'Performance' + ( perfR.time ? ' · ' + perfR.time : '' ), countdown ) );
+		} else if ( ! perfR && W.cantata.perfDay && ( ! r || r.date !== W.cantata.perfDate ) && days !== null && days >= 0 ) {
+			rows.appendChild( row( W.cantata.perfDay, W.cantata.title, 'Performance' + ( W.cantata.perfTime ? ' · ' + W.cantata.perfTime : '' ), countdown ) );
+		}
+		if ( ! r && ! rows.children.length ) { rows.appendChild( h( 'li', { class: 'tcc-db__cal-row tcc-db__cal-row--empty' }, [ 'Nothing on the calendar for you right now.' ] ) ); }
+		if ( W.urls.schedule ) {
+			rows.appendChild( h( 'li', { class: 'tcc-db__cal-more' }, [ h( 'a', { href: W.urls.schedule }, [ h( 'span', {}, [ 'Full schedule' ] ), h( 'span', { class: 'tcc-db__cal-arrow', html: ICON.arrow } ) ] ) ] ) );
+		}
+		return h( 'section', { class: 'tcc-db__sec tcc-db__sec--first' }, [ eyebrow( 'Coming up' ), skipped || null, rows ] );
 	}
 
 	/* your songs: the whole work, one tile per song */
@@ -308,10 +326,6 @@
 		if ( isSinger() && W.voice[ who.part ] ) { meta.push( h( 'span', {}, [ W.voice[ who.part ].label ] ) ); }
 		who.types.forEach( function ( t ) { if ( t !== 'singers' && W.types[ t ] ) { meta.push( h( 'span', {}, [ W.types[ t ].replace( /s$/, '' ) ] ) ); } } );
 		if ( who.role && W.roles[ who.role ] ) { meta.push( h( 'span', {}, [ W.roles[ who.role ].label + ' team' ] ) ); }
-		var days = W.cantata.days;
-		if ( days !== null && days !== undefined && days >= 0 ) {
-			meta.push( h( 'span', { class: 'tcc-db__hello-count' }, days === 0 ? [ h( 'b', {}, [ W.cantata.title + ' is today' ] ) ] : [ h( 'b', {}, [ days + ( days === 1 ? ' day' : ' days' ) ] ), ' to ' + W.cantata.title ] ) );
-		}
 		var firstName = who.first || who.name.split( ' ' )[ 0 ];
 		var head = h( 'header', { class: 'tcc-db__hello' }, [
 			h( 'div', { class: 'tcc-db__hello-text' }, [
