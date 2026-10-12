@@ -157,9 +157,8 @@
 
 	/* ---------- pieces ---------- */
 
-	/* Coming up: every date-ish thing in one list. The next rehearsal is opened up; after it, quiet rows for
-	   the next date that's required for you (when that's a different one) and the performance with its countdown;
-	   the last row goes to the full schedule. */
+	/* Coming up: the next rehearsal, opened up, and a row that goes to the full schedule. Nothing in between,
+	   so it never looks like there's nothing between now and a later date. */
 	function comingUp( list, personal, skipped ) {
 		var rows = h( 'ol', { class: 'tcc-db__cal' } );
 		var r = list[ 0 ];
@@ -189,29 +188,6 @@
 					r.note ? h( 'blockquote', { class: 'tcc-db__note' }, [ h( 'span', { class: 'tcc-db__note-k' }, [ 'From the director' ] ), h( 'div', { html: r.note } ) ] ) : null
 				] )
 			] ) );
-		}
-		function row( d, title, sub, right ) {
-			return h( 'li', { class: 'tcc-db__cal-row' }, [
-				h( 'span', { class: 'tcc-db__cal-d tcc-db__cal-d--sm' }, [ h( 'span', {}, [ d[ 2 ] ] ), h( 'b', {}, [ d[ 1 ] ] ), h( 'span', {}, [ d[ 0 ] ] ) ] ),
-				h( 'span', { class: 'tcc-db__cal-rt' }, [ h( 'b', {}, [ title ] ), sub ? h( 'span', {}, [ sub ] ) : null ] ),
-				right ? h( 'span', { class: 'tcc-db__cal-r' }, [ right ] ) : null
-			] );
-		}
-		/* the next date you must be at, if it isn't the one above (and isn't the performance itself) */
-		var perfR = null;
-		list.some( function ( x ) { if ( x.type === 'performance' ) { perfR = x; return true; } return false; } );
-		if ( r && ! ( personal ? requiredOfMe( r ) : ( r.must && r.must.length ) ) ) {
-			var rq = null;
-			list.slice( 1 ).some( function ( x ) { if ( x.type !== 'performance' && ( personal ? requiredOfMe( x ) : ( x.must && x.must.length ) ) ) { rq = x; return true; } return false; } );
-			if ( rq ) { rows.appendChild( row( [ rq.dow, rq.day, rq.mon ], rq.full ? 'Full run-through' : rq.title, rq.time ? rq.dow + ' · ' + rq.time : '', 'Required' ) ); }
-		}
-		/* the performance, with the countdown */
-		var days = W.cantata.days;
-		var countdown = days === null || days === undefined || days < 0 ? '' : days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : 'in ' + days + ' days';
-		if ( perfR && perfR !== r ) {
-			rows.appendChild( row( [ perfR.dow, perfR.day, perfR.mon ], W.cantata.title, 'Performance' + ( perfR.time ? ' · ' + perfR.time : '' ), countdown ) );
-		} else if ( ! perfR && W.cantata.perfDay && ( ! r || r.date !== W.cantata.perfDate ) && days !== null && days >= 0 ) {
-			rows.appendChild( row( W.cantata.perfDay, W.cantata.title, 'Performance' + ( W.cantata.perfTime ? ' · ' + W.cantata.perfTime : '' ), countdown ) );
 		}
 		if ( ! r && ! rows.children.length ) { rows.appendChild( h( 'li', { class: 'tcc-db__cal-row tcc-db__cal-row--empty' }, [ 'Nothing on the calendar for you right now.' ] ) ); }
 		if ( W.urls.schedule ) {
