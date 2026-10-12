@@ -409,6 +409,7 @@
 	}
 	/* two pages side by side only when each would still be a good size */
 	function spread() {
+		if ( M.rec ) { return false; } // recording turns: one page at a time, so every tap visibly turns a page
 		var w = ui.pages.clientWidth - 16, hh = ui.pages.clientHeight - 16, a = M.aspect || 0.72;
 		var one = Math.min( w, hh * a ), each = Math.min( ( w - 12 ) / 2, hh * a );
 		return each >= 420 && each >= one * 0.8;
@@ -653,7 +654,8 @@
 	/* director: record the page turns by tapping along */
 	function startRec() {
 		var r = scoreRange(); if ( ! r ) { return; }
-		M.rec = { times: [], old: ( SC.turns[ current().song ] || [] ).slice() };
+		M.rec = { times: [], old: ( SC.turns[ current().song ] || [] ).slice(), song: current().song };
+		M.shown = null;
 		M.manual = null;
 		seek( 0 ); audio.play().catch( function () {} );
 		paintRec(); tickMusic( true ); paintMarks();
@@ -674,7 +676,7 @@
 	function saveRec() {
 		var t = current(), times = M.rec.times.slice();
 		api( 'turns', 'POST', { cantata: D.cantata.id, song: t.song, times: times } ).then( function ( r ) {
-			if ( r && r.ok ) { SC.turns[ t.song ] = r.times; M.rec = null; paintRec(); tickMusic( true ); paintMarks(); toast( 'Page turns saved for ' + t.title ); }
+			if ( r && r.ok ) { SC.turns[ t.song ] = r.times; M.rec = null; paintRec(); tickMusic( true ); paintMarks(); toast( r.times.length + ( r.times.length === 1 ? ' page turn' : ' page turns' ) + ' saved for ' + t.title ); }
 			else { toast( 'Couldn’t save — try again.' ); }
 		} );
 	}
@@ -921,6 +923,9 @@
 			paintScrub(); paintMarks(); tickStream( true );
 		} );
 		if ( S.list.now && t.song >= 0 ) { ls( 'tcc_last', JSON.stringify( { part: S.list.part, song: t.song, id: src.id, title: t.title } ) ); }
+		/* the address follows the song, so a reload (or a shared link) opens this one */
+		try { history.replaceState( history.state, '', location.pathname + location.search + ( S.list.now && t.song >= 0 ? '#song-' + ( t.song + 1 ) : '' ) ); } catch ( e ) {}
+		if ( M.rec && M.rec.song !== t.song ) { M.rec = null; paintRec(); toast( 'Page-turn recording stopped — it was for another song.' ); }
 		setFollow( true );
 		M.manual = null;
 		paintTop(); paintStream(); paintSide(); paintTools(); paintLoop();
@@ -1048,6 +1053,7 @@
 		flushPlay( true );
 		var t = current(); if ( t ) { ls( 'tcc_pos_' + t.id, null ); }
 		if ( S.loopA !== null ) { audio.currentTime = S.loopA; audio.play(); return; }
+		if ( M.rec ) { toast( 'End of the song — tap Save to keep these ' + M.rec.times.length + ' turns.' ); return; } // never roll on to the next song mid-recording
 		step( 1 );
 	} );
 	audio.addEventListener( 'play', function () { ui.play.innerHTML = I.pause; ui.play.setAttribute( 'aria-label', 'Pause' ); ui.app.classList.add( 'is-playing' ); setFollow( S.follow ); } );
