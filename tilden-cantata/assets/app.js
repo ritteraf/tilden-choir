@@ -39,7 +39,11 @@
 		people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
 		pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
 		loop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
-		star: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1 L13.4 10.6 L23 12 L13.4 13.4 L12 23 L10.6 13.4 L1 12 L10.6 10.6 Z"/></svg>'
+		star: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1 L13.4 10.6 L23 12 L13.4 13.4 L12 23 L10.6 13.4 L1 12 L10.6 10.6 Z"/></svg>',
+		score: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2"/><line x1="7" y1="7" x2="17" y2="7"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/><line x1="7" y1="17" x2="17" y2="17"/><circle cx="10" cy="17" r="1.4" fill="currentColor"/><line x1="11.4" y1="17" x2="11.4" y2="12.5"/></svg>',
+		notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+		left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+		right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>'
 	};
 	/* the gentle states — the only "progress" a singer ever sees */
 	var STATE = { none: 'Not started', some: 'Getting there', good: 'Feeling good', help: 'Asked for help' };
@@ -82,7 +86,8 @@
 	var S = {
 		who: null, part: '', list: null, idx: -1, playPart: '',
 		rows: {}, notes: [], alt: false, loopA: null, loopB: null, rate: 1,
-		listened: 0, counted: false, lastT: 0, follow: true, active: -2
+		listened: 0, counted: false, lastT: 0, follow: true, active: -2,
+		view: ls( 'tcc_view' ) === 'music' ? 'music' : 'notes'
 	};
 	function rowKey( song, part ) { return song + '|' + part; }
 	function countPart() { return S.playPart || S.part; }
@@ -125,7 +130,8 @@
 		ui.stream = h( 'div', { class: 'ta-stream', tabindex: '-1' } );
 		ui.followBtn = h( 'button', { type: 'button', class: 'ta-follow', hidden: true, onclick: function () { setFollow( true ); scrollToActive( true ); } }, [ 'Back to now' ] );
 		ui.side = h( 'aside', { class: 'ta-side', 'aria-label': 'Songs' } );
-		ui.app.appendChild( h( 'main', { class: 'ta-stage' }, [ h( 'div', { class: 'ta-streamwrap' }, [ ui.stream, ui.followBtn ] ), ui.side ] ) );
+		ui.music = h( 'div', { class: 'ta-music', hidden: true } );
+		ui.app.appendChild( h( 'main', { class: 'ta-stage' }, [ h( 'div', { class: 'ta-streamwrap' }, [ ui.stream, ui.music, ui.followBtn ] ), ui.side ] ) );
 		/* dock */
 		ui.scrub = h( 'div', { class: 'ta-scrub', role: 'slider', tabindex: '0', 'aria-label': 'Position in the song' } );
 		ui.rail = h( 'div', { class: 'ta-scrub__rail' } );
@@ -141,7 +147,10 @@
 		ui.altBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: toggleAlt }, [ h( 'b', { html: I.people } ), h( 'span', {}, [ 'Everyone' ] ) ] );
 		ui.noteBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: openNote }, [ h( 'b', { html: I.pen } ), h( 'span', {}, [ D.canEdit ? 'Note' : 'My note' ] ) ] );
 		ui.songsBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--songs', onclick: openSongs }, [ h( 'b', { html: I.list } ), h( 'span', {}, [ 'Songs' ] ) ] );
+		ui.viewBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: function () { setView( S.view === 'music' ? 'notes' : 'music' ); } }, [ h( 'b', { html: I.score } ), h( 'span', {}, [ 'Music' ] ) ] );
+		ui.strip = h( 'button', { type: 'button', class: 'ta-strip', hidden: true, onclick: function () { setView( 'notes' ); } } );
 		ui.app.appendChild( h( 'footer', { class: 'ta-dock' }, [
+			ui.strip,
 			h( 'div', { class: 'ta-dock__scrub' }, [ ui.tcur, ui.scrub, ui.tdur ] ),
 			h( 'div', { class: 'ta-dock__main' }, [
 				h( 'button', { type: 'button', class: 'ta-icon ta-icon--dim', 'aria-label': 'Back five seconds', html: I.back5, onclick: function () { seek( audio.currentTime - 5 ); } } ),
@@ -150,7 +159,7 @@
 				h( 'button', { type: 'button', class: 'ta-icon', 'aria-label': 'Next song', html: I.next, onclick: function () { step( 1 ); } } ),
 				h( 'span', { class: 'ta-icon ta-icon--spacer' } )
 			] ),
-			h( 'div', { class: 'ta-dock__tools' }, [ ui.rateBtn, ui.loopBtn, ui.altBtn, ui.noteBtn, ui.songsBtn ] )
+			h( 'div', { class: 'ta-dock__tools' }, [ ui.viewBtn, ui.rateBtn, ui.loopBtn, ui.altBtn, ui.noteBtn, ui.songsBtn ] )
 		] ) );
 		ui.toast = h( 'div', { class: 'ta-toast', role: 'status', 'aria-live': 'polite' } );
 		ui.app.appendChild( ui.toast );
@@ -261,7 +270,8 @@
 
 	/* which note is "now", and keep it centred */
 	function tickStream( force ) {
-		if ( ! CUES.length ) { return; }
+		tickMusic( force );
+		if ( ! CUES.length ) { paintStrip( -1 ); return; }
 		var now = audio.currentTime || 0, a = -1;
 		for ( var i = 0; i < CUES.length; i++ ) { if ( CUES[ i ].t <= now + 0.4 ) { a = i; } }
 		var items = ui.stream.querySelectorAll( '.ta-note' );
@@ -272,6 +282,7 @@
 		}
 		if ( a === S.active && ! force ) { return; }
 		S.active = a;
+		paintStrip( a );
 		items.forEach( function ( li, i ) {
 			li.classList.toggle( 'is-past', i < a );
 			li.classList.toggle( 'is-on', i === a );
@@ -298,6 +309,226 @@
 		ui.followBtn.hidden = on || ! CUES.length || audio.paused;
 		clearTimeout( followTimer );
 		if ( ! on ) { followTimer = setTimeout( function () { setFollow( true ); scrollToActive(); }, 7000 ); }
+	}
+
+
+	/* ---------- the music: score pages that turn with the track ---------- */
+	var SC = D.score || null;
+	var M = { pdf: null, loading: null, manual: null, shown: '', zoom: 1, rec: null, cache: {} };
+	function scoreRange() {
+		var t = current();
+		if ( ! SC || ! t || t.song < 0 || ! S.list || ! S.list.now ) { return null; }
+		var r = SC.songs[ t.song ];
+		return r ? { a: r[ 0 ], b: r[ 1 ] } : null;
+	}
+	function turnsFor() { var t = current(); if ( M.rec ) { return M.rec.times; } return t && SC && SC.turns[ t.song ] ? SC.turns[ t.song ] : []; }
+	function pageAt( time ) {
+		var r = scoreRange(); if ( ! r ) { return 0; }
+		var n = 0; turnsFor().forEach( function ( x ) { if ( x <= time ) { n++; } } );
+		return Math.min( r.b, r.a + n );
+	}
+	function printedNo( p ) { return p + ( SC ? SC.offset : 0 ); }
+	function setView( v ) {
+		S.view = v; ls( 'tcc_view', v );
+		if ( v === 'music' && scoreRange() ) { loadScore(); }
+		paintTools(); paintMarks();
+	}
+	function applyView() {
+		var music = S.view === 'music' && !! scoreRange();
+		ui.music.hidden = ! music;
+		ui.stream.hidden = music;
+		ui.strip.hidden = ! music;
+		ui.app.classList.toggle( 'is-music', music );
+		if ( music ) { if ( M.pdf ) { tickMusic( true ); } else { loadScore(); } paintStrip( S.active ); }
+	}
+	function loadScore() {
+		if ( M.pdf || M.loading ) { return M.loading; }
+		ui.music.innerHTML = '';
+		var msg = h( 'p', { class: 'ta-music__msg' }, [ 'Opening the score…' ] );
+		ui.music.appendChild( msg );
+		M.loading = new Promise( function ( res, rej ) {
+			if ( window.pdfjsLib ) { res( window.pdfjsLib ); return; }
+			var sc = document.createElement( 'script' ); sc.src = SC.lib;
+			sc.onload = function () { window.pdfjsLib.GlobalWorkerOptions.workerSrc = SC.worker; res( window.pdfjsLib ); };
+			sc.onerror = rej; document.head.appendChild( sc );
+		} ).then( function ( L ) {
+			var task = L.getDocument( { url: SC.url, disableRange: true, disableStream: false } );
+			task.onProgress = function ( p ) { if ( p.total ) { msg.textContent = 'Opening the score… ' + Math.round( p.loaded / p.total * 100 ) + '%'; } };
+			return task.promise;
+		} ).then( function ( doc ) { M.pdf = doc; buildMusic(); tickMusic( true ); } ).catch( function () { msg.textContent = 'Couldn’t open the score. Check your connection and try again.'; M.loading = null; } );
+		return M.loading;
+	}
+	function buildMusic() {
+		ui.music.innerHTML = '';
+		ui.pageInfo = h( 'span', { class: 'ta-music__info' } );
+		ui.pageBack = h( 'button', { type: 'button', class: 'ta-icon ta-icon--sm', 'aria-label': 'Previous page', html: I.left, onclick: function () { manualPage( -1 ); } } );
+		ui.pageNext = h( 'button', { type: 'button', class: 'ta-icon ta-icon--sm', 'aria-label': 'Next page', html: I.right, onclick: function () { manualPage( 1 ); } } );
+		ui.pageNow = h( 'button', { type: 'button', class: 'ta-link ta-music__now', hidden: true, onclick: function () { M.manual = null; tickMusic( true ); } }, [ 'Back to now' ] );
+		ui.recBtn = D.canEdit ? h( 'button', { type: 'button', class: 'ta-music__set', onclick: startRec }, [ 'Set page turns' ] ) : null;
+		ui.pages = h( 'div', { class: 'ta-pages' } );
+		ui.pagesIn = h( 'div', { class: 'ta-pages__in' } );
+		ui.pages.appendChild( ui.pagesIn );
+		ui.music.appendChild( h( 'div', { class: 'ta-music__bar' }, [ ui.pageBack, ui.pageInfo, ui.pageNext, ui.pageNow, h( 'span', { class: 'ta-music__sp' } ), ui.recBtn ] ) );
+		ui.music.appendChild( ui.pages );
+		ui.recBar = h( 'div', { class: 'ta-rec', hidden: true } );
+		ui.music.appendChild( ui.recBar );
+		gestures( ui.pages );
+		window.addEventListener( 'resize', function () { M.shown = ''; tickMusic( true ); } );
+	}
+	function manualPage( d ) {
+		var r = scoreRange(); if ( ! r ) { return; }
+		var base = M.manual !== null ? M.manual : pageAt( audio.currentTime );
+		M.manual = Math.max( 1, Math.min( SC.pages, base + d ) );
+		tickMusic( true );
+	}
+	function spread() { var w = ui.pages.clientWidth, hh = ui.pages.clientHeight; return w >= 820 && w > hh * 1.2; }
+	function tickMusic( force ) {
+		if ( S.view !== 'music' || ! M.pdf || ui.music.hidden ) { return; }
+		var r = scoreRange(); if ( ! r ) { return; }
+		var now = audio.currentTime || 0;
+		var live = pageAt( now );
+		if ( M.manual !== null && M.manual === live ) { M.manual = null; }
+		var p = M.manual !== null ? M.manual : live;
+		var two = spread();
+		var pages = two ? [ p, Math.min( M.pdf.numPages, p + 1 ) ] : [ p ];
+		if ( two && pages[ 1 ] === pages[ 0 ] ) { pages = [ p ]; }
+		/* the little line above the page: where we are and when it turns */
+		var turns = turnsFor(), nextT = null;
+		for ( var i = 0; i < turns.length; i++ ) { if ( turns[ i ] > now ) { nextT = turns[ i ]; break; } }
+		var info = 'p. ' + printedNo( p ) + ( two && pages[ 1 ] ? '–' + printedNo( pages[ 1 ] ) : '' );
+		if ( M.rec ) { info += ' · recording turns'; }
+		else if ( M.manual !== null ) { info += ' · looking ahead'; }
+		else if ( nextT !== null && pageAt( nextT ) !== p ) { info += ' · turns in ' + fmt( Math.ceil( nextT - now ) ); }
+		else if ( ! turns.length && r.b > r.a ) { info += D.canEdit ? ' · page turns not set yet' : ''; }
+		ui.pageInfo.textContent = info;
+		ui.pageNow.hidden = M.manual === null;
+		ui.pageBack.disabled = p <= 1; ui.pageNext.disabled = p >= M.pdf.numPages;
+		var key = pages.join( ',' ) + '|' + ui.pages.clientWidth + 'x' + ui.pages.clientHeight + '|' + M.zoom;
+		if ( key === M.shown ) { return; }
+		var turned = M.shown && M.shown.split( '|' )[ 0 ] !== pages.join( ',' );
+		M.shown = key;
+		drawPages( pages, turned );
+	}
+	function drawPages( pages, turned ) {
+		var W = ui.pages.clientWidth - 16, H = ui.pages.clientHeight - 16;
+		var dpr = Math.min( 3, window.devicePixelRatio || 1 );
+		Promise.all( pages.map( function ( n ) { return M.pdf.getPage( n ); } ) ).then( function ( list ) {
+			var vp = list[ 0 ].getViewport( { scale: 1 } );
+			var fit = Math.min( W / ( vp.width * list.length + ( list.length - 1 ) * 12 ), H / vp.height );
+			if ( ! ( fit > 0 ) ) { return; }
+			var scale = fit * M.zoom;
+			var frag = document.createDocumentFragment();
+			list.forEach( function ( page, k ) {
+				var v = page.getViewport( { scale: scale * dpr } );
+				var c = document.createElement( 'canvas' );
+				c.width = Math.floor( v.width ); c.height = Math.floor( v.height );
+				c.style.width = Math.floor( v.width / dpr ) + 'px'; c.style.height = Math.floor( v.height / dpr ) + 'px';
+				c.className = 'ta-page' + ( k === 0 ? ' is-current' : '' );
+				page.render( { canvasContext: c.getContext( '2d' ), viewport: v } );
+				frag.appendChild( c );
+			} );
+			ui.pagesIn.innerHTML = '';
+			ui.pagesIn.appendChild( frag );
+			ui.pagesIn.classList.toggle( 'is-zoomed', M.zoom > 1 );
+			ui.pages.classList.toggle( 'is-zoomed', M.zoom > 1 );
+			if ( turned && ! reduceMotion ) { ui.pagesIn.classList.remove( 'is-turn' ); void ui.pagesIn.offsetWidth; ui.pagesIn.classList.add( 'is-turn' ); }
+			if ( M.zoom === 1 ) { ui.pages.scrollTop = 0; ui.pages.scrollLeft = 0; }
+			// get the next page ready so the turn is instant
+			var after = pages[ pages.length - 1 ] + 1;
+			if ( after <= M.pdf.numPages ) { M.pdf.getPage( after ); }
+		} );
+	}
+	/* pinch to zoom, double-tap to zoom, swipe for pages */
+	function gestures( el ) {
+		var pts = {}, start = null, tap = 0, swipe = null;
+		el.addEventListener( 'pointerdown', function ( e ) {
+			pts[ e.pointerId ] = { x: e.clientX, y: e.clientY };
+			var ids = Object.keys( pts );
+			if ( ids.length === 2 ) { var a = pts[ ids[ 0 ] ], b = pts[ ids[ 1 ] ]; start = { d: Math.hypot( a.x - b.x, a.y - b.y ), z: M.zoom }; swipe = null; }
+			else if ( ids.length === 1 ) { swipe = M.zoom === 1 ? { x: e.clientX, y: e.clientY, t: Date.now() } : null; }
+		} );
+		el.addEventListener( 'pointermove', function ( e ) {
+			if ( ! pts[ e.pointerId ] ) { return; }
+			pts[ e.pointerId ] = { x: e.clientX, y: e.clientY };
+			var ids = Object.keys( pts );
+			if ( ids.length === 2 && start ) {
+				var a = pts[ ids[ 0 ] ], b = pts[ ids[ 1 ] ];
+				var z = Math.max( 1, Math.min( 4, start.z * Math.hypot( a.x - b.x, a.y - b.y ) / start.d ) );
+				ui.pagesIn.style.transform = 'scale(' + ( z / M.zoom ) + ')';
+				start.next = z;
+			}
+		} );
+		function end( e ) {
+			var had = pts[ e.pointerId ]; delete pts[ e.pointerId ];
+			if ( start && Object.keys( pts ).length < 2 ) {
+				ui.pagesIn.style.transform = '';
+				if ( start.next ) { zoomTo( start.next ); }
+				start = null; return;
+			}
+			if ( swipe && had ) {
+				var dx = had.x - swipe.x, dy = had.y - swipe.y, dt = Date.now() - swipe.t;
+				if ( Math.abs( dx ) > 60 && Math.abs( dx ) > Math.abs( dy ) * 1.5 && dt < 600 ) { manualPage( dx < 0 ? 1 : -1 ); swipe = null; return; }
+				if ( Math.abs( dx ) < 10 && Math.abs( dy ) < 10 ) {
+					if ( Date.now() - tap < 320 ) { zoomTo( M.zoom > 1 ? 1 : 2.2 ); tap = 0; } else { tap = Date.now(); }
+				}
+			}
+			swipe = null;
+		}
+		el.addEventListener( 'pointerup', end ); el.addEventListener( 'pointercancel', end );
+	}
+	function zoomTo( z ) {
+		var el = ui.pages, cx = el.scrollLeft + el.clientWidth / 2, cy = el.scrollTop + el.clientHeight / 2, ratio = z / M.zoom;
+		M.zoom = Math.round( z * 100 ) / 100;
+		M.shown = '';
+		tickMusic( true );
+		setTimeout( function () { el.scrollLeft = cx * ratio - el.clientWidth / 2; el.scrollTop = cy * ratio - el.clientHeight / 2; }, 60 );
+	}
+	/* the current note, as one line above the controls */
+	function paintStrip( a ) {
+		if ( ! ui.strip || ui.strip.hidden ) { return; }
+		ui.strip.innerHTML = '';
+		var c = a >= 0 ? CUES[ a ] : null;
+		var nx = CUES[ a + 1 ] || null;
+		if ( c ) {
+			ui.strip.className = 'ta-strip ta-strip--' + c.kind;
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__k' }, [ fmt( c.t ) + ( c.kind === 'cue' ? ' · Director' : ' · You' ) ] ) );
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__t' }, [ c.text ] ) );
+		} else if ( nx ) {
+			ui.strip.className = 'ta-strip ta-strip--quiet';
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__k' }, [ 'First note at ' + fmt( nx.t ) ] ) );
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__t' }, [ nx.text ] ) );
+		} else {
+			ui.strip.className = 'ta-strip ta-strip--quiet';
+			ui.strip.appendChild( h( 'span', { class: 'ta-strip__t' }, [ CUES.length ? '' : 'No notes on this song yet.' ] ) );
+		}
+	}
+	/* director: record the page turns by tapping along */
+	function startRec() {
+		var r = scoreRange(); if ( ! r ) { return; }
+		M.rec = { times: [], old: ( SC.turns[ current().song ] || [] ).slice() };
+		M.manual = null;
+		seek( 0 ); audio.play().catch( function () {} );
+		paintRec(); tickMusic( true ); paintMarks();
+	}
+	function paintRec() {
+		var bar = ui.recBar; bar.innerHTML = '';
+		if ( ! M.rec ) { bar.hidden = true; if ( ui.recBtn ) { ui.recBtn.hidden = false; } return; }
+		bar.hidden = false; if ( ui.recBtn ) { ui.recBtn.hidden = true; }
+		var r = scoreRange(), need = r ? r.b - r.a : 0;
+		bar.appendChild( h( 'div', { class: 'ta-rec__msg' }, [ h( 'b', {}, [ 'Tap “Turn” each time the page should turn.' ] ), h( 'span', {}, [ M.rec.times.length + ' of ' + need + ' turns' + ( M.rec.times.length ? ' · last at ' + fmt( M.rec.times[ M.rec.times.length - 1 ] ) : '' ) ] ) ] ) );
+		bar.appendChild( h( 'div', { class: 'ta-rec__go' }, [
+			h( 'button', { type: 'button', class: 'ta-rec__turn', disabled: M.rec.times.length >= need ? true : null, onclick: function () { M.rec.times.push( Math.max( 0, Math.round( ( audio.currentTime - 0.3 ) * 10 ) / 10 ) ); paintRec(); tickMusic( true ); paintMarks(); } }, [ 'Turn', h( 'span', { html: I.right } ) ] ),
+			h( 'button', { type: 'button', class: 'ta-btn', disabled: M.rec.times.length ? null : true, onclick: function () { M.rec.times.pop(); paintRec(); tickMusic( true ); paintMarks(); } }, [ 'Undo' ] ),
+			h( 'button', { type: 'button', class: 'ta-btn ta-btn--gold', onclick: saveRec }, [ 'Save' ] ),
+			h( 'button', { type: 'button', class: 'ta-link', onclick: function () { M.rec = null; paintRec(); tickMusic( true ); paintMarks(); } }, [ 'Cancel' ] )
+		] ) );
+	}
+	function saveRec() {
+		var t = current(), times = M.rec.times.slice();
+		api( 'turns', 'POST', { cantata: D.cantata.id, song: t.song, times: times } ).then( function ( r ) {
+			if ( r && r.ok ) { SC.turns[ t.song ] = r.times; M.rec = null; paintRec(); tickMusic( true ); paintMarks(); toast( 'Page turns saved for ' + t.title ); }
+			else { toast( 'Couldn’t save — try again.' ); }
+		} );
 	}
 
 	/* ---------- the side list (tablet) and the songs sheet (phone) ---------- */
@@ -484,6 +715,7 @@
 		} );
 		if ( S.list.now && t.song >= 0 ) { ls( 'tcc_last', JSON.stringify( { part: S.list.part, song: t.song, id: src.id, title: t.title } ) ); }
 		setFollow( true );
+		M.manual = null;
 		paintTop(); paintStream(); paintSide(); paintTools(); paintLoop();
 		mediaSession( t );
 		if ( autoplay ) { audio.play().catch( function () {} ); }
@@ -525,6 +757,12 @@
 		ui.altBtn.hidden = ! ( current() && ( altTrack() || S.alt ) );
 		ui.altBtn.classList.toggle( 'is-on', S.alt );
 		ui.noteBtn.disabled = ! current();
+		var hasScore = !! scoreRange();
+		ui.viewBtn.hidden = ! hasScore;
+		ui.viewBtn.classList.toggle( 'is-on', hasScore && S.view === 'music' );
+		ui.viewBtn.querySelector( 'b' ).innerHTML = S.view === 'music' && hasScore ? I.notes : I.score;
+		ui.viewBtn.querySelector( 'span' ).textContent = S.view === 'music' && hasScore ? 'Notes' : 'Music';
+		applyView();
 	}
 
 	/* ---------- the scrubber ---------- */
@@ -538,6 +776,7 @@
 		ui.marks.innerHTML = '';
 		var d = audio.duration; if ( ! d ) { return; }
 		CUES.forEach( function ( c ) { if ( c.t > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--' + c.kind } ); m.style.left = ( c.t / d * 100 ) + '%'; ui.marks.appendChild( m ); } );
+		if ( S.view === 'music' ) { turnsFor().forEach( function ( t ) { if ( t > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--turn' } ); m.style.left = ( t / d * 100 ) + '%'; ui.marks.appendChild( m ); } ); }
 	}
 	function paintLoop() {
 		var d = audio.duration;
@@ -606,6 +845,7 @@
 		if ( e.target.matches( 'input, textarea, select' ) ) { if ( e.key === 'Escape' ) { closeSheet(); } return; }
 		if ( e.key === 'Escape' ) { closeSheet(); }
 		if ( e.key === ' ' ) { e.preventDefault(); toggle(); }
+		if ( S.view === 'music' && ( e.key === 'PageDown' || e.key === 'PageUp' ) ) { e.preventDefault(); manualPage( e.key === 'PageDown' ? 1 : -1 ); return; }
 		if ( e.key === 'ArrowLeft' && ! sheet ) { seek( audio.currentTime - 5 ); }
 		if ( e.key === 'ArrowRight' && ! sheet ) { seek( audio.currentTime + 5 ); }
 	} );

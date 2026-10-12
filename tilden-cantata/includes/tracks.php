@@ -474,6 +474,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		tcc_enqueue_signin_assets();
 	}
 	if ( $page ) {
+		$data['score'] = function_exists( 'tcc_score_data' ) ? tcc_score_data( $current, $data['token'] ) : null;
 		// The full-screen practice app.
 		wp_enqueue_style( 'tcc-app', TCC_URL . 'assets/app.css', [ 'tcc-signin' ], TCC_VERSION );
 		wp_enqueue_script( 'tcc-app', TCC_URL . 'assets/app.js', [ 'tcc-signin' ], TCC_VERSION, [ 'strategy' => 'defer' ] );
