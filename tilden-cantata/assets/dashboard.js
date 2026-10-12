@@ -139,17 +139,70 @@
 		] ) ] );
 	}
 
-	/* the general page, for anyone browsing */
+	/* the general page, for anyone browsing — often someone a choir member sent the link to */
+	var PART_ABOUT = {
+		soprano: 'The highest voices — usually women.',
+		alto: 'The lower women’s voices.',
+		tenor: 'The higher men’s voices.',
+		bass: 'The lowest men’s voices.',
+		accompaniment: 'Just the piano, to sing along with.',
+		sections: 'The piano part in short pieces, for working on one spot.',
+		listen: 'Everyone together, the way it will sound.'
+	};
+	function perfLine() {
+		var c = W.cantata, d = ( c.perf || '' ).replace( /,\s*\d{4}$/, '' ), t = ( c.perfTime || '' ).replace( ':00', '' );
+		return d ? d + ( t ? ' at ' + t : '' ) : '';
+	}
 	function viewBrowse() {
 		var who = me && me.who;
-		var nodes = [ h( 'p', { class: 'tcc-dash__line' }, [ who ? 'Browsing as ' : 'Browsing without signing in. ', who ? h( 'b', {}, [ who.name ] ) : null, who ? '. ' : '',
-			h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { store( 'ss', 'tcc_browse', null ); if ( who ) { if ( who.onSeason ) { viewDash(); } else { signIn( undefined, { id: who.id, name: who.name, onSeason: false } ); } } else { viewChooser(); } } }, [ who ? ( who.onSeason ? 'Show my page' : 'Sign in for this year' ) : 'Sign in' ] ) ] ) ];
+		var nodes = [];
+		var leave = function () { store( 'ss', 'tcc_browse', null ); if ( who ) { if ( who.onSeason ) { viewDash(); } else { signIn( undefined, { id: who.id, name: who.name, onSeason: false } ); } } else { viewChooser(); } };
+		if ( who ) {
+			nodes.push( h( 'p', { class: 'tcc-dash__line' }, [ 'Browsing as ', h( 'b', {}, [ who.name ] ), '. ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: leave }, [ who.onSeason ? 'Show my page' : 'Sign in for this year' ] ) ] ) );
+		} else {
+			/* they have the password, so someone in the choir invited them: say so, and make joining easy */
+			var when = perfLine();
+			nodes.push( h( 'section', { class: 'tcc-dash__choose tcc-db__welcome' }, [
+				h( 'span', { class: 'tcc-dash__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ),
+				h( 'h2', { class: 'tcc-dash__h' }, [ 'Come on in — we’re glad you’re here.' ] ),
+				h( 'p', { class: 'tcc-dash__lede' }, [ 'Someone in the choir shared this page with you, so consider yourself invited. This is Backstage: where the Tilden Community Choir gets ready for ', h( 'i', {}, [ W.cantata.title ] ), when ? ', on ' + when + '.' : '.', ' Have a look around — the schedule, the music we’re learning, and the tracks our singers practice with.' ] ),
+				h( 'div', { class: 'tcc-db__invite' }, [
+					h( 'p', { class: 'tcc-db__invite-k' }, [ 'Thinking about singing with us?' ] ),
+					h( 'p', { class: 'tcc-db__invite-big' }, [ 'There’s only one requirement: you must love to sing.' ] ),
+					h( 'ul', { class: 'tcc-db__invite-list' }, [
+						h( 'li', {}, [ h( 'b', {}, [ 'No audition, no experience needed' ] ), ' — and you don’t need to read music. If you can carry a tune and you’re willing to show up, we’ll teach you the rest.' ] ),
+						h( 'li', {}, [ h( 'b', {}, [ 'No cost.' ] ), ' The music is provided.' ] ),
+						h( 'li', {}, [ h( 'b', {}, [ 'Can’t make every rehearsal?' ] ), ' That’s normal — most people miss one or two. The practice tracks below help you catch up at home.' ] ),
+						h( 'li', {}, [ h( 'b', {}, [ 'Not a singer?' ] ), ' We’d love to have you anyway: narrators, actors, a tech crew, and helpers for staging, costumes and welcoming the audience.' ] )
+					] ),
+					h( 'div', { class: 'tcc-db__invite-go' }, [
+						h( 'button', { type: 'button', class: 'tcc-db__go tcc-db__go--join', onclick: function () { store( 'ss', 'tcc_browse', null ); signIn( 'new' ); } }, [ h( 'span', { class: 'tcc-db__go-t' }, [ 'I’d like to join' ] ), h( 'span', { class: 'tcc-db__go-i', html: ICON.arrow } ) ] ),
+						W.urls.join ? h( 'a', { class: 'tcc-dash__link', href: W.urls.join }, [ 'Read more about joining' ] ) : null
+					] )
+				] ),
+				h( 'p', { class: 'tcc-dash__foot' }, [ 'Already in the choir? ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { store( 'ss', 'tcc_browse', null ); signIn( 'find' ); } }, [ 'Find your name' ] ),
+					W.urls.contact ? ' · Questions? ' : null, W.urls.contact ? h( 'a', { class: 'tcc-dash__link', href: W.urls.contact }, [ 'Ask the director' ] ) : null ] )
+			] ) );
+		}
 		nodes.push( comingUp( W.rehearsals, false, null ) );
-		var parts = h( 'div', { class: 'tcc-db__partpick' } );
+		/* practice tracks: say what they are before asking anyone to pick one */
+		var parts = h( 'div', { class: 'tcc-db__partcards' } );
 		[ 'soprano', 'alto', 'tenor', 'bass', 'accompaniment', 'sections', 'listen' ].forEach( function ( p ) {
-			if ( W.parts[ p ] && W.parts[ p ].count ) { parts.appendChild( h( 'a', { class: 'tcc-db__part', href: practiceUrl( p ) }, [ h( 'span', { html: ICON.play } ), W.parts[ p ].label ] ) ); }
+			if ( W.parts[ p ] && W.parts[ p ].count ) {
+				parts.appendChild( h( 'a', { class: 'tcc-db__partcard', href: practiceUrl( p ) }, [
+					h( 'span', { class: 'tcc-db__partcard-i', html: ICON.play } ),
+					h( 'span', { class: 'tcc-db__partcard-t' }, [ h( 'b', {}, [ W.parts[ p ].label ] ), PART_ABOUT[ p ] ? h( 'span', {}, [ PART_ABOUT[ p ] ] ) : null ] )
+				] ) );
+			}
 		} );
-		if ( parts.children.length ) { nodes.push( h( 'section', { class: 'tcc-db__sec' }, [ eyebrow( 'Practice tracks' ), parts ] ) ); }
+		if ( parts.children.length ) {
+			nodes.push( h( 'section', { class: 'tcc-db__sec' }, [
+				eyebrow( 'Practice tracks' ),
+				h( 'p', { class: 'tcc-db__about' }, [ 'Each song in the cantata, recorded with one voice part turned up louder than the rest — so you can learn your notes by ear, in the car or at the kitchen sink. Pick a part to hear what that’s like; the director’s notes appear as the music plays.' ] ),
+				parts,
+				h( 'p', { class: 'tcc-db__hint' }, [ 'Not sure which part is yours? Most women start on Alto or Soprano and most men on Bass or Tenor. If the high notes feel like a strain, try the lower part — the director will help you find your fit.' ] )
+			] ) );
+		}
 		var docs = docList( [ 'everyone', 'singers', 'narrators', 'actors', 'tech' ], true );
 		if ( docs ) { nodes.push( h( 'section', { class: 'tcc-db__sec' }, [ eyebrow( 'Documents' ), docs ] ) ); }
 		show( nodes );

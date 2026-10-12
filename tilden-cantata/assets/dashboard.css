@@ -161,3 +161,31 @@ a.tcc-db__tile:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba
 	.tcc-db__sec { margin-top: 40px; }
 	.tcc-db__eyebrow > span:first-child { font-size: 22px; }
 }
+
+/* ---------- just browsing: a welcome for someone a choir member invited ---------- */
+.tcc-db__welcome .tcc-dash__lede { margin-bottom: 28px; }
+.tcc-db__invite { max-width: 680px; padding: 26px 28px 24px; border-radius: 16px; background: rgba(53, 86, 53, 0.07); border: 1.5px solid rgba(53, 86, 53, 0.25); }
+.tcc-db__invite-k { margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tcc-green); }
+.tcc-db__invite-big { margin: 0 0 16px; font-family: var(--tcc-display); font-size: clamp(22px, 3.4vw, 28px); font-weight: 700; line-height: 1.2; color: var(--tcc-ink); }
+.tcc-db__invite-list { margin: 0 0 22px; padding: 0; list-style: none; display: grid; gap: 12px; }
+.tcc-db__invite-list li { position: relative; padding-left: 26px; font-size: 16px; line-height: 1.5; color: var(--tcc-slate); }
+.tcc-db__invite-list li::before { content: ""; position: absolute; left: 4px; top: 0.6em; width: 9px; height: 9px; border-radius: 50%; background: var(--tcc-green); }
+.tcc-db__invite-list b { color: var(--tcc-ink); }
+.tcc-db__invite-go { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
+.tcc-db__invite-go .tcc-db__go { margin: 0; }
+.tcc-db__go--join { border: 0; font: inherit; cursor: pointer; padding: 10px 10px 10px 24px; background: var(--tcc-green); box-shadow: 0 10px 24px rgba(53, 86, 53, 0.25); }
+.tcc-db__go--join .tcc-db__go-i { color: var(--tcc-green); }
+.tcc-db__about { max-width: 680px; margin: 0 0 18px; font-size: 16px; line-height: 1.55; color: var(--tcc-slate); }
+.tcc-db__partcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.tcc-db__partcard { display: flex; align-items: center; gap: 14px; min-height: 76px; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--tcc-stone); background: var(--tcc-paper); color: var(--tcc-ink); text-decoration: none; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+.tcc-db__partcard:hover { border-color: var(--tcc-ink); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(31, 31, 31, 0.1); color: var(--tcc-ink); }
+.tcc-db__partcard-i { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--tcc-ink); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.tcc-db__partcard-i svg { width: 18px; height: 18px; margin-left: 2px; }
+.tcc-db__partcard-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tcc-db__partcard-t b { font-family: var(--tcc-display); font-size: 19px; line-height: 1.15; }
+.tcc-db__partcard-t span { font-size: 14px; line-height: 1.35; color: var(--tcc-ash); }
+.tcc-db__hint { max-width: 680px; margin: 16px 0 0; font-size: 14px; line-height: 1.5; color: var(--tcc-ash); }
+@media (max-width: 600px) {
+	.tcc-db__invite { padding: 20px 18px; }
+	.tcc-db__partcards { grid-template-columns: 1fr; }
+}

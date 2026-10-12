@@ -140,7 +140,14 @@ function tcc_world( int $cantata_id ): array {
 			$teams[ $role ][] = get_the_title( $id );
 		}
 	}
-	$urls = [ 'hub' => home_url( '/backstage/' ), 'practice' => '', 'schedule' => '', 'parts' => [] ];
+	$urls = [ 'hub' => home_url( '/backstage/' ), 'practice' => '', 'schedule' => '', 'parts' => [], 'join' => '', 'contact' => '' ];
+	/* the public pages a visitor might want next: joining, and a word with the director */
+	foreach ( [ 'join' => [ 'join-the-choir', 'join' ], 'contact' => [ 'contact-the-director', 'contact' ] ] as $k => $slugs ) {
+		foreach ( $slugs as $slug ) {
+			$p = get_page_by_path( $slug );
+			if ( $p && $p->post_status === 'publish' ) { $urls[ $k ] = get_permalink( $p ); break; }
+		}
+	}
 	foreach ( [ 'practice', 'schedule', 'soprano', 'alto', 'tenor', 'bass', 'accompaniment' ] as $slug ) {
 		$p = get_page_by_path( $slug );
 		if ( $p && $p->post_status === 'publish' ) {
