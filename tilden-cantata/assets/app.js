@@ -96,9 +96,7 @@
 		if ( r.flag === 'ok' ) { return 'good'; }
 		if ( r.flag === 'help' ) { return 'help'; }
 		if ( r.flag === 'working' ) { return 'some'; }
-		if ( +r.plays >= 3 ) { return 'good'; }
-		if ( +r.plays >= 1 || +r.seconds >= 45 ) { return 'some'; }
-		return 'none';
+		return 'none'; // the circle is only ever the singer's own mark
 	}
 	function partForVoice( voice ) {
 		var v = D.voice && D.voice[ voice ];
@@ -566,7 +564,7 @@
 			var PL = LISTS[ k ];
 			wrap.appendChild( h( 'details', { class: 'ta-year', open: S.list && S.list.key === k ? true : null }, [ h( 'summary', {}, [ PL.cantata.year + ' · ' + PL.cantata.title ] ), trackRows( PL, false ) ] ) );
 		} );
-		if ( inSheet ) { wrap.appendChild( h( 'p', { class: 'ta-fine' }, [ S.who ? 'The circles are just for you — how each song is going. Only you see them.' : '' ] ) ); }
+		if ( inSheet ) { wrap.appendChild( h( 'p', { class: 'ta-fine' }, [ S.who ? 'The circles are your own marks — set them on a song with Getting there / Feeling good. Only you see them.' : '' ] ) ); }
 		return wrap;
 	}
 	function trackRows( L, now ) {

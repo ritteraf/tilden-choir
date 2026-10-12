@@ -57,11 +57,17 @@
 			);
 		}
 
+		/* someone already on this year's list just switches the device to them — no form to fill in again */
+		function pick( p ) {
+			if ( ! p.on ) { stepForm( p.id ); return; }
+			api( cfg, 'who', 'POST', { cantata: cfg.cantata.id, person: p.id } ).then( function ( r ) { close( { id: r.id, name: r.name, onSeason: true } ); } ).catch( function () { stepForm( p.id ); } );
+		}
+
 		/* step 1: find my name */
-		function stepFind() {
+		function stepFind( title ) {
 			var search = h( 'input', { type: 'search', class: 'tcc-si__search', placeholder: 'Start typing your name…', autocomplete: 'off' } );
 			var list = h( 'div', { class: 'tcc-si__names' }, [ h( 'p', { class: 'tcc-si__muted' }, [ 'Loading…' ] ) ] );
-			show( head( 'Find your name', stepAsk ), search, list, h( 'p', { class: 'tcc-si__foot' }, [ 'Can’t find yourself? ', h( 'button', { type: 'button', class: 'tcc-si__link', onclick: function () { stepForm( 0 ); } }, [ 'Sign up as new' ] ) ] ) );
+			show( head( typeof title === 'string' ? title : 'Find your name', stepAsk ), search, list, h( 'p', { class: 'tcc-si__foot' }, [ 'Can’t find yourself? ', h( 'button', { type: 'button', class: 'tcc-si__link', onclick: function () { stepForm( 0 ); } }, [ 'Sign up as new' ] ) ] ) );
 			search.focus();
 			var groups = null;
 			function paint() {
@@ -74,7 +80,7 @@
 					any = true;
 					var grp = h( 'div', { class: 'tcc-si__group' }, [ h( 'span', { class: 'tcc-si__eyebrow' }, [ g ] ) ] );
 					var grid = h( 'div', { class: 'tcc-si__grid' } );
-					people.forEach( function ( p ) { grid.appendChild( h( 'button', { type: 'button', class: 'tcc-si__name' + ( p.on ? ' is-on' : '' ), onclick: function () { stepForm( p.id ); } }, [ p.name, p.on ? h( 'small', {}, [ 'on this year’s list' ] ) : null ] ) ); } );
+					people.forEach( function ( p ) { grid.appendChild( h( 'button', { type: 'button', class: 'tcc-si__name' + ( p.on ? ' is-on' : '' ), onclick: function () { pick( p ); } }, [ p.name, p.on ? h( 'small', {}, [ 'on this year’s list' ] ) : null ] ) ); } );
 					grp.appendChild( grid ); list.appendChild( grp );
 				} );
 				if ( ! any ) { list.appendChild( h( 'p', { class: 'tcc-si__muted' }, [ 'Nobody by that name yet — use “Sign up as new” below.' ] ) ); }
@@ -175,7 +181,7 @@
 			);
 		}
 
-		if ( start === 'find' ) { stepFind(); } else if ( start === 'new' ) { stepForm( 0 ); } else { stepAsk(); }
+		if ( start === 'details' && cfg.who ) { stepForm( cfg.who.id ); } else if ( start === 'switch' ) { stepFind( 'Who’s using this device?' ); } else if ( start === 'find' ) { stepFind(); } else if ( start === 'new' ) { stepForm( 0 ); } else { stepAsk(); }
 		panel.addEventListener( 'keydown', function ( e ) { if ( e.key === 'Escape' ) { close( null ); } } );
 	}
 
