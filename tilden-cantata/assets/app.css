@@ -83,8 +83,9 @@ body.tcc-app-on { overflow: hidden; }
 .ta-note__t { font-family: var(--display); font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--dim); font-variant-numeric: tabular-nums; }
 .ta-note__in { margin-left: auto; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--gold); font-variant-numeric: tabular-nums; }
 .ta-note__text { font-size: 19px; line-height: 1.4; color: var(--dim); transition: font-size 0.3s, color 0.3s; }
-.ta-note__x { flex-shrink: 0; width: 36px; height: 36px; margin: 10px 4px 0 0; border: 0; border-radius: 50%; background: transparent; color: var(--faint); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
-.ta-note__x svg { width: 16px; height: 16px; }
+.ta-note__x { flex-shrink: 0; width: 48px; height: 48px; margin: 4px 0 0 0; border: 0; border-radius: 50%; background: transparent; color: var(--dim); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; opacity: 0.55; transition: opacity 0.2s, background 0.2s; }
+.ta-note__x svg { width: 19px; height: 19px; }
+.ta-note__x:active { background: rgba(255, 255, 255, 0.1); }
 .ta-note:hover .ta-note__x, .ta-note.is-on .ta-note__x { opacity: 1; }
 .ta-note--cue .ta-note__who { color: rgba(210, 157, 51, 0.8); }
 .ta-note--mine .ta-note__who { color: rgba(143, 196, 143, 0.85); }
@@ -200,6 +201,10 @@ body.tcc-app-on { overflow: hidden; }
 .ta-checks small { color: var(--faint); }
 .ta-noteform__go { display: flex; align-items: center; gap: 14px; }
 .ta-noteform__go .ta-fine { margin: 0; }
+.ta-noteform__go .ta-btn--del { margin-left: auto; }
+.ta-btn--del { background: transparent; border-color: rgba(255, 156, 138, 0.45); color: var(--red) !important; }
+.ta-btn--del.is-armed { background: var(--red); border-color: var(--red); color: #2a0f0a !important; }
+.ta-at__now { align-self: center; min-height: 44px; font-size: 16px; }
 
 /* tablets and computers: the song list stays open beside the stream */
 @media (min-width: 900px) {

@@ -33,6 +33,7 @@
 		prev: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5v14l-10-7zM5 5h2.2v14H5z"/></svg>',
 		next: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5v14l10-7zM16.8 5H19v14h-2.2z"/></svg>',
 		back5: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/></svg>',
+		edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
 		x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
 		down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>',
 		list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1" fill="currentColor"/><circle cx="3.5" cy="12" r="1" fill="currentColor"/><circle cx="3.5" cy="18" r="1" fill="currentColor"/></svg>',
@@ -240,7 +241,7 @@
 						h( 'span', { class: 'ta-note__meta' }, [ h( 'span', { class: 'ta-note__t' }, [ fmt( c.t ) ] ), h( 'span', { class: 'ta-note__who' }, [ c.kind === 'cue' ? ( c.parts.length && c.parts.length < 4 ? 'Director · ' + c.parts.map( shortLabel ).join( ', ' ) : 'Director' ) : 'Your note' ] ), h( 'span', { class: 'ta-note__in' } ) ] ),
 						h( 'span', { class: 'ta-note__text' }, [ c.text ] )
 					] ),
-					canX ? h( 'button', { type: 'button', class: 'ta-note__x', 'aria-label': 'Remove this note', html: I.x, onclick: function () { removeNote( c ); } } ) : null
+					canX ? h( 'button', { type: 'button', class: 'ta-note__x', 'aria-label': 'Edit this note', title: 'Edit', html: I.edit, onclick: function () { openNote( c ); } } ) : null
 				] ) );
 			} );
 			s.appendChild( ol );
@@ -748,53 +749,85 @@
 		window.tccSignin.open( cfg, function () { loadMe( true ); } );
 	}
 
-	/* ---------- notes: write one ---------- */
-	function openNote() {
+	/* ---------- notes: write one, or change one ---------- */
+	function openNote( edit ) {
 		var t = current();
 		if ( ! t ) { toast( 'Play a song first.' ); return; }
 		if ( ! S.list.now || t.song < 0 ) { toast( 'Notes are for this year’s songs.' ); return; }
 		if ( ! D.canEdit && ! S.who ) { signIn(); return; }
-		var at = Math.max( 0, audio.currentTime - ( audio.paused ? 0 : 0.8 ) ); // people tap a beat late
-		var kind = D.canEdit ? 'cue' : 'mine';
+		edit = edit && edit.id ? edit : null;
+		var at = edit ? +edit.t : Math.max( 0, audio.currentTime - ( audio.paused ? 0 : 0.8 ) ); // people tap a beat late
+		var kind = edit ? edit.kind : ( D.canEdit ? 'cue' : 'mine' );
 		var when = h( 'b', { class: 'ta-at__t' }, [ fmt( at ) ] );
-		function nudge( d ) { at = Math.max( 0, Math.min( audio.duration || at + 1, at + d ) ); when.textContent = fmt( at ); }
+		function setAt( v ) { at = Math.max( 0, Math.min( audio.duration || v + 1, v ) ); when.textContent = fmt( at ); }
+		function nudge( d ) { setAt( at + d ); }
 		var input = h( 'textarea', { class: 'ta-input', rows: '2', maxlength: '200', placeholder: kind === 'cue' ? 'e.g. m. 42 — altos take the lower note here' : 'e.g. breathe before the high G' } );
+		if ( edit ) { input.value = edit.text; }
 		var kindRow = null, partsRow = null;
-		if ( D.canEdit ) {
+		if ( D.canEdit && kind !== 'mine' || D.canEdit && ! edit ) {
 			var asMine = false;
-			kindRow = h( 'div', { class: 'ta-seg' }, [
+			kindRow = edit ? null : h( 'div', { class: 'ta-seg' }, [
 				h( 'button', { type: 'button', class: 'ta-seg__b is-on', onclick: function ( e ) { asMine = false; seg( e.currentTarget ); partsRow.hidden = false; } }, [ 'For the singers' ] ),
 				S.who ? h( 'button', { type: 'button', class: 'ta-seg__b', onclick: function ( e ) { asMine = true; seg( e.currentTarget ); partsRow.hidden = true; } }, [ 'Just for me' ] ) : null
 			] );
 			partsRow = h( 'div', { class: 'ta-checks' }, [ h( 'span', {}, [ 'Who sees it:' ] ) ] );
-			VOICE.forEach( function ( p ) { partsRow.appendChild( h( 'label', {}, [ h( 'input', { type: 'checkbox', value: p, checked: p === countPart() ? true : null } ), ' ' + label( p ) ] ) ); } );
+			VOICE.forEach( function ( p ) {
+				var on = edit ? ( edit.parts || [] ).indexOf( p ) !== -1 : p === countPart();
+				partsRow.appendChild( h( 'label', {}, [ h( 'input', { type: 'checkbox', value: p, checked: on ? true : null } ), ' ' + label( p ) ] ) );
+			} );
 			partsRow.appendChild( h( 'small', {}, [ 'none ticked = everyone' ] ) );
-			kind = function () { return asMine ? 'mine' : 'cue'; };
+			if ( ! edit ) { kind = function () { return asMine ? 'mine' : 'cue'; }; }
 		}
 		function seg( b ) { b.parentNode.querySelectorAll( '.ta-seg__b' ).forEach( function ( x ) { x.classList.toggle( 'is-on', x === b ); } ); }
+		var atRow = h( 'div', { class: 'ta-at' }, [ h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'One second earlier', onclick: function () { nudge( -1 ); } }, [ '−1s' ] ), h( 'span', {}, [ 'at ', when ] ), h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'One second later', onclick: function () { nudge( 1 ); } }, [ '+1s' ] ) ] );
+		var nowBtn = edit ? h( 'button', { type: 'button', class: 'ta-link ta-at__now', onclick: function () { setAt( audio.currentTime ); } }, [ 'Move it to where the music is now' ] ) : null;
+		var delBtn = null, armed = false;
+		if ( edit ) {
+			delBtn = h( 'button', { type: 'button', class: 'ta-btn ta-btn--del', onclick: function () {
+				if ( ! armed ) { armed = true; delBtn.textContent = 'Tap again to delete'; delBtn.classList.add( 'is-armed' ); setTimeout( function () { if ( armed ) { armed = false; delBtn.textContent = 'Delete note'; delBtn.classList.remove( 'is-armed' ); } }, 4000 ); return; }
+				removeNote( edit ); closeSheet();
+			} }, [ 'Delete note' ] );
+		}
 		var body = h( 'div', { class: 'ta-noteform' }, [
-			h( 'div', { class: 'ta-at' }, [ h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'One second earlier', onclick: function () { nudge( -1 ); } }, [ '−1s' ] ), h( 'span', {}, [ 'at ', when ] ), h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'One second later', onclick: function () { nudge( 1 ); } }, [ '+1s' ] ) ] ),
+			atRow, nowBtn,
 			kindRow, input, partsRow,
-			h( 'div', { class: 'ta-noteform__go' }, [ h( 'button', { type: 'button', class: 'ta-btn ta-btn--gold', onclick: save }, [ 'Save note' ] ), h( 'span', { class: 'ta-fine' }, [ audio.paused ? '' : 'The music keeps playing.' ] ) ] )
+			h( 'div', { class: 'ta-noteform__go' }, [ h( 'button', { type: 'button', class: 'ta-btn ta-btn--gold', onclick: save }, [ edit ? 'Save changes' : 'Save note' ] ), edit ? delBtn : h( 'span', { class: 'ta-fine' }, [ audio.paused ? '' : 'The music keeps playing.' ] ) ] )
 		] );
 		input.addEventListener( 'keydown', function ( e ) { if ( e.key === 'Enter' && ! e.shiftKey ) { e.preventDefault(); save(); } } );
-		openSheet( D.canEdit ? 'New note' : 'Note to self', body );
+		openSheet( edit ? ( kind === 'cue' ? 'Edit director note' : 'Edit your note' ) : D.canEdit ? 'New note' : 'Note to self', body );
+		if ( edit ) { setTimeout( function () { try { input.focus(); input.setSelectionRange( input.value.length, input.value.length ); } catch ( e ) {} }, 60 ); }
 		function save() {
 			var text = input.value.trim(); if ( ! text ) { input.focus(); return; }
 			var k = typeof kind === 'function' ? kind() : kind;
+			var done = edit ? 'Note updated' : 'Note saved at ' + fmt( at );
 			if ( k === 'cue' ) {
 				var parts = Array.prototype.map.call( partsRow.querySelectorAll( 'input:checked' ), function ( c ) { return c.value; } );
-				api( 'cue', 'POST', { cantata: D.cantata.id, song: t.song, t: at, text: text, parts: parts } ).then( function ( r ) { if ( r && r.cue ) { D.cues.push( r.cue ); paintStream(); toast( 'Note saved at ' + fmt( at ) ); } else { toast( 'Couldn’t save — try again.' ); } } );
+				var req = { cantata: D.cantata.id, song: t.song, t: at, text: text, parts: parts };
+				if ( edit ) { req.id = edit.id; }
+				api( 'cue', 'POST', req ).then( function ( r ) {
+					if ( r && r.cue ) {
+						if ( edit ) { D.cues = D.cues.map( function ( x ) { return x.id === r.cue.id ? r.cue : x; } ); } else { D.cues.push( r.cue ); }
+						paintStream(); toast( done );
+					} else { toast( 'Couldn’t save — try again.' ); }
+				} ).catch( function () { toast( 'Couldn’t save — try again.' ); } );
 			} else {
-				api( 'note', 'POST', { cantata: D.cantata.id, song: t.song, t: at, text: text } ).then( function ( r ) { if ( r && r.ok ) { S.notes.push( { id: r.id, song: t.song, t: at, text: text } ); paintStream(); toast( 'Note saved at ' + fmt( at ) ); } else { toast( 'Couldn’t save — try again.' ); } } );
+				var body2 = { cantata: D.cantata.id, song: t.song, t: at, text: text };
+				if ( edit ) { body2.id = edit.id; }
+				api( 'note', 'POST', body2 ).then( function ( r ) {
+					if ( r && r.ok ) {
+						if ( edit ) { S.notes.forEach( function ( n ) { if ( String( n.id ) === String( edit.id ) ) { n.t = at; n.text = text; } } ); }
+						else { S.notes.push( { id: r.id, song: t.song, t: at, text: text } ); }
+						paintStream(); toast( done );
+					} else { toast( 'Couldn’t save — try again.' ); }
+				} ).catch( function () { toast( 'Couldn’t save — try again.' ); } );
 			}
 			closeSheet();
 		}
 	}
 	function removeNote( c ) {
-		if ( ! window.confirm( 'Remove this note?' ) ) { return; }
-		if ( c.kind === 'cue' ) { api( 'cue', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { D.cues = D.cues.filter( function ( x ) { return x.id !== c.id; } ); paintStream(); } ); }
-		else { api( 'note', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { S.notes = S.notes.filter( function ( x ) { return x.id !== c.id; } ); paintStream(); } ); }
+		var fail = function () { toast( 'Couldn’t delete — try again.' ); };
+		if ( c.kind === 'cue' ) { api( 'cue', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { D.cues = D.cues.filter( function ( x ) { return x.id !== c.id; } ); paintStream(); toast( 'Note deleted' ); } ).catch( fail ); }
+		else { api( 'note', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { S.notes = S.notes.filter( function ( x ) { return String( x.id ) !== String( c.id ); } ); paintStream(); toast( 'Note deleted' ); } ).catch( fail ); }
 	}
 
 	/* ---------- playback ---------- */

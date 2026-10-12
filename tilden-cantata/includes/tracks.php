@@ -315,6 +315,11 @@ add_action( 'rest_api_init', function () {
 			if ( ! $who || $text === '' ) {
 				return [ 'ok' => false ];
 			}
+			$id = (int) $r->get_param( 'id' );
+			if ( $id ) { // an edit: only ever the person's own note
+				$wpdb->update( tcc_pnotes_table(), [ 't' => max( 0, (float) $r->get_param( 't' ) ), 'text' => $text ], [ 'id' => $id, 'person_id' => $who ] );
+				return [ 'ok' => true, 'id' => $id ];
+			}
 			$wpdb->insert( tcc_pnotes_table(), [ 'person_id' => $who, 'cantata_id' => $cantata, 'song' => (int) $r->get_param( 'song' ), 't' => (float) $r->get_param( 't' ), 'text' => $text, 'created' => current_time( 'mysql' ) ] );
 			return [ 'ok' => true, 'id' => (int) $wpdb->insert_id ];
 		} ],
@@ -338,6 +343,23 @@ add_action( 'rest_api_init', function () {
 			}
 			$cues = tcc_cues( $cantata );
 			$parts = array_values( array_intersect( array_keys( tcc_track_parts() ), (array) $r->get_param( 'parts' ) ) );
+			$id = (string) $r->get_param( 'id' );
+			if ( $id !== '' ) { // an edit: same id and song; new time, words and parts
+				foreach ( $cues as &$c ) {
+					if ( $c['id'] === $id ) {
+						$c['t'] = round( max( 0, (float) $r->get_param( 't' ) ), 1 );
+						$c['text'] = $text;
+						$c['parts'] = $parts;
+						$cue = $c;
+					}
+				}
+				unset( $c );
+				if ( empty( $cue ) ) {
+					return new WP_Error( 'gone', 'That note no longer exists', [ 'status' => 404 ] );
+				}
+				update_post_meta( $cantata, '_tcc_cues', $cues );
+				return [ 'ok' => true, 'cue' => $cue ];
+			}
 			$cue = [ 'id' => wp_generate_password( 8, false ), 'song' => (int) $r->get_param( 'song' ), 't' => round( (float) $r->get_param( 't' ), 1 ), 'text' => $text, 'parts' => $parts ];
 			$cues[] = $cue;
 			update_post_meta( $cantata, '_tcc_cues', $cues );
