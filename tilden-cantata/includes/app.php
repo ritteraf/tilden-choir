@@ -100,7 +100,7 @@ add_action( 'wp', function () {
 	function norm( p ) { return ( p.replace( /\/+$/, '' ) || '/' ) + '/'; }
 	var inside = C.members.map( norm );
 	function bar() {
-		if ( C.isHub || C.noBar || d.querySelector( '.tcc-appbar' ) || ! d.body ) { return; }
+		if ( C.isHub || C.noBar || ! d.body || d.querySelector( '.tcc-appbar, .tcc-phead__back' ) ) { return; }
 		var b = d.createElement( 'div' ); b.className = 'tcc-appbar';
 		var a = d.createElement( 'a' ); a.className = 'tcc-appbar__back'; a.href = C.hub;
 		a.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg><span>Backstage</span>';
