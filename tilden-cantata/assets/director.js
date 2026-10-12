@@ -75,7 +75,8 @@
 
 		/* getting ready for the next rehearsal */
 		if ( W.current && D.next && D.next.songs && D.next.songs.length ) {
-			var list = D.next.full ? D.songs.map( function ( t, i ) { return i; } ) : D.next.songs;
+			/* a whole-work rehearsal: just the songs marked for focus (the grid below has the rest) */
+			var list = D.next.full ? ( D.next.focus || [] ) : D.next.songs;
 			var rows = h( 'div', { class: 'tcc-dir__ready' } );
 			list.forEach( function ( i ) {
 				var c = R.cells[ i ]; if ( ! c ) { return; }
@@ -84,7 +85,9 @@
 					h( 'div', { class: 'tcc-dir__ready-parts' }, SECT.map( function ( s ) { return h( 'div', { class: 'tcc-dir__ready-p' }, [ h( 'span', { class: 'tcc-dir__ready-k' }, [ s.label ] ), cell( c[ s.id ], s.size ) ] ); } ) )
 				] ) );
 			} );
-			root.appendChild( sec( 'Getting ready for ' + ( D.next.date || 'the next rehearsal' ), D.next.full ? 'The whole work is planned.' : 'The songs planned for it, and how each section is doing on them this week.', [ rows ] ) );
+			root.appendChild( sec( 'Getting ready for ' + ( D.next.date || 'the next rehearsal' ),
+				D.next.full ? ( list.length ? 'The whole work is planned; these are the songs marked for focus. Every song is in the grid below.' : 'The whole work is planned — every song is in the grid below. Mark songs for ★ focus on the rehearsal to see them here.' ) : 'The songs planned for it, and how each section is doing on them this week.',
+				list.length ? [ rows ] : [] ) );
 		}
 
 		/* help requests */
