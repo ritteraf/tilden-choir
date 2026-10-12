@@ -123,10 +123,10 @@
 		ui.close = h( 'a', { class: 'ta-icon', href: D.hub, 'aria-label': 'Back to Backstage', html: I.down, onclick: function () { flushPlay(); } } );
 		ui.eyebrow = h( 'span', { class: 'ta-top__eyebrow' } );
 		ui.ttl = h( 'span', { class: 'ta-top__title' }, [ 'Practice' ] );
-		/* phones in Music view: the note in the top bar gets a pencil while it shows, if it's one you can change */
-		ui.ttlEd = h( 'button', { type: 'button', class: 'ta-icon ta-top__ed', hidden: true, 'aria-label': 'Edit this note', title: 'Edit', html: I.edit, onclick: function () { if ( ui.ttlEd._c ) { openNote( ui.ttlEd._c ); } } } );
+		/* phones in Music view: the current note drops down from under the header, the full width of the screen */
+		ui.drop = h( 'div', { class: 'ta-drop', 'aria-live': 'polite' } );
 		ui.partBtn = h( 'button', { type: 'button', class: 'ta-chip', onclick: openParts, 'aria-haspopup': 'dialog' } );
-		ui.app.appendChild( h( 'header', { class: 'ta-top' }, [ ui.close, h( 'button', { type: 'button', class: 'ta-top__mid', onclick: function () { if ( ui.ttl.classList.contains( 'is-note' ) ) { setView( 'notes' ); } else { openSongs(); } }, 'aria-haspopup': 'dialog' }, [ ui.eyebrow, ui.ttl ] ), h( 'div', { class: 'ta-top__end' }, [ ui.ttlEd, ui.partBtn ] ) ] ) );
+		ui.app.appendChild( h( 'header', { class: 'ta-top' }, [ ui.close, h( 'button', { type: 'button', class: 'ta-top__mid', onclick: openSongs, 'aria-haspopup': 'dialog' }, [ ui.eyebrow, ui.ttl ] ), h( 'div', { class: 'ta-top__end' }, [ ui.partBtn ] ) ] ) );
 		/* stage */
 		ui.stream = h( 'div', { class: 'ta-stream', tabindex: '-1' } );
 		ui.followBtn = h( 'button', { type: 'button', class: 'ta-follow', hidden: true, onclick: function () { setFollow( true ); scrollToActive( true ); } }, [ 'Back to now' ] );
@@ -181,7 +181,7 @@
 	function paintTop() {
 		var t = current();
 		ui.eyebrow.textContent = ( S.list ? ( S.list.now ? '' : S.list.cantata.year + ' · ' ) : '' ) + ( S.list ? S.list.cantata.title : D.cantata.title );
-		ui.ttl.className = 'ta-top__title'; ui.ttl.removeAttribute( 'data-n' ); if ( ui.ttlEd ) { ui.ttlEd.hidden = true; ui.ttlEd._c = null; }
+		ui.ttl.className = 'ta-top__title';
 		ui.ttl.textContent = t ? ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title : 'Choose a song';
 		ui.partBtn.innerHTML = '';
 		ui.partBtn.appendChild( h( 'span', {}, [ S.alt && altTrack() ? 'Full choir' : shortLabel( S.list ? S.list.part : S.part ) ] ) );
@@ -384,6 +384,7 @@
 		ui.pagesIn = h( 'div', { class: 'ta-pages__in' } );
 		ui.pages.appendChild( ui.pagesIn );
 		ui.music.appendChild( ui.pages );
+		ui.music.appendChild( ui.drop );
 		ui.music.appendChild( ui.pageNow );
 		if ( ui.recBtn ) { ui.music.appendChild( ui.recBtn ); }
 		M.pdf.getPage( 1 ).then( function ( pg ) { var v = pg.getViewport( { scale: 1 } ); M.aspect = v.width / v.height; M.shown = ''; tickMusic( true ); } );
@@ -598,20 +599,23 @@
 	}
 	/* phones: the note that's happening now takes the song title's place in the top bar for a few seconds */
 	function topNote() {
-		if ( ! ui.ttl ) { return; }
+		if ( ! ui.drop ) { return; }
 		var narrow = window.innerWidth < 700;
 		var c = S.view === 'music' && narrow && S.active >= 0 ? CUES[ S.active ] : null;
-		var now = audio.currentTime || 0;
-		if ( c ) {
-			if ( ui.ttl.getAttribute( 'data-n' ) !== String( S.active ) ) {
-				ui.ttl.innerHTML = ''; var g = gist( c, 'ta-gist ta-gist--top' ); if ( g ) { ui.ttl.appendChild( g ); } ui.ttl.appendChild( document.createTextNode( c.text ) ); ui.ttl.setAttribute( 'data-n', String( S.active ) );
-				ui.ttl.className = 'ta-top__title is-note' + ( c.kind === 'mine' ? ' is-mine' : '' );
-				ui.ttlEd._c = c; ui.ttlEd.hidden = ! canEditNote( c );
-				ui.viewBtn.classList.remove( 'is-ping' ); void ui.viewBtn.offsetWidth; ui.viewBtn.classList.add( 'is-ping' );
-			}
-		} else if ( ui.ttl.classList.contains( 'is-note' ) ) {
-			ui.ttl.className = 'ta-top__title'; ui.ttl.removeAttribute( 'data-n' ); ui.ttlEd.hidden = true; ui.ttlEd._c = null; paintTop();
+		if ( ! c ) { ui.drop.classList.remove( 'is-in', 'is-open' ); ui.drop._k = null; return; }
+		var k = S.active + ':' + c.id + ':' + c.text;
+		if ( ui.drop._k !== k ) {
+			ui.drop._k = k;
+			ui.drop.innerHTML = '';
+			ui.drop.className = 'ta-drop ta-drop--' + c.kind + ( ui.drop.classList.contains( 'is-in' ) ? ' is-in' : '' );
+			ui.drop.appendChild( h( 'button', { type: 'button', class: 'ta-drop__go', 'aria-label': 'Show the whole note', onclick: function () { ui.drop.classList.toggle( 'is-open' ); } }, [
+				gist( c, 'ta-gist ta-drop__gist' ),
+				h( 'span', { class: 'ta-drop__t' }, [ c.text ] )
+			] ) );
+			if ( canEditNote( c ) ) { ui.drop.appendChild( h( 'button', { type: 'button', class: 'ta-drop__ed', 'aria-label': 'Edit this note', title: 'Edit', html: I.edit, onclick: function () { openNote( c ); } } ) ); }
+			ui.viewBtn.classList.remove( 'is-ping' ); void ui.viewBtn.offsetWidth; ui.viewBtn.classList.add( 'is-ping' );
 		}
+		if ( ! ui.drop.classList.contains( 'is-in' ) ) { void ui.drop.offsetWidth; ui.drop.classList.add( 'is-in' ); }
 	}
 	/* the current note, as one line above the controls */
 	/*
