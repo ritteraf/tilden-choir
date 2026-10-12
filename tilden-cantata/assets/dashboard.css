@@ -71,7 +71,13 @@
 .tcc-db__ios svg { width: 16px; height: 16px; color: #0a7aff; }
 .tcc-db__a2hs-go { display: flex; align-items: center; gap: 16px; margin-top: 10px; font-size: 14px; }
 
-/* coming up: the next date opened up, then plain rows */
+/* coming up: just the next date, a required-date warning when needed, and the way to the full schedule */
+.tcc-db__reqnext { margin: 0 0 14px 82px; padding: 10px 14px; border-radius: 10px; background: rgba(156, 43, 26, 0.07); font-size: 15px; color: var(--tcc-ink); }
+.tcc-db__reqnext b { color: var(--tcc-red); }
+.tcc-db__schedbtn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; margin-left: 82px; padding: 11px 20px 11px 16px; border-radius: 26px; border: 1.5px solid var(--tcc-ink); color: var(--tcc-ink); font-size: 16px; font-weight: 700; text-decoration: none; }
+.tcc-db__schedbtn svg { width: 20px; height: 20px; color: var(--tcc-red); }
+.tcc-db__schedbtn:hover { background: var(--tcc-ink); color: #fff; }
+.tcc-db__schedbtn:hover svg { color: #fff; }
 .tcc-db__evt { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 18px; padding: 4px 0 18px; }
 .tcc-db__day { display: flex; flex-direction: column; align-items: center; padding: 8px 0 9px; border: 1.5px solid var(--line); border-radius: 12px; line-height: 1; align-self: start; background: var(--tcc-paper); }
 .tcc-db__day span { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tcc-ash); }
@@ -179,6 +185,7 @@ a.tcc-db__tile:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba
 	.tcc-db__hello-meta .tcc-db__hello-count { flex-basis: 100%; margin-top: 2px; }
 	.tcc-db__hello-meta .tcc-db__hello-count::before { content: none !important; }
 	.tcc-db__evt { grid-template-columns: 54px minmax(0, 1fr); gap: 14px; }
+	.tcc-db__reqnext, .tcc-db__schedbtn { margin-left: 68px; }
 	.tcc-db__day b { font-size: 26px; }
 	.tcc-db__evt-t { font-size: 22px; }
 }

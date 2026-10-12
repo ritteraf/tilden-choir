@@ -190,25 +190,15 @@
 				r.note ? h( 'blockquote', { class: 'tcc-db__note' }, [ h( 'span', { class: 'tcc-db__note-k' }, [ 'From the director' ] ), h( 'div', { html: r.note } ) ] ) : null
 			] )
 		] );
-		var ol = h( 'ol', { class: 'tcc-db__dates' } );
-		list.slice( 1, 5 ).forEach( function ( x ) {
-			var rq = personal ? requiredOfMe( x ) : !! ( x.must && x.must.length );
-			var af = x.after.filter( function ( a ) { return personal && forMe( a.who ); } );
-			var what = x.type === 'performance' ? 'Performance' : x.full ? 'Full run-through' : x.title;
-			ol.appendChild( h( 'li', { class: 'tcc-db__date' + ( rq ? ' is-req' : '' ) + ( x.type === 'performance' ? ' is-perf' : '' ) }, [
-				h( 'span', { class: 'tcc-db__date-d' }, [ h( 'b', {}, [ x.day ] ), h( 'span', {}, [ x.mon ] ) ] ),
-				h( 'span', { class: 'tcc-db__date-t' }, [
-					h( 'b', {}, [ x.dow + ( x.time ? ' · ' + x.time : '' ) ] ),
-					h( 'span', {}, [ what, af.length ? ' + ' + af.map( function ( a ) { return a.what; } ).join( ', ' ) : '' ] )
-				] ),
-				rq ? h( 'span', { class: 'tcc-db__date-req' }, [ 'Required' ] ) : personal ? null : pills( x.who )
-			] ) );
-		} );
+		/* only the next date lives here; the one exception is a later date that's required for you */
+		var reqLater = null;
+		if ( ! req ) { list.slice( 1 ).some( function ( x ) { if ( personal ? requiredOfMe( x ) : ( x.must && x.must.length ) ) { reqLater = x; return true; } return false; } ); }
 		return h( 'section', { class: 'tcc-db__sec' }, [
-			eyebrow( 'Coming up', W.urls.schedule ? h( 'a', { class: 'tcc-db__eyebrow-link', href: W.urls.schedule }, [ 'Full schedule' ] ) : null ),
+			eyebrow( 'Coming up' ),
 			skipped || null,
 			first,
-			ol.children.length ? ol : null
+			reqLater ? h( 'p', { class: 'tcc-db__reqnext' }, [ h( 'b', {}, [ 'Next required: ' ] ), reqLater.dow + ' ' + reqLater.mon + ' ' + reqLater.day + ' · ' + ( reqLater.type === 'performance' ? 'Performance' : reqLater.full ? 'Full run-through' : reqLater.title ) ] ) : null,
+			W.urls.schedule ? h( 'a', { class: 'tcc-db__schedbtn', href: W.urls.schedule }, [ h( 'span', { html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>' } ), 'Full schedule' ] ) : null
 		] );
 	}
 
