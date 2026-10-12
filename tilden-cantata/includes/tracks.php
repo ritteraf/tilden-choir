@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  *  - The front end is the tilden/part-tracks block: a purpose-built player.
  * ===================================================================== */
 
-define( 'TCC_PRACTICE_DB', '1' );
+define( 'TCC_PRACTICE_DB', '2' );
 
 /** The playlists a cantata can have. */
 function tcc_track_parts(): array {
@@ -226,6 +226,15 @@ function tcc_pnotes_table(): string {
 	global $wpdb;
 	return $wpdb->prefix . 'tcc_pnotes';
 }
+/** A dated log of practice: listening sessions, feedback changes, loops and rewinds. It is what lets the director see each week between rehearsals, and where in a song people go back. */
+function tcc_events_table(): string {
+	global $wpdb;
+	return $wpdb->prefix . 'tcc_events';
+}
+function tcc_log_event( int $who, int $cantata, int $song, string $part, string $kind, float $a = 0, float $b = 0, string $v = '' ): void {
+	global $wpdb;
+	$wpdb->insert( tcc_events_table(), [ 'person_id' => $who, 'cantata_id' => $cantata, 'song' => $song, 'part' => substr( $part, 0, 20 ), 'kind' => $kind, 'a' => $a, 'b' => $b, 'v' => substr( $v, 0, 12 ), 'created' => current_time( 'mysql' ) ] );
+}
 
 add_action( 'plugins_loaded', function () {
 	if ( get_option( 'tcc_practice_db' ) === TCC_PRACTICE_DB ) {
@@ -258,6 +267,21 @@ add_action( 'plugins_loaded', function () {
 		created datetime NOT NULL,
 		PRIMARY KEY  (id),
 		KEY who (person_id, cantata_id, song)
+	) $charset;" );
+	dbDelta( 'CREATE TABLE ' . tcc_events_table() . " (
+		id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+		person_id bigint(20) unsigned NOT NULL DEFAULT 0,
+		cantata_id bigint(20) unsigned NOT NULL,
+		song int(11) NOT NULL DEFAULT -1,
+		part varchar(20) NOT NULL DEFAULT '',
+		kind varchar(10) NOT NULL DEFAULT '',
+		a float NOT NULL DEFAULT 0,
+		b float NOT NULL DEFAULT 0,
+		v varchar(12) NOT NULL DEFAULT '',
+		created datetime NOT NULL,
+		PRIMARY KEY  (id),
+		KEY cw (cantata_id, created),
+		KEY cs (cantata_id, song, kind)
 	) $charset;" );
 	update_option( 'tcc_practice_db', TCC_PRACTICE_DB );
 } );
@@ -345,6 +369,7 @@ add_action( 'rest_api_init', function () {
 		$sec  = min( 3600, max( 0, (int) $r->get_param( 'seconds' ) ) ); $done = (int) (bool) $r->get_param( 'complete' );
 		$wpdb->query( $wpdb->prepare( 'INSERT INTO ' . tcc_practice_table() . ' (person_id, cantata_id, song, part, plays, seconds, last_played) VALUES (%d, %d, %d, %s, %d, %d, %s)
 			ON DUPLICATE KEY UPDATE plays = plays + VALUES(plays), seconds = seconds + VALUES(seconds), last_played = VALUES(last_played)', $who, $cantata, $song, $part, $done, $sec, current_time( 'mysql' ) ) );
+		if ( $sec > 0 || $done ) { tcc_log_event( $who, $cantata, $song, $part, 'listen', 0, $sec, $done ? 'done' : '' ); }
 		return [ 'ok' => true ];
 	} ] );
 
@@ -357,7 +382,24 @@ add_action( 'rest_api_init', function () {
 		$song = (int) $r->get_param( 'song' ); $part = sanitize_key( $r->get_param( 'part' ) );
 		$flag = in_array( $r->get_param( 'flag' ), [ 'ok', 'working', 'help', '' ], true ) ? $r->get_param( 'flag' ) : '';
 		$wpdb->query( $wpdb->prepare( 'INSERT INTO ' . tcc_practice_table() . ' (person_id, cantata_id, song, part, flag) VALUES (%d, %d, %d, %s, %s) ON DUPLICATE KEY UPDATE flag = VALUES(flag)', $who, $cantata, $song, $part, $flag ) );
+		tcc_log_event( $who, $cantata, $song, $part, 'flag', 0, 0, $flag );
 		return [ 'ok' => true, 'flag' => $flag ];
+	} ] );
+
+	/* where people go back: loops (each time round), rewinds and backward scrubs, sent in small batches */
+	register_rest_route( $ns, '/heat', [ 'methods' => 'POST', 'permission_callback' => $open, 'callback' => function ( WP_REST_Request $r ) {
+		$cantata = tcc_rest_cantata( $r ); $who = (int) tcc_who();
+		$items = $r->get_param( 'items' );
+		if ( is_string( $items ) ) { $items = json_decode( $items, true ); }
+		$n = 0;
+		foreach ( array_slice( (array) $items, 0, 80 ) as $it ) {
+			if ( ! is_array( $it ) || ! in_array( $it['kind'] ?? '', [ 'loop', 'back', 'seek' ], true ) ) { continue; }
+			$a = round( max( 0, min( 3600, (float) ( $it['a'] ?? 0 ) ) ), 1 ); $b = round( max( 0, min( 3600, (float) ( $it['b'] ?? 0 ) ) ), 1 );
+			if ( $b <= $a || $b - $a > 300 ) { continue; }
+			tcc_log_event( $who, $cantata, (int) ( $it['song'] ?? -1 ), sanitize_key( $it['part'] ?? '' ), $it['kind'], $a, $b );
+			$n++;
+		}
+		return [ 'ok' => true, 'n' => $n ];
 	} ] );
 
 	register_rest_route( $ns, '/note', [

@@ -400,7 +400,7 @@
 		nodes.push( pair );
 		if ( ! isSinger() && W.urls.practice ) { nodes.push( h( 'p', { class: 'tcc-db__skip' }, [ 'Want to hear the music? ', h( 'a', { href: practiceUrl( W.parts.listen && W.parts.listen.count ? 'listen' : '' ) }, [ 'Open the practice app' ] ) ] ) ); }
 
-		nodes.push( h( 'p', { class: 'tcc-db__foot' }, [ 'Signed in as ' + who.name + '. ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ), W.canEdit && W.admin ? ' · ' : '', W.canEdit && W.admin ? h( 'a', { href: W.admin }, [ 'Director: what the choir is practicing' ] ) : null ] ) );
+		nodes.push( h( 'p', { class: 'tcc-db__foot' }, [ 'Signed in as ' + who.name + '. ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ), W.canEdit && W.admin ? ' · ' : '', W.canEdit && W.admin ? h( 'a', { href: W.admin }, [ 'Director: how the cantata is coming' ] ) : null ] ) );
 		show( nodes );
 		paintA2hsLink();
 	}

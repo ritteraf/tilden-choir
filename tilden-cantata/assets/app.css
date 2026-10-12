@@ -374,3 +374,34 @@ body.tcc-app-on { overflow: hidden; }
 .ta-drop__ed svg { width: 19px; height: 19px; }
 @media (min-width: 700px) { .ta-drop { display: none; } }
 @media (prefers-reduced-motion: reduce) { .ta-drop { transition: none; } }
+
+/* ---------- feedback: the dock button shows your mark; the sheet asks with three big choices ---------- */
+.ta-tool--feel b svg { width: 22px; height: 22px; }
+.ta-tool--good b { color: var(--green); }
+.ta-tool--some b { color: var(--gold); }
+.ta-tool--help b { color: var(--red); }
+.ta-feelsheet { display: flex; flex-direction: column; gap: 14px; }
+.ta-feelbig { display: grid; gap: 10px; }
+.ta-feelbig__b { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 10px 18px; border-radius: 14px; border: 2px solid var(--line); background: rgba(255, 255, 255, 0.03); color: var(--ink) !important; text-align: left; cursor: pointer; font: inherit; }
+.ta-feelbig__b:active { transform: scale(0.99); }
+.ta-feelbig__i svg { width: 30px; height: 30px; display: block; }
+.ta-feelbig__t { display: flex; flex-direction: column; gap: 2px; }
+.ta-feelbig__t b { font-size: 19px; }
+.ta-feelbig__t span { font-size: 14px; color: var(--dim); }
+.ta-feelbig__b--good .ta-feelbig__i { color: var(--green); }
+.ta-feelbig__b--some .ta-feelbig__i { color: var(--gold); }
+.ta-feelbig__b--help .ta-feelbig__i { color: var(--red); }
+.ta-feelbig__b--good.is-on { border-color: var(--green); background: rgba(143, 196, 143, 0.12); }
+.ta-feelbig__b--some.is-on { border-color: var(--gold); background: rgba(210, 157, 51, 0.12); }
+.ta-feelbig__b--help.is-on { border-color: var(--red); background: rgba(255, 156, 138, 0.12); }
+.ta-feel__fine { margin: 0; font-size: 13px; line-height: 1.45; }
+.ta-feelask__go { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.ta-feelask__n { font-size: 14px; color: var(--dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ta-feelnotes { border-top: 1px solid var(--line); padding-top: 12px; }
+.ta-feelnotes__k { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+.ta-feelnote { display: flex; align-items: flex-start; border-left: 3px solid rgba(210, 157, 51, 0.6); margin: 0 0 6px; border-radius: 6px; }
+.ta-feelnote--mine { border-left-color: rgba(143, 196, 143, 0.7); }
+.ta-feelnote__go { flex: 1 1 auto; min-width: 0; display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 0; background: transparent; color: var(--ink) !important; font: inherit; text-align: left; cursor: pointer; }
+.ta-feelnote__t { flex-shrink: 0; font-family: var(--display); font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.ta-feelnote__g svg { width: 22px; height: 22px; }
+.ta-feelnote__x { font-size: 16px; line-height: 1.4; }
