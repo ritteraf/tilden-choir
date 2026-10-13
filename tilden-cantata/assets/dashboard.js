@@ -59,16 +59,15 @@
 		if ( song !== undefined && song !== null && song >= 0 ) { u += '#song-' + ( song + 1 ); }
 		return u;
 	}
-	function eyebrow( text, extra ) { return h( 'div', { class: 'tcc-db__eyebrow' }, [ h( 'span', {}, [ text ] ), extra || null ] ); }
 
 	/* ---------- the person ---------- */
 	var me = null, rows = {};
-	function P() { return me.who; }
+	function P() { return me && me.who; }
 	function forMe( who ) {
-		if ( ! who || ! who.length ) { return true; }
+		if ( ! who || ! who.length || ! P() ) { return true; }
 		return who.some( function ( k ) { return P().types.indexOf( k ) !== -1 || ( P().role && k === 'role:' + P().role ); } );
 	}
-	function requiredOfMe( r ) { return !! ( r.must && r.must.length && forMe( r.must ) ); }
+	function requiredOfMe( r ) { return !! ( P() && r.must && r.must.length && forMe( r.must ) ); }
 	function myTrackParts() { var v = W.voice[ P().part ]; return v ? v.tracks.filter( function ( p ) { return W.parts[ p ] && W.parts[ p ].count; } ) : []; }
 	function isSinger() { return P().types.indexOf( 'singers' ) !== -1; }
 	/* the circle is the singer's own mark, nothing else */
@@ -101,33 +100,52 @@
 		window.tccSignin.open( cfg, function () { store( 'ss', 'tcc_browse', null ); load(); }, start );
 	}
 
+	/* ---------- the doors: for a device Backstage doesn't know yet ---------- */
+	var DOOR = {
+		find: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6"/><path d="m16 19 2 2 4-4"/></svg>',
+		add: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h6"/><path d="M19 14v6M16 17h6"/></svg>',
+		look: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+		user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>'
+	};
+	function browse() { store( 'ss', 'tcc_browse', '1' ); route(); window.scrollTo( 0, 0 ); }
+	function door( icon, title, sub, onclick, cls ) {
+		return h( 'button', { type: 'button', class: 'tcc-hm__w tcc-hm__door' + ( cls ? ' ' + cls : '' ), onclick: onclick }, [
+			h( 'span', { class: 'tcc-hm__door-i', html: DOOR[ icon ] } ),
+			h( 'span', { class: 'tcc-hm__door-t' }, [ h( 'b', {}, [ title ] ), h( 'span', {}, [ sub ] ) ] ),
+			h( 'span', { class: 'tcc-hm__door-go', html: SVG.right } )
+		] );
+	}
+	/* the page head for someone Backstage doesn't know: the same greeting spot, with a way to say who you are */
+	function guestHead( title, lede ) {
+		return h( 'header', { class: 'tcc-hm__head tcc-hm__head--wrap' }, [
+			h( 'div', { class: 'tcc-hm__head-t' }, [
+				h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ),
+				h( 'h2', { class: 'tcc-hm__hello' }, [ title ] )
+			] ),
+			h( 'button', { type: 'button', class: 'tcc-hm__me tcc-hm__me--guest', 'aria-label': 'Sign in — who’s practicing?', onclick: openSwitch }, [ h( 'span', { class: 'tcc-hm__av tcc-hm__av--guest', html: DOOR.user } ), h( 'span', { class: 'tcc-hm__me-n' }, [ 'Sign in' ] ) ] ),
+			lede ? h( 'p', { class: 'tcc-hm__lede' }, lede ) : null
+		] );
+	}
+
 	/* an unknown device: three equal doors */
 	function viewChooser() {
-		show( [ h( 'section', { class: 'tcc-dash__choose' }, [
-			h( 'span', { class: 'tcc-dash__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ),
-			h( 'h2', { class: 'tcc-dash__h' }, [ 'Welcome backstage.' ] ),
-			h( 'p', { class: 'tcc-dash__lede' }, [ 'Tell us who you are once on this device and Backstage becomes your page: your rehearsals, your part’s tracks, your notes. It also replaces the paper sign-up sheet.' ] ),
-			h( 'div', { class: 'tcc-dash__doors' }, [
-				h( 'button', { type: 'button', class: 'tcc-dash__door', onclick: function () { signIn( 'find' ); } }, [ h( 'b', {}, [ 'I’ve sung with the choir before' ] ), h( 'span', {}, [ 'Find my name on the list' ] ) ] ),
-				h( 'button', { type: 'button', class: 'tcc-dash__door', onclick: function () { signIn( 'new' ); } }, [ h( 'b', {}, [ 'I’m new this year' ] ), h( 'span', {}, [ 'Sign me up — it takes a minute' ] ) ] ),
-				h( 'button', { type: 'button', class: 'tcc-dash__door tcc-dash__door--quiet', onclick: function () { store( 'ss', 'tcc_browse', '1' ); viewBrowse(); } }, [ h( 'b', {}, [ 'Just browsing for now' ] ), h( 'span', {}, [ 'Have a look around; you can sign in any time' ] ) ] )
-			] )
-		] ) ] );
+		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--doors' }, [
+			door( 'find', 'I’ve sung with the choir before', 'Find my name on the list', function () { signIn( 'find' ); } ),
+			door( 'add', 'I’m new this year', 'Sign me up — it takes a minute', function () { signIn( 'new' ); } ),
+			door( 'look', 'Just browsing for now', 'Have a look around; you can sign in any time', browse, 'is-quiet' )
+		] );
+		show( [ guestHead( 'Welcome backstage.', [ 'Tell us who you are once on this device and Backstage becomes your page: your rehearsals, your part’s tracks, your notes. It also replaces the paper sign-up sheet.' ] ), grid ] );
 	}
 
 	/* a known device whose person isn't on this season yet */
 	function viewWelcomeBack( who ) {
-		var first = who.first || who.name.split( ' ' )[ 0 ];
-		show( [ h( 'section', { class: 'tcc-dash__choose tcc-dash__choose--back' }, [
-			h( 'span', { class: 'tcc-dash__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ),
-			h( 'h2', { class: 'tcc-dash__h' }, [ 'Welcome back, ' + first + '!' ] ),
-			h( 'p', { class: 'tcc-dash__lede' }, [ 'Taking part in ' + W.cantata.title + '? Confirm your details and this becomes your page. It replaces the paper sign-up sheet.' ] ),
-			h( 'div', { class: 'tcc-dash__doors' }, [
-				h( 'button', { type: 'button', class: 'tcc-dash__door tcc-dash__door--primary', onclick: function () { signIn( undefined, { id: who.id, name: who.name, onSeason: false } ); } }, [ h( 'b', {}, [ 'Yes, I’m in this year' ] ), h( 'span', {}, [ 'Check my details' ] ) ] ),
-				h( 'button', { type: 'button', class: 'tcc-dash__door tcc-dash__door--quiet', onclick: function () { store( 'ss', 'tcc_browse', '1' ); viewBrowse(); } }, [ h( 'b', {}, [ 'Just browsing for now' ] ), h( 'span', {}, [ 'Have a look around first' ] ) ] )
-			] ),
-			h( 'p', { class: 'tcc-dash__foot' }, [ 'Not ' + first + '? ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { signIn( 'find' ); } }, [ 'Find your name' ] ), ' · ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { signIn( 'new' ); } }, [ 'I’m new' ] ) ] )
-		] ) ] );
+		var first = firstOf( who );
+		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--doors' }, [
+			door( 'find', 'Yes, I’m in this year', 'Check my details', function () { signIn( undefined, { id: who.id, name: who.name, onSeason: false } ); }, 'is-primary' ),
+			door( 'look', 'Just browsing for now', 'Have a look around first', browse, 'is-quiet' )
+		] );
+		show( [ guestHead( 'Welcome back, ' + first + '!', [ 'Taking part in ', h( 'i', {}, [ W.cantata.title ] ), '? Confirm your details and this becomes your page. It replaces the paper sign-up sheet.' ] ), grid,
+			h( 'footer', { class: 'tcc-hm__foot' }, [ 'Not ' + first + '? ', h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: openSwitch }, [ 'Switch person' ] ) ] ) ] );
 	}
 
 	/* the general page, for anyone browsing — often someone a choir member sent the link to */
@@ -144,79 +162,76 @@
 		var c = W.cantata, d = ( c.perf || '' ).replace( /,\s*\d{4}$/, '' ), t = ( c.perfTime || '' ).replace( ':00', '' );
 		return d ? d + ( t ? ' at ' + t : '' ) : '';
 	}
+	/* thinking about joining: the pitch from the Join page, and one button */
+	function joinWidget() {
+		var tick = function ( b, rest ) { return h( 'li', {}, [ h( 'span', { class: 'tcc-hm__tick', html: SVG.check } ), h( 'span', {}, [ h( 'b', {}, [ b ] ), rest ] ) ] ); };
+		return widget( 'tcc-hm__join', [
+			h( 'div', { class: 'tcc-hm__join-a' }, [
+				wk( 'Thinking about singing with us?', 'is-red' ),
+				h( 'p', { class: 'tcc-hm__join-big' }, [ 'There’s only one requirement: you must love to sing.' ] ),
+				h( 'div', { class: 'tcc-hm__join-go' }, [
+					h( 'button', { type: 'button', class: 'tcc-hm__btn', onclick: function () { store( 'ss', 'tcc_browse', null ); signIn( 'new' ); } }, [ 'I’d like to join', h( 'span', { html: SVG.right } ) ] ),
+					W.urls.join ? h( 'a', { class: 'tcc-hm__link', href: W.urls.join }, [ 'Read more about joining' ] ) : null
+				] )
+			] ),
+			h( 'ul', { class: 'tcc-hm__ticks' }, [
+				tick( 'No audition, no experience needed', ' — and you don’t need to read music. If you can carry a tune and you’re willing to show up, we’ll teach you the rest.' ),
+				tick( 'No cost.', ' The music is provided.' ),
+				tick( 'Can’t make every rehearsal?', ' That’s normal — most people miss one or two. The practice tracks help you catch up at home.' ),
+				tick( 'Not a singer?', ' We’d love to have you anyway: narrators, actors, a tech crew, and helpers for staging, costumes and welcoming the audience.' )
+			] )
+		] );
+	}
+	/* the practice tracks, explained before anyone is asked to pick one */
+	function tracksWidget() {
+		var list = h( 'ul', { class: 'tcc-hm__songs tcc-hm__parts' } );
+		[ 'soprano', 'alto', 'tenor', 'bass', 'accompaniment', 'listen' ].forEach( function ( p ) {
+			if ( ! W.parts[ p ] || ! W.parts[ p ].count ) { return; }
+			list.appendChild( h( 'li', {}, [ h( 'a', { class: 'tcc-hm__song', href: practiceUrl( p ) }, [
+				h( 'span', { class: 'tcc-hm__song-t' }, [ h( 'b', {}, [ W.parts[ p ].label ] ), PART_ABOUT[ p ] ? h( 'span', {}, [ PART_ABOUT[ p ] ] ) : null ] ),
+				h( 'span', { class: 'tcc-hm__play', html: SVG.play, 'aria-hidden': 'true' } )
+			] ) ] ) );
+		} );
+		if ( ! list.children.length ) { return null; }
+		return widget( 'tcc-hm__songsw tcc-hm__tracks', [
+			h( 'div', { class: 'tcc-hm__songs-top' }, [
+				h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Practice tracks', 'is-green' ), h( 'span', { class: 'tcc-hm__fine' }, [ 'Pick a part to listen' ] ) ] ),
+				h( 'p', { class: 'tcc-hm__body' }, [ 'Each song in the cantata, recorded with one voice part turned up louder than the rest — so you can learn your notes by ear, in the car or at the kitchen sink. The director’s notes appear as the music plays.' ] ),
+				h( 'p', { class: 'tcc-hm__fine' }, [ 'Not sure which part is yours? Most women start on Alto or Soprano and most men on Bass or Tenor. If the high notes feel like a strain, try the lower part — the director will help you find your fit.' ] )
+			] ),
+			list
+		] );
+	}
 	function viewBrowse() {
 		var who = me && me.who;
-		var nodes = [];
-		var leave = function () { store( 'ss', 'tcc_browse', null ); if ( who ) { if ( who.onSeason ) { viewDash(); } else { signIn( undefined, { id: who.id, name: who.name, onSeason: false } ); } } else { viewChooser(); } };
+		var leave = function () { store( 'ss', 'tcc_browse', null ); route(); window.scrollTo( 0, 0 ); };
+		var head;
 		if ( who ) {
-			nodes.push( h( 'p', { class: 'tcc-dash__line' }, [ 'Browsing as ', h( 'b', {}, [ who.name ] ), '. ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: leave }, [ who.onSeason ? 'Show my page' : 'Sign in for this year' ] ) ] ) );
+			head = h( 'header', { class: 'tcc-hm__head' }, [
+				h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ 'Have a look around' ] ),
+					h( 'p', { class: 'tcc-hm__lede' }, [ 'Browsing as ', h( 'b', {}, [ who.name ] ), '. ', h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: leave }, [ who.onSeason ? 'Show my page' : 'Sign in for this year' ] ) ] ) ] )
+			] );
 		} else {
 			/* they have the password, so someone in the choir invited them: say so, and make joining easy */
 			var when = perfLine();
-			nodes.push( h( 'section', { class: 'tcc-dash__choose tcc-db__welcome' }, [
-				h( 'span', { class: 'tcc-dash__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ),
-				h( 'h2', { class: 'tcc-dash__h' }, [ 'Come on in — we’re glad you’re here.' ] ),
-				h( 'p', { class: 'tcc-dash__lede' }, [ 'Someone in the choir shared the password with you, so consider yourself invited. This is Backstage: where the Tilden Community Choir gets ready for ', h( 'i', {}, [ W.cantata.title ] ), when ? ', on ' + when + '.' : '.', ' Have a look around — the schedule, the music we’re learning, and the tracks our singers practice with.' ] ),
-				h( 'div', { class: 'tcc-db__invite' }, [
-					h( 'p', { class: 'tcc-db__invite-k' }, [ 'Thinking about singing with us?' ] ),
-					h( 'p', { class: 'tcc-db__invite-big' }, [ 'There’s only one requirement: you must love to sing.' ] ),
-					h( 'ul', { class: 'tcc-db__invite-list' }, [
-						h( 'li', {}, [ h( 'b', {}, [ 'No audition, no experience needed' ] ), ' — and you don’t need to read music. If you can carry a tune and you’re willing to show up, we’ll teach you the rest.' ] ),
-						h( 'li', {}, [ h( 'b', {}, [ 'No cost.' ] ), ' The music is provided.' ] ),
-						h( 'li', {}, [ h( 'b', {}, [ 'Can’t make every rehearsal?' ] ), ' That’s normal — most people miss one or two. The practice tracks below help you catch up at home.' ] ),
-						h( 'li', {}, [ h( 'b', {}, [ 'Not a singer?' ] ), ' We’d love to have you anyway: narrators, actors, a tech crew, and helpers for staging, costumes and welcoming the audience.' ] )
-					] ),
-					h( 'div', { class: 'tcc-db__invite-go' }, [
-						h( 'button', { type: 'button', class: 'tcc-db__go tcc-db__go--join', onclick: function () { store( 'ss', 'tcc_browse', null ); signIn( 'new' ); } }, [ h( 'span', { class: 'tcc-db__go-t' }, [ 'I’d like to join' ] ), h( 'span', { class: 'tcc-db__go-i', html: ICON.arrow } ) ] ),
-						W.urls.join ? h( 'a', { class: 'tcc-dash__link', href: W.urls.join }, [ 'Read more about joining' ] ) : null
-					] )
-				] ),
-				h( 'p', { class: 'tcc-dash__foot' }, [ 'Already in the choir? ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { store( 'ss', 'tcc_browse', null ); signIn( 'find' ); } }, [ 'Find your name' ] ),
-					W.urls.contact ? ' · Questions? ' : null, W.urls.contact ? h( 'a', { class: 'tcc-dash__link', href: W.urls.contact }, [ 'Ask the director' ] ) : null ] )
-			] ) );
+			head = guestHead( 'Come on in — we’re glad you’re here.', [ 'Someone in the choir shared the password with you, so consider yourself invited. This is Backstage, where the Tilden Community Choir gets ready for ', h( 'i', {}, [ W.cantata.title ] ), when ? ' on ' + when + '.' : '.' ] );
 		}
-		nodes.push( comingUp( W.rehearsals, false, null ) );
-		/* practice tracks: say what they are before asking anyone to pick one */
-		var parts = h( 'div', { class: 'tcc-db__partcards' } );
-		[ 'soprano', 'alto', 'tenor', 'bass', 'accompaniment', 'sections', 'listen' ].forEach( function ( p ) {
-			if ( W.parts[ p ] && W.parts[ p ].count ) {
-				parts.appendChild( h( 'a', { class: 'tcc-db__partcard', href: practiceUrl( p ) }, [
-					h( 'span', { class: 'tcc-db__partcard-i', html: ICON.play } ),
-					h( 'span', { class: 'tcc-db__partcard-t' }, [ h( 'b', {}, [ W.parts[ p ].label ] ), PART_ABOUT[ p ] ? h( 'span', {}, [ PART_ABOUT[ p ] ] ) : null ] )
-				] ) );
-			}
-		} );
-		if ( parts.children.length ) {
-			nodes.push( h( 'section', { class: 'tcc-db__sec' }, [
-				eyebrow( 'Practice tracks' ),
-				h( 'p', { class: 'tcc-db__about' }, [ 'Each song in the cantata, recorded with one voice part turned up louder than the rest — so you can learn your notes by ear, in the car or at the kitchen sink. Pick a part to hear what that’s like; the director’s notes appear as the music plays.' ] ),
-				parts,
-				h( 'p', { class: 'tcc-db__hint' }, [ 'Not sure which part is yours? Most women start on Alto or Soprano and most men on Bass or Tenor. If the high notes feel like a strain, try the lower part — the director will help you find your fit.' ] )
-			] ) );
-		}
-		var docs = docList( [ 'everyone', 'singers', 'narrators', 'actors', 'tech' ], true );
-		if ( docs ) { nodes.push( h( 'section', { class: 'tcc-db__sec' }, [ eyebrow( 'Documents' ), docs ] ) ); }
-		show( nodes );
+		var grid = h( 'div', { class: 'tcc-hm__grid' } );
+		if ( ! who ) { grid.appendChild( joinWidget() ); }
+		grid.appendChild( rehearsalWidget( W.rehearsals[ 0 ] ) );
+		var cd = countdownWidget(), sw = scheduleWidget(), tw = tracksWidget();
+		if ( cd ) { grid.appendChild( cd ); }
+		if ( sw ) { grid.appendChild( sw ); }
+		if ( tw ) { grid.appendChild( tw ); }
+		var strip = homeStrip(); if ( strip ) { grid.appendChild( strip ); }
+		show( [ head, grid, who ? null : h( 'footer', { class: 'tcc-hm__foot' }, [
+			'Already in the choir? ', h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { store( 'ss', 'tcc_browse', null ); signIn( 'find' ); } }, [ 'Find your name' ] ),
+			W.urls.contact ? h( 'br' ) : null, W.urls.contact ? 'Questions? ' : null, W.urls.contact ? h( 'a', { class: 'tcc-hm__link', href: W.urls.contact }, [ 'Ask the director' ] ) : null
+		] ) ] );
 	}
 
 	/* ---------- pieces ---------- */
 
-	/* Coming up: the next rehearsal, opened up, and a row that goes to the full schedule. Nothing in between,
-	   so it never looks like there's nothing between now and a later date. */
-	function comingUp( list, personal, skipped ) {
-		var r = list[ 0 ];
-		var body = r
-			? h( 'div', { class: 'tcc-schedule tcc-db__reh' + ( personal && isSinger() && myTrackParts().length ? ' tcc-db__reh--tiles' : '' ), html: '<ol class="tcc-schedule__list">' + r.html + '</ol>' } )
-			: h( 'p', { class: 'tcc-db__skip' }, [ 'Nothing on the calendar for you right now.' ] );
-		return h( 'section', { class: 'tcc-db__sec tcc-db__sec--first' }, [
-			eyebrow( 'Coming up' ),
-			skipped || null,
-			body,
-			W.urls.schedule ? h( 'a', { class: 'tcc-db__more', href: W.urls.schedule }, [ h( 'span', {}, [ 'Full schedule' ] ), h( 'span', { class: 'tcc-db__more-i', html: ICON.arrow } ) ] ) : null
-		] );
-	}
-
-	/* your songs: the whole work, one tile per song */
 
 	function docList( groups, all ) {
 		var seen = {}, items = [];
@@ -400,8 +415,8 @@
 			h( 'p', { class: 'tcc-hm__fine' }, [ 'Everyone who has used this device. One tap switches — notes, marks and where you left off follow each person.' ] ),
 			listBox,
 			h( 'div', { class: 'tcc-hm__more2' }, [
-				h( 'button', { type: 'button', class: 'tcc-hm__door', onclick: function () { closeSheet(); signIn( 'find' ); } }, [ h( 'b', {}, [ 'Someone else' ] ), h( 'span', {}, [ 'Find your name' ] ) ] ),
-				h( 'button', { type: 'button', class: 'tcc-hm__door', onclick: function () { closeSheet(); signIn( 'new' ); } }, [ h( 'b', {}, [ 'New this year' ] ), h( 'span', {}, [ 'Sign up' ] ) ] )
+				h( 'button', { type: 'button', class: 'tcc-hm__opt', onclick: function () { closeSheet(); signIn( 'find' ); } }, [ h( 'b', {}, [ 'Someone else' ] ), h( 'span', {}, [ 'Find your name' ] ) ] ),
+				h( 'button', { type: 'button', class: 'tcc-hm__opt', onclick: function () { closeSheet(); signIn( 'new' ); } }, [ h( 'b', {}, [ 'New this year' ] ), h( 'span', {}, [ 'Sign up' ] ) ] )
 			] ),
 			people().length > 1 ? editBtn : null
 		] ) );
@@ -655,8 +670,11 @@
 		var slot = document.querySelector( '.tcc-tabs__me' ); if ( ! slot ) { return; }
 		var who = me && me.who && me.who.onSeason ? me.who : null;
 		slot.innerHTML = '';
-		document.documentElement.classList.toggle( 'tcc-navme', !! who );
-		if ( ! who ) { return; }
+		document.documentElement.classList.add( 'tcc-navme' );
+		if ( ! who ) {
+			slot.appendChild( h( 'button', { type: 'button', class: 'tcc-tabs__who', 'aria-label': 'Sign in — who’s practicing?', onclick: openSwitch }, [ h( 'span', { class: 'tcc-hm__av tcc-hm__av--guest', html: DOOR.user } ), h( 'span', {}, [ 'Sign in' ] ) ] ) );
+			return;
+		}
 		var part = W.voice[ who.part ] && isSinger() ? ' · ' + W.voice[ who.part ].label : '';
 		slot.appendChild( h( 'button', { type: 'button', class: 'tcc-tabs__who', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', {}, [ who.name + part ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) );
 	}
