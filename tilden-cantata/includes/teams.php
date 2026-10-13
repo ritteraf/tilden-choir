@@ -112,7 +112,7 @@ add_action( 'rest_api_init', function () {
 function tcc_doc_audiences(): array {
 	$out = function_exists( 'tcc_attendee_types' ) ? tcc_attendee_types() : [];
 	foreach ( tcc_teams() as $k => $t ) {
-		$out[ 'role:' . $k ] = $t['label'];
+		$out[ 'role:' . $k ] = preg_match( '/team$/i', $t['label'] ) ? $t['label'] : $t['label'] . ' team';
 	}
 	return $out;
 }
@@ -172,6 +172,7 @@ function tcc_render_teams_page() {
 			<?php foreach ( $teams as $slug => $t ) :
 				$people = $members[ $slug ] ?? [];
 				$mine   = array_values( array_filter( $tasks, fn( $x ) => $x['team'] === $slug ) );
+				$mine[] = [ 'id' => '', 'text' => '', 'details' => '', 'due' => '' ];
 				$mine[] = [ 'id' => '', 'text' => '', 'details' => '', 'due' => '' ];
 				$base   = 'teams[' . esc_attr( $slug ) . ']';
 				?>
