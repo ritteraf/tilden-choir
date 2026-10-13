@@ -118,10 +118,10 @@ body.tcc-app-on { overflow: hidden; }
 .ta-play svg { width: 34px; height: 34px; }
 .ta-play:active { transform: scale(0.95); }
 .ta-dock__tools { display: flex; justify-content: space-between; gap: 4px; }
-.ta-tool { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; padding: 7px 2px 6px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; color: var(--dim) !important; }
+.ta-tool { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; padding: 7px 0 6px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; color: var(--dim) !important; }
 .ta-tool b { height: 22px; display: inline-flex; align-items: center; font-size: 16px; color: var(--ink); }
 .ta-tool b svg { width: 21px; height: 21px; }
-.ta-tool span { font-size: 11px; font-weight: 600; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.ta-tool span { font-size: 11px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .ta-tool:hover { background: rgba(255, 255, 255, 0.06); }
 .ta-tool.is-on { background: rgba(210, 157, 51, 0.16); color: var(--gold) !important; }
 .ta-tool.is-on b { color: var(--gold); }

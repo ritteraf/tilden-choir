@@ -38,7 +38,7 @@
 		x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
 		down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>',
 		list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1" fill="currentColor"/><circle cx="3.5" cy="12" r="1" fill="currentColor"/><circle cx="3.5" cy="18" r="1" fill="currentColor"/></svg>',
-		piano: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M7.5 4v16M12 4v16M16.5 4v16"/><path d="M6 4v8h3V4M15 4v8h3V4" fill="currentColor" stroke="none"/></svg>',
+		accomp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
 		people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
 		pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
 		loop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
@@ -149,7 +149,8 @@
 		ui.play = h( 'button', { type: 'button', class: 'ta-play', 'aria-label': 'Play', html: I.play, onclick: toggle } );
 		ui.rateBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: cycleRate, 'aria-label': 'Speed' }, [ h( 'b', {}, [ '1×' ] ), h( 'span', {}, [ 'Speed' ] ) ] );
 		ui.loopBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: loopTap, 'aria-label': 'Loop a section' }, [ h( 'b', { html: I.loop } ), h( 'span', {}, [ 'Loop' ] ) ] );
-		ui.altBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: toggleAlt }, [ h( 'b', { html: I.piano } ), h( 'span', {}, [ 'Piano only' ] ) ] );
+		/* voices ⇄ accompaniment: the full orchestration we perform with, no voices, at the same spot in the song */
+		ui.altBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--alt', onclick: toggleAlt }, [ h( 'b', { html: I.people } ), h( 'span', {}, [ 'Voices' ] ) ] );
 		ui.noteBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: openNote }, [ h( 'b', { html: I.pen } ), h( 'span', {}, [ D.canEdit ? 'Note' : 'My note' ] ) ] );
 		ui.songsBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--songs', onclick: openSongs }, [ h( 'b', { html: I.list } ), h( 'span', {}, [ 'Songs' ] ) ] );
 		ui.viewBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--feel', onclick: function () { openFeel(); } }, [ h( 'b', { html: ring( 'none' ) } ), h( 'span', {}, [ 'Feedback' ] ) ] );
@@ -188,7 +189,7 @@
 		ui.ttl.className = 'ta-top__title';
 		ui.ttl.textContent = t ? ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title + ( S.list.part === 'sections' && t.cd ? ' · CD ' + t.cd : '' ) : 'Choose a song';
 		ui.partBtn.innerHTML = '';
-		ui.partBtn.appendChild( h( 'span', {}, [ S.alt && altTrack() ? 'Piano only' : shortLabel( S.list ? S.list.part : S.part ) ] ) );
+		ui.partBtn.appendChild( h( 'span', {}, [ S.alt && altTrack() ? 'Accompaniment' : shortLabel( S.list ? S.list.part : S.part ) ] ) );
 		ui.partBtn.appendChild( h( 'span', { class: 'ta-chip__caret', html: I.down } ) );
 		document.title = ( t ? t.title + ' · ' : '' ) + 'Practice';
 	}
@@ -242,7 +243,7 @@
 		var head = h( 'section', { class: 'ta-songhead' + ( CUES.length ? '' : ' is-alone' ) }, [
 			h( 'span', { class: 'ta-songhead__num' }, [ t.song >= 0 ? String( t.song + 1 ) : '♪' ] ),
 			h( 'h1', { class: 'ta-songhead__title' }, [ t.title ] ),
-			h( 'p', { class: 'ta-songhead__sub' }, [ ( S.alt && altTrack() ? 'Piano only' : label( S.list.part ) ) + ' · ' + fmt( t.dur || audio.duration ) + ( CUES.length ? ' · ' + CUES.length + ( CUES.length === 1 ? ' note' : ' notes' ) : '' ) ] ),
+			h( 'p', { class: 'ta-songhead__sub' }, [ ( S.alt && altTrack() ? 'Accompaniment (no voices)' : label( S.list.part ) ) + ' · ' + fmt( t.dur || audio.duration ) + ( CUES.length ? ' · ' + CUES.length + ( CUES.length === 1 ? ' note' : ' notes' ) : '' ) ] ),
 			tags.length ? h( 'div', { class: 'ta-songhead__tags' }, tags ) : null,
 			S.who && st !== '' ? feelRow( t.song, st ) : null
 		] );
@@ -972,7 +973,7 @@
 	}
 	function altTrack() {
 		var t = current(); if ( ! t || t.song < 0 || ! S.list.now ) { return null; }
-		/* "Piano only": the same song as one full-length accompaniment track — never a CD section, which is only part of the song */
+		/* the same song as one full-length accompaniment track (performance) — never a CD section, which is only part of the song */
 		if ( S.list.part === 'accompaniment' || S.list.part === 'sections' ) { return null; }
 		var pref = [ 'now:accompaniment' ];
 		for ( var k = 0; k < pref.length; k++ ) {
@@ -1074,14 +1075,20 @@
 		else { S.loopA = S.loopB = null; toast( 'Loop off' ); }
 		paintTools(); paintLoop();
 	}
-	function toggleAlt() { if ( ! current() || ! altTrack() && ! S.alt ) { return; } S.alt = ! S.alt; var playing = ! audio.paused; loadTrack( playing, true ); toast( S.alt ? 'Piano only — now you sing your part' : 'Back to ' + label( S.list.part ) + ' with the voices' ); }
+	function toggleAlt() { if ( ! current() || ! altTrack() && ! S.alt ) { return; } S.alt = ! S.alt; var playing = ! audio.paused; loadTrack( playing, true ); toast( S.alt ? 'Accompaniment — the music we perform with, no voices. You sing your part.' : 'Back to ' + label( S.list.part ) + ', with voices' ); }
 	function paintTools() {
 		ui.rateBtn.querySelector( 'b' ).textContent = S.rate + '×';
 		ui.rateBtn.classList.toggle( 'is-on', S.rate !== 1 );
 		ui.loopBtn.classList.toggle( 'is-on', S.loopA !== null );
 		ui.loopBtn.querySelector( 'span' ).textContent = S.loopA === null ? 'Loop' : S.loopB === null ? 'Set end' : fmt( S.loopA ) + '–' + fmt( S.loopB );
-		ui.altBtn.hidden = ! ( current() && ( altTrack() || S.alt ) );
+		/* always there; greyed out when this song has no accompaniment track yet */
+		var hasAlt = !! ( current() && ( altTrack() || S.alt ) );
+		ui.altBtn.hidden = false;
+		ui.altBtn.disabled = ! hasAlt;
+		ui.altBtn.title = hasAlt ? ( S.alt ? 'Switch back to the track with voices' : 'Switch to the accompaniment (no voices)' ) : 'No accompaniment track for this song yet';
 		ui.altBtn.classList.toggle( 'is-on', S.alt );
+		ui.altBtn.querySelector( 'b' ).innerHTML = S.alt ? I.accomp : I.people;
+		ui.altBtn.querySelector( 'span' ).textContent = S.alt ? 'Accomp.' : 'Voices';
 		ui.noteBtn.disabled = ! current();
 		paintFeelBtn();
 		applyView();
