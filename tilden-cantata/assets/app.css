@@ -104,6 +104,9 @@ body.tcc-app-on { overflow: hidden; }
 .ta-dock { min-width: 0; padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--panel); }
 .ta-dock > * { max-width: 680px; margin-left: auto; margin-right: auto; }
 .ta-dock__scrub { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+/* the times keep their width as the digits change, so the bar never shifts */
+.ta-dock__scrub > span { flex: 0 0 auto; min-width: 4.6ch; white-space: nowrap; }
+.ta-dock__scrub > span:first-child { text-align: right; }
 .ta-scrub { position: relative; flex: 1; height: 32px; cursor: pointer; touch-action: none; }
 .ta-scrub__rail { position: absolute; left: 0; right: 0; top: 14px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.16); }
 .ta-scrub__fill { position: absolute; left: 0; top: 14px; height: 4px; border-radius: 2px; background: var(--ink); pointer-events: none; }
