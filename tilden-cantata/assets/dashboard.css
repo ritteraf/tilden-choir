@@ -388,6 +388,29 @@ a.tcc-hm__song:hover { background: #faf9f6; }
 .tcc-hm__body { margin: 0; font-size: 15px; line-height: 1.5; }
 .tcc-hm__parts .tcc-hm__song-t b { white-space: normal; }
 .tcc-hm__parts .tcc-hm__song { padding-left: 18px; }
+/* the Schedule tab */
+.tcc-dash--sched { padding-top: clamp(20px, 4vw, 40px); }
+.tcc-hm__segs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 6px; border-radius: 24px; background: var(--hm-card); }
+.tcc-hm__seg { min-height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: transparent; color: var(--hm-muted); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.tcc-hm__seg.is-on { background: var(--hm-ink); color: #fff; }
+.tcc-hm__seg:focus-visible { outline: 3px solid var(--tcc-red); outline-offset: 2px; }
+.tcc-hm__month { margin: 22px 4px 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-muted); }
+.tcc-hm__grid--sched { grid-template-columns: minmax(0, 1fr); }
+.tcc-hm__rcard { grid-column: auto; border: 2px solid transparent; }
+.tcc-hm__rcard.is-next { border-color: var(--tcc-red); }
+.tcc-hm__rcard.is-other { background: rgba(255, 255, 255, 0.55); }
+.tcc-hm__rcard.is-other .tcc-hm__cal, .tcc-hm__rcard.is-other .tcc-hm__what, .tcc-hm__rcard.is-other .tcc-hm__note { opacity: 0.6; }
+.tcc-hm__perf { grid-column: auto; min-height: 0; justify-content: flex-start; gap: 12px; }
+.tcc-hm__perf-row { display: flex; align-items: center; gap: 16px; }
+.tcc-hm__perf-row .tcc-hm__page { background: rgba(255, 255, 255, 0.95); color: var(--tcc-ink); }
+.tcc-hm__perf-row .tcc-hm__page-m { background: var(--tcc-ink); }
+.tcc-hm__perf-row h3 { margin: 0 0 4px; font-family: var(--tcc-display); font-size: 24px; line-height: 1.15; }
+.tcc-hm__perf-row > div:last-child > span { font-size: 15px; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+.tcc-hm__past { margin: 22px 0 8px; border-radius: 20px; background: var(--hm-card); }
+.tcc-hm__past summary { min-height: 52px; display: flex; align-items: center; padding: 0 18px; font-weight: 700; cursor: pointer; }
+.tcc-hm__past ul { list-style: none; margin: 0; padding: 0 18px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
+.tcc-hm__past li { display: flex; gap: 12px; color: var(--hm-muted); }
+.tcc-hm__past li b { flex-shrink: 0; min-width: 92px; color: var(--hm-ink); }
 @media (min-width: 900px) {
 	.tcc-hm__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 16px; }
 	.tcc-hm__reh { grid-column: span 2; grid-row: span 2; padding: 24px; }
@@ -400,6 +423,8 @@ a.tcc-hm__song:hover { background: #faf9f6; }
 	.tcc-hm__grid--list .tcc-hm__wide { grid-column: span 3; }
 	.tcc-hm__grid--docs .tcc-hm__wide { grid-column: auto; }
 	html.tcc-navme .tcc-hm__head .tcc-hm__me { display: none; }
+	.tcc-hm__grid--sched { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.tcc-hm__rcard { padding: 22px; }
 	.tcc-hm__grid--doors { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
 	.tcc-hm__door { flex-direction: column; align-items: flex-start; min-height: 200px; padding: 24px; }
 	.tcc-hm__door-t b { font-size: 22px; }

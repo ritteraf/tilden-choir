@@ -62,12 +62,11 @@ function tcc_docs_data( int $cantata_id ): array {
 }
 
 /** Upcoming rehearsals as plain data, soonest first. */
-function tcc_rehearsals_data( int $cantata_id ): array {
+function tcc_rehearsals_data( int $cantata_id, bool $with_past = false ): array {
 	$songs = tcc_song_titles( $cantata_id );
 	$count = count( $songs );
 	$now   = new DateTimeImmutable( 'now', wp_timezone() );
 	$out   = [];
-	$next  = tcc_next_rehearsal( $cantata_id );
 	foreach ( tcc_get_rehearsals( $cantata_id ) as $r ) {
 		$dt = tcc_rehearsal_dt( $r->ID );
 		if ( ! $dt ) {
@@ -75,7 +74,8 @@ function tcc_rehearsals_data( int $cantata_id ): array {
 		}
 		$end  = get_post_meta( $r->ID, '_tcc_end', true );
 		$ends = $end ? new DateTimeImmutable( $dt->format( 'Y-m-d' ) . ' ' . $end, wp_timezone() ) : $dt->setTime( 23, 59 );
-		if ( $ends < $now ) {
+		$past = $ends < $now;
+		if ( $past && ! $with_past ) {
 			continue;
 		}
 		$full  = tcc_rehearsal_is_full( $r->ID );
@@ -104,8 +104,7 @@ function tcc_rehearsals_data( int $cantata_id ): array {
 			'focus' => tcc_song_indices( (string) get_post_meta( $r->ID, '_tcc_focus', true ), $count ),
 			'after' => $after,
 			'note'  => trim( $r->post_content ) ? apply_filters( 'the_content', $r->post_content ) : '',
-			// the schedule page's own entry, so the dashboard reads exactly like the schedule
-			'html'  => tcc_render_rehearsal( $r, $cantata_id, $next && $next->ID === $r->ID ),
+			'past'  => $past,
 		];
 	}
 	return $out;
@@ -177,6 +176,7 @@ function tcc_world( int $cantata_id ): array {
 		'cues'       => $cues,
 		'docs'       => tcc_docs_data( $cantata_id ),
 		'types'      => tcc_attendee_types(),
+		'rtypes'     => function_exists( 'tcc_rehearsal_types' ) ? tcc_rehearsal_types() : [],
 		'roles'      => array_map( fn( $r ) => [ 'label' => $r['label'], 'desc' => $r['desc'] ], $roles ),
 		'teams'      => $teams,
 		'urls'       => $urls,
@@ -229,20 +229,27 @@ add_action( 'init', function () {
 		'api_version' => 3, 'title' => 'Backstage dashboard', 'description' => 'The whole Backstage hub: asks an unknown device who it belongs to, then shows each person their own next rehearsal, the songs to work on, their part\'s tracks, their documents and their team. Browsing without signing in shows the general page.',
 		'category' => 'widgets', 'icon' => 'dashboard',
 		'supports' => [ 'html' => false, 'multiple' => false, 'align' => [ 'wide' ] ],
-		'attributes' => [],
-		'render_callback' => function () {
+		'attributes' => [ 'view' => [ 'type' => 'string', 'default' => 'home' ] ],
+		'render_callback' => function ( array $attributes = [] ) {
+			$view = ( $attributes['view'] ?? 'home' ) === 'schedule' ? 'schedule' : 'home';
 			$current = tcc_current_id();
 			if ( ! $current ) {
 				return '';
 			}
 			if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-				return '<div ' . get_block_wrapper_attributes() . '><div style="padding:22px 24px;border:1.5px dashed #c8c8c4;border-radius:8px;font-family:sans-serif"><strong style="font-size:16px">Backstage dashboard</strong><br><span style="color:#6b6b6b">Sign-in for new devices, then a personal page: next rehearsal, songs to work on, tracks, documents, team. Nothing to set here — it all comes from the cantata, the rehearsals and the people.</span></div></div>';
+				return '<div ' . get_block_wrapper_attributes() . '><div style="padding:22px 24px;border:1.5px dashed #c8c8c4;border-radius:8px;font-family:sans-serif"><strong style="font-size:16px">' . ( $view === 'schedule' ? 'Backstage schedule' : 'Backstage dashboard' ) . '</strong><br><span style="color:#6b6b6b">' . ( $view === 'schedule' ? 'Every rehearsal this season as cards, month by month, with a "Just mine" filter. It all comes from the rehearsals.' : 'Sign-in for new devices, then a personal page: next rehearsal, songs to work on, tracks, documents, team. Nothing to set here — it all comes from the cantata, the rehearsals and the people.' ) . '</span></div></div>';
 			}
 			tcc_enqueue_front_assets();
 			tcc_enqueue_signin_assets();
 			wp_enqueue_style( 'tcc-dash', TCC_URL . 'assets/dashboard.css', [ 'tcc-signin' ], TCC_VERSION );
 			wp_enqueue_script( 'tcc-dash', TCC_URL . 'assets/dashboard.js', [ 'tcc-signin' ], TCC_VERSION, [ 'strategy' => 'defer' ] );
-			return '<div ' . get_block_wrapper_attributes() . '><div class="tcc-dash" data-tcc-dash="' . esc_attr( wp_json_encode( tcc_world( $current ) ) ) . '"><noscript><p>Backstage needs JavaScript turned on.</p></noscript></div></div>';
+			$world = tcc_world( $current );
+			if ( $view === 'schedule' ) {
+				/* the Schedule tab: the whole season, earlier rehearsals included */
+				$world['view']       = 'schedule';
+				$world['rehearsals'] = tcc_rehearsals_data( $current, true );
+			}
+			return '<div ' . get_block_wrapper_attributes() . '><div class="tcc-dash" data-tcc-dash="' . esc_attr( wp_json_encode( $world ) ) . '"><noscript><p>Backstage needs JavaScript turned on.</p></noscript></div></div>';
 		},
 	] );
 

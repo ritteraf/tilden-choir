@@ -425,12 +425,10 @@
 	function widget( cls, kids, tag ) { return h( tag || 'section', { class: 'tcc-hm__w ' + ( cls || '' ) }, kids ); }
 	function wk( text, cls ) { return h( 'span', { class: 'tcc-hm__k' + ( cls ? ' ' + cls : '' ) }, [ text ] ); }
 
-	/* next rehearsal: a calendar page for the day — the times, who comes, what's on, the director's word */
-	function rehearsalWidget( r, skippedFirst ) {
-		if ( ! r ) { return widget( 'tcc-hm__reh', [ wk( 'Next rehearsal', 'is-red' ), h( 'p', { class: 'tcc-hm__fine' }, [ 'Nothing on the calendar for you right now.' ] ) ] ); }
-		var rel = relDay( r.date );
+	/* one rehearsal as a calendar page for the day — the times, who comes, what's on, the director's word */
+	function rehBody( r ) {
 		var times = h( 'div', { class: 'tcc-hm__times' }, [
-			h( 'div', { class: 'tcc-hm__time' }, [ h( 'b', {}, [ r.time || 'All day' ] ), h( 'span', {}, [ r.type && r.type !== 'rehearsal' ? r.type.charAt( 0 ).toUpperCase() + r.type.slice( 1 ) : 'Rehearsal' ] ) ] )
+			h( 'div', { class: 'tcc-hm__time' }, [ h( 'b', {}, [ r.time || 'All day' ] ), h( 'span', {}, [ r.type && r.type !== 'rehearsal' ? ( W.rtypes && W.rtypes[ r.type ] ) || r.type.charAt( 0 ).toUpperCase() + r.type.slice( 1 ) : 'Rehearsal' ] ) ] )
 		].concat( ( r.after || [] ).map( function ( a ) {
 			var forWho = a.who && a.who.length ? a.who.map( whoLabel ).join( ', ' ) : '';
 			return h( 'div', { class: 'tcc-hm__time' + ( a.who && a.who.length && ! forMe( a.who ) ? ' is-other' : '' ) }, [ h( 'b', {}, [ a.time || 'After' ] ), h( 'span', {}, [ a.what + ( forWho ? ' · ' + forWho : '' ) ] ) ] );
@@ -438,7 +436,8 @@
 		var tags = h( 'div', { class: 'tcc-hm__tags' } );
 		( r.who && r.who.length ? r.who : [ 'everyone' ] ).forEach( function ( k ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag' }, [ k === 'everyone' ? 'Everyone' : whoLabel( k ) ] ) ); } );
 		if ( requiredOfMe( r ) ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag is-must' }, [ 'Required' ] ) ); }
-		var what;
+		else if ( ! P() && r.must && r.must.length ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag is-must' }, [ 'Required for ' + r.must.map( whoLabel ).join( ', ' ).toLowerCase() ] ) ); }
+		var what = null;
 		if ( r.full ) {
 			what = h( 'div', { class: 'tcc-hm__what' }, [ h( 'span', { html: SVG.music } ), h( 'span', {}, [ h( 'b', {}, [ 'Full run-through' ] ), ' · the whole work' ] ) ] );
 		} else if ( r.songs && r.songs.length ) {
@@ -448,16 +447,21 @@
 			} ) );
 		}
 		var note = plainText( r.note );
-		return widget( 'tcc-hm__reh', [
-			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Next rehearsal', 'is-red' ), rel ? h( 'span', { class: 'tcc-hm__chip' }, [ rel ] ) : null ] ),
+		return [
 			h( 'div', { class: 'tcc-hm__cal' }, [
 				h( 'div', { class: 'tcc-hm__page', 'aria-hidden': 'true' }, [ h( 'span', { class: 'tcc-hm__page-m' }, [ r.mon.toUpperCase() ] ), h( 'span', { class: 'tcc-hm__page-d' }, [ r.day ] ), h( 'span', { class: 'tcc-hm__page-w' }, [ r.dow.toUpperCase() ] ) ] ),
 				h( 'div', { class: 'tcc-hm__cal-t' }, [ h( 'h3', {}, [ r.title ] ), h( 'span', { class: 'tcc-hm__sr' }, [ r.long ] ), times, tags ] )
 			] ),
-			what || null,
-			note ? h( 'p', { class: 'tcc-hm__note' }, [ h( 'b', {}, [ 'From the director: ' ] ), note ] ) : null,
-			skippedFirst ? h( 'p', { class: 'tcc-hm__fine' }, [ skippedFirst ] ) : null
-		] );
+			what,
+			note ? h( 'p', { class: 'tcc-hm__note' }, [ h( 'b', {}, [ 'From the director: ' ] ), note ] ) : null
+		];
+	}
+	function rehearsalWidget( r, skippedFirst ) {
+		if ( ! r ) { return widget( 'tcc-hm__reh', [ wk( 'Next rehearsal', 'is-red' ), h( 'p', { class: 'tcc-hm__fine' }, [ 'Nothing on the calendar for you right now.' ] ) ] ); }
+		var rel = relDay( r.date );
+		return widget( 'tcc-hm__reh', [
+			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Next rehearsal', 'is-red' ), rel ? h( 'span', { class: 'tcc-hm__chip' }, [ rel ] ) : null ] )
+		].concat( rehBody( r ), [ skippedFirst ? h( 'p', { class: 'tcc-hm__fine' }, [ skippedFirst ] ) : null ] ) );
 	}
 
 	/* continue practicing: where this person left off, at the spot they stopped */
@@ -654,6 +658,67 @@
 		show( nodes );
 	}
 
+	/* ---------- the Schedule tab: every rehearsal, month by month ---------- */
+	function personHead( title, meta ) {
+		var who = me && me.who && me.who.onSeason ? me.who : null;
+		if ( ! who ) { return guestHead( title, meta ? [ meta ] : null ); }
+		return h( 'header', { class: 'tcc-hm__head' }, [
+			h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ title ] ), meta ? h( 'span', { class: 'tcc-hm__meta' }, [ meta ] ) : null ] ),
+			h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] )
+		] );
+	}
+	function viewSchedule() {
+		var who = me && me.who && me.who.onSeason ? me.who : null;
+		var all = W.rehearsals || [];
+		var past = all.filter( function ( r ) { return r.past; } ), coming = all.filter( function ( r ) { return ! r.past; } );
+		var mineOnly = !! who && store( 'ls', 'tcc_sched_mine' ) === '1';
+		var shown = coming.filter( function ( r ) { return ! mineOnly || forMe( r.who ); } );
+		var nextMine = coming.filter( function ( r ) { return forMe( r.who ); } )[ 0 ];
+		var left = coming.filter( function ( r ) { return r.type !== 'performance'; } ).length;
+		var nodes = [ personHead( 'Schedule', left ? left + ( left === 1 ? ' rehearsal' : ' rehearsals' ) + ' to go' + ( W.cantata.perfDay ? ' · performance ' + W.cantata.perfDay[ 0 ] + ', ' + W.cantata.perfDay[ 2 ] + ' ' + W.cantata.perfDay[ 1 ] : '' ) : '' ) ];
+		if ( who ) {
+			var chip = function ( on, label, val ) { return h( 'button', { type: 'button', class: 'tcc-hm__seg' + ( on ? ' is-on' : '' ), 'aria-pressed': on ? 'true' : 'false', onclick: function () { store( 'ls', 'tcc_sched_mine', val ); viewSchedule(); } }, [ label ] ); };
+			nodes.push( h( 'div', { class: 'tcc-hm__segs', role: 'group', 'aria-label': 'Which rehearsals' }, [ chip( ! mineOnly, 'Everything', null ), chip( mineOnly, 'Just mine', '1' ) ] ) );
+		}
+		/* the performance closes the season, unless it's already on the calendar as performance day */
+		var c = W.cantata, perfListed = all.some( function ( r ) { return r.type === 'performance' || r.date === c.perfDate; } );
+		var items = shown.slice();
+		if ( c.perfDate && ! perfListed && +c.days >= 0 ) { items.push( { perf: true, date: c.perfDate } ); }
+		var month = '', grid = null, list = h( 'div', { class: 'tcc-hm__sched-list' } );
+		items.forEach( function ( r ) {
+			var m = new Date( r.date + 'T12:00:00' ).toLocaleDateString( undefined, { month: 'long' } );
+			if ( m !== month ) {
+				month = m;
+				list.appendChild( h( 'h3', { class: 'tcc-hm__month' }, [ m ] ) );
+				grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--sched' } );
+				list.appendChild( grid );
+			}
+			if ( r.perf ) {
+				grid.appendChild( widget( 'tcc-hm__count tcc-hm__perf', [
+					wk( 'Performance' ),
+					h( 'div', { class: 'tcc-hm__perf-row' }, [
+						h( 'div', { class: 'tcc-hm__page', 'aria-hidden': 'true' }, [ h( 'span', { class: 'tcc-hm__page-m' }, [ c.perfDay[ 2 ].toUpperCase() ] ), h( 'span', { class: 'tcc-hm__page-d' }, [ c.perfDay[ 1 ] ] ), h( 'span', { class: 'tcc-hm__page-w' }, [ c.perfDay[ 0 ].toUpperCase() ] ) ] ),
+						h( 'div', {}, [ h( 'h3', {}, [ c.title ] ), h( 'span', {}, [ ( c.perfTime ? c.perfTime.replace( ':00', '' ) + ' · ' : '' ) + ( +c.days === 0 ? 'Today!' : c.days + ( +c.days === 1 ? ' day' : ' days' ) + ' to go' ) ] ) ] )
+					] )
+				] ) );
+				return;
+			}
+			var isNext = nextMine && r.id === nextMine.id, rel = relDay( r.date ), other = who && ! forMe( r.who );
+			grid.appendChild( widget( 'tcc-hm__rcard' + ( isNext ? ' is-next' : '' ) + ( other ? ' is-other' : '' ), [
+				isNext || rel || other ? h( 'div', { class: 'tcc-hm__row' }, [ isNext ? wk( who ? 'Next for you' : 'Next rehearsal', 'is-red' ) : other ? wk( 'Not for you' ) : h( 'span' ), rel ? h( 'span', { class: 'tcc-hm__chip' }, [ rel ] ) : null ] ) : null
+			].concat( rehBody( r ) ) ) );
+		} );
+		if ( ! items.length ) { list.appendChild( widget( '', [ h( 'p', { class: 'tcc-hm__fine' }, [ mineOnly ? 'Nothing else on the calendar for you this season.' : 'Nothing on the calendar right now.' ] ) ] ) ); }
+		nodes.push( list );
+		if ( past.length ) {
+			nodes.push( h( 'details', { class: 'tcc-hm__past' }, [
+				h( 'summary', {}, [ 'Earlier this season · ' + past.length ] ),
+				h( 'ul', {}, past.slice().reverse().map( function ( r ) { return h( 'li', {}, [ h( 'b', {}, [ r.dow + ' ' + r.mon + ' ' + r.day ] ), h( 'span', {}, [ r.title + ( r.full ? ' · full run-through' : r.songs && r.songs.length ? ' · ' + r.songs.map( function ( i ) { return i + 1; } ).join( ', ' ) : '' ) ] ) ] ); } ) )
+			] ) );
+		}
+		show( nodes );
+	}
+
 	/* ---------- go ---------- */
 	function load() {
 		root.innerHTML = '';
@@ -681,6 +746,7 @@
 	/* the hub draws three tabs: Home (default), Team (#team) and Docs (#docs) */
 	function route() {
 		navMe();
+		if ( W.view === 'schedule' ) { document.documentElement.setAttribute( 'data-tcc-tab', 'schedule' ); root.classList.add( 'tcc-dash--sched' ); viewSchedule(); return; }
 		var tab = ( location.hash || '' ).replace( '#', '' );
 		document.documentElement.setAttribute( 'data-tcc-tab', tab === 'team' || tab === 'docs' ? tab : 'home' );
 		if ( window.tccTabs ) { window.tccTabs(); }
@@ -692,6 +758,6 @@
 		if ( ! r.who.onSeason ) { viewWelcomeBack( r.who ); return; }
 		viewDash();
 	}
-	window.addEventListener( 'hashchange', function () { if ( me ) { route(); window.scrollTo( 0, 0 ); } } );
+	window.addEventListener( 'hashchange', function () { if ( me && W.view !== 'schedule' ) { route(); window.scrollTo( 0, 0 ); } } );
 	load();
 } )();
