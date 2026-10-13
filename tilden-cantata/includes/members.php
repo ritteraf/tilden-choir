@@ -111,7 +111,7 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 	?>
 <section class="tcc-gate" aria-labelledby="<?php echo esc_attr( $id ); ?>-h">
 	<div class="tcc-gate__card">
-		<span class="tcc-gate__k"><?php echo $lock; // phpcs:ignore ?>Cast &amp; Crew</span>
+		<div class="tcc-gate__k"><?php echo $lock; // phpcs:ignore ?>Cast &amp; Crew</div>
 		<h1 class="tcc-gate__h" id="<?php echo esc_attr( $id ); ?>-h">Welcome! This part is for the cast and crew.</h1>
 		<p class="tcc-gate__p">Backstage is where the Tilden Community Choir gets ready<?php echo $title ? ' for <i>' . esc_html( $title ) . '</i>' : ''; ?>: the rehearsal schedule, practice tracks and sheet music. It’s kept behind one shared password, just to keep it among the people taking part.</p>
 		<p class="tcc-gate__p"><b>Don’t have the password?</b> Ask anyone singing or helping with this year’s cantata — they can share it with you.<?php echo $contact ? ' Or <a href="' . esc_url( $contact ) . '">send the director a note</a> and you’ll get it back.' : ''; ?></p>
@@ -120,7 +120,7 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 			<?php if ( $wrong ) : ?>
 			<p class="tcc-gate__wrong" role="alert">That password didn’t work. Check the spelling with whoever shared it — it may also have changed for this season.</p>
 			<?php endif; ?>
-			<label class="tcc-gate__label" for="<?php echo esc_attr( $id ); ?>">Password</label>
+			<div class="tcc-gate__label"><label for="<?php echo esc_attr( $id ); ?>">Password</label></div>
 			<div class="tcc-gate__row">
 				<input class="tcc-gate__input" name="post_password" id="<?php echo esc_attr( $id ); ?>" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off" required>
 				<button class="tcc-gate__go" type="submit">Come in</button>
@@ -134,7 +134,7 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 <style>
 .tcc-gate { padding-top: clamp(28px, 6vw, 64px); font-family: var(--wp--preset--font-family--libre-franklin, system-ui, sans-serif); }
 .tcc-gate__card { box-sizing: border-box; max-width: 40rem; padding: clamp(22px, 4vw, 36px); border-radius: 24px; background: #f3f1ec; color: #1f1f1f; display: flex; flex-direction: column; gap: 14px; }
-.tcc-gate__k { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #9c2b1a; }
+.tcc-gate__k { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #9c2b1a; }
 .tcc-gate__h { margin: 0; font-family: var(--wp--preset--font-family--zilla-slab, Georgia, serif); font-size: clamp(28px, 5vw, 38px); line-height: 1.12; font-weight: 700; }
 .tcc-gate__p { margin: 0; font-size: 17px; line-height: 1.55; color: #3d3c39; }
 .tcc-gate a { color: #9c2b1a; font-weight: 600; text-underline-offset: 3px; }
