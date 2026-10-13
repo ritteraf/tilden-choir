@@ -155,3 +155,16 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 	/* one line: the post content filters (wpautop) would otherwise pad the card with empty paragraphs */
 	return trim( preg_replace( '/\s*\n\s*/', ' ', preg_replace( '/>\s+</', '><', ob_get_clean() ) ) );
 }, 10, 2 );
+
+/**
+ * The Backstage copy of the schedule (/backstage/schedule/). The public /schedule/ page shows the
+ * same rehearsals for anyone; this one sits inside Backstage with the tab bar.
+ */
+function tcc_backstage_schedule(): ?WP_Post {
+	$p = get_page_by_path( 'backstage/schedule' );
+	if ( $p && $p->post_status === 'publish' ) {
+		return $p;
+	}
+	$p = get_page_by_path( 'schedule' );
+	return $p && $p->post_status === 'publish' && tcc_is_members_page( (int) $p->ID ) ? $p : null;
+}

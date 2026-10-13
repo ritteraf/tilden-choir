@@ -152,10 +152,12 @@ function tcc_world( int $cantata_id ): array {
 			if ( $p && $p->post_status === 'publish' ) { $urls[ $k ] = get_permalink( $p ); break; }
 		}
 	}
-	foreach ( [ 'practice', 'schedule', 'soprano', 'alto', 'tenor', 'bass', 'accompaniment' ] as $slug ) {
+	$sched = tcc_backstage_schedule();
+	$urls['schedule'] = $sched ? get_permalink( $sched ) : '';
+	foreach ( [ 'practice', 'soprano', 'alto', 'tenor', 'bass', 'accompaniment' ] as $slug ) {
 		$p = get_page_by_path( $slug );
 		if ( $p && $p->post_status === 'publish' ) {
-			if ( in_array( $slug, [ 'practice', 'schedule' ], true ) ) {
+			if ( $slug === 'practice' ) {
 				$urls[ $slug ] = get_permalink( $p );
 			} else {
 				$urls['parts'][ $slug ] = get_permalink( $p );

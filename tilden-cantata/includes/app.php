@@ -83,7 +83,7 @@ function tcc_tabs_config(): array {
 		return $p && $p->post_status === 'publish' ? $p : null;
 	};
 	$prac  = $find( 'practice' );
-	$sched = $find( 'schedule' );
+	$sched = tcc_backstage_schedule();
 	$slug  = (string) get_post_field( 'post_name', $qid );
 	$on    = '';
 	if ( ( $hubp && $qid === $hubp ) || $slug === 'backstage' ) {

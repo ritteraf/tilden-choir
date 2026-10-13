@@ -67,7 +67,7 @@ Full-screen, built for phones and older singers with "fat fingers" — big contr
 3. **Practice tracks** — upload the audio to the media library, then on the cantata's *Practice tracks* box add them per part. Tracks are matched to songs by title or track number; set one part by hand and files called "Track 04" in the other parts follow. Parts: Soprano, Alto, Tenor, Bass, *Accompaniment (performance)* — the full-song accompaniment the Voices/Accomp. toggle uses — *Accompaniment, sectioned* (the CD sections) and *All voices*.
 4. **Score** — clean the scan (below), then upload it in the cantata's *Score (sheet music)* box: page offset (so PDF page = printed page), and each song's first and last printed page ("Fill in last pages" helps). The PDF is stored outside the public uploads folder (random name, deny-all `.htaccess`) and streamed only to Backstage with a token.
 5. **Page turns** — record them per song on `/practice/` (see above).
-6. **Pages** — `/backstage/` (the hub: hero + dashboard, password-protected), `/practice/`, `/schedule/`, `/director/` use the *Backstage page* template; any page with that template or a password is members-only. Add Backstage URLs to SiteGround's Dynamic Cache exclusions.
+6. **Pages** — `/backstage/` (the hub: hero + dashboard, password-protected), `/practice/`, `/backstage/schedule/`, `/director/` use the *Backstage page* template; any page with that template or a password is members-only. `/schedule/` is the public copy of the schedule (default template, same *Rehearsal schedule* block), linked from the Join page. Add Backstage URLs to SiteGround's Dynamic Cache exclusions.
 
 ### Cleaning a scanned score
 
@@ -130,4 +130,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.17.4**, theme **1.8.0**.
+Current versions: plugin **2.18.0**, theme **1.8.0**.
