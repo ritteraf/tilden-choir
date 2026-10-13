@@ -735,9 +735,10 @@
 			] ) );
 		}
 		nodes.push( grid );
-		var rest = Object.keys( W.roles ).filter( function ( k ) { return k !== team; } );
+		/* the teams to choose from, only while this person hasn't picked one */
+		var rest = role ? [] : Object.keys( W.roles );
 		if ( rest.length ) {
-			nodes.push( h( 'h3', { class: 'tcc-hm__month' }, [ role ? 'Other teams' : 'Teams' ] ) );
+			nodes.push( h( 'h3', { class: 'tcc-hm__month' }, [ 'Teams' ] ) );
 			nodes.push( h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list' }, rest.map( function ( k ) {
 				var r = W.roles[ k ], names = W.teams[ k ] || [];
 				return h( 'div', { class: 'tcc-hm__w tcc-hm__team' }, [
