@@ -559,9 +559,8 @@
 		] );
 		return widget( 'tcc-hm__songsw', [
 			h( 'div', { class: 'tcc-hm__songs-top' }, [
-				h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Your songs · ' + W.voice[ P().part ].label, 'is-green' ), h( 'span', { class: 'tcc-hm__fine' }, [ 'Tap one to practice' ] ) ] ),
-				dots, summary,
-				h( 'p', { class: 'tcc-hm__fine' }, [ 'Mark a song with Feedback while it plays — your marks help the director plan rehearsals.' ] )
+				wk( 'Your songs · ' + W.voice[ P().part ].label, 'is-green' ),
+				dots, summary
 			] ),
 			list
 		] );
