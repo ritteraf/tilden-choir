@@ -427,16 +427,25 @@
 
 	/* one rehearsal as a calendar page for the day — the times, who comes, what's on, the director's word */
 	function rehBody( r ) {
+		/* each part of the evening on its own line, with who it's for right on that line:
+		   7–8 PM  Rehearsal  [Singers] [Required]
+		   8–8:45 PM  Staging/Costuming meeting  [Staging] [Costuming] */
+		function chips( who, extra ) {
+			var box = h( 'span', { class: 'tcc-hm__chips' } );
+			( who && who.length ? who : [ 'everyone' ] ).forEach( function ( k ) {
+				var team = k.indexOf( 'role:' ) === 0;
+				box.appendChild( h( 'span', { class: 'tcc-hm__tag' + ( team ? ' is-team' : '' ) }, [ k === 'everyone' ? 'Everyone' : team ? ( ( W.roles[ k.slice( 5 ) ] || {} ).label || k.slice( 5 ) ) : whoLabel( k ) ] ) );
+			} );
+			( extra || [] ).forEach( function ( x ) { if ( x ) { box.appendChild( x ); } } );
+			return box;
+		}
+		var must = requiredOfMe( r ) ? h( 'span', { class: 'tcc-hm__tag is-must' }, [ 'Required' ] )
+			: ( ! P() && r.must && r.must.length ? h( 'span', { class: 'tcc-hm__tag is-must' }, [ 'Required for ' + r.must.map( whoLabel ).join( ', ' ).toLowerCase() ] ) : null );
 		var times = h( 'div', { class: 'tcc-hm__times' }, [
-			h( 'div', { class: 'tcc-hm__time' }, [ h( 'b', {}, [ r.time || 'All day' ] ), h( 'span', {}, [ r.type && r.type !== 'rehearsal' ? ( W.rtypes && W.rtypes[ r.type ] ) || r.type.charAt( 0 ).toUpperCase() + r.type.slice( 1 ) : 'Rehearsal' ] ) ] )
+			h( 'div', { class: 'tcc-hm__time' }, [ h( 'b', {}, [ r.time || 'All day' ] ), h( 'span', { class: 'tcc-hm__time-t' }, [ h( 'span', {}, [ r.type && r.type !== 'rehearsal' ? ( W.rtypes && W.rtypes[ r.type ] ) || r.type.charAt( 0 ).toUpperCase() + r.type.slice( 1 ) : 'Rehearsal' ] ), chips( r.who, [ must ] ) ] ) ] )
 		].concat( ( r.after || [] ).map( function ( a ) {
-			var forWho = a.who && a.who.length ? a.who.map( whoLabel ).join( ', ' ) : '';
-			return h( 'div', { class: 'tcc-hm__time' + ( a.who && a.who.length && ! forMe( a.who ) ? ' is-other' : '' ) }, [ h( 'b', {}, [ a.time || 'After' ] ), h( 'span', {}, [ a.what + ( forWho ? ' · ' + forWho : '' ) ] ) ] );
+			return h( 'div', { class: 'tcc-hm__time' + ( a.who && a.who.length && ! forMe( a.who ) ? ' is-other' : '' ) }, [ h( 'b', {}, [ a.time || 'After' ] ), h( 'span', { class: 'tcc-hm__time-t' }, [ h( 'span', {}, [ a.what ] ), chips( a.who ) ] ) ] );
 		} ) ) );
-		var tags = h( 'div', { class: 'tcc-hm__tags' } );
-		( r.who && r.who.length ? r.who : [ 'everyone' ] ).forEach( function ( k ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag' }, [ k === 'everyone' ? 'Everyone' : whoLabel( k ) ] ) ); } );
-		if ( requiredOfMe( r ) ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag is-must' }, [ 'Required' ] ) ); }
-		else if ( ! P() && r.must && r.must.length ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag is-must' }, [ 'Required for ' + r.must.map( whoLabel ).join( ', ' ).toLowerCase() ] ) ); }
 		var what = null;
 		if ( r.full ) {
 			what = h( 'div', { class: 'tcc-hm__what' }, [ h( 'span', { html: SVG.music } ), h( 'span', {}, [ h( 'b', {}, [ 'Full run-through' ] ), ' · the whole work' ] ) ] );
@@ -450,7 +459,7 @@
 		return [
 			h( 'div', { class: 'tcc-hm__cal' }, [
 				h( 'div', { class: 'tcc-hm__page', 'aria-hidden': 'true' }, [ h( 'span', { class: 'tcc-hm__page-m' }, [ r.mon.toUpperCase() ] ), h( 'span', { class: 'tcc-hm__page-d' }, [ r.day ] ), h( 'span', { class: 'tcc-hm__page-w' }, [ r.dow.toUpperCase() ] ) ] ),
-				h( 'div', { class: 'tcc-hm__cal-t' }, [ h( 'h3', {}, [ r.title ] ), h( 'span', { class: 'tcc-hm__sr' }, [ r.long ] ), times, tags ] )
+				h( 'div', { class: 'tcc-hm__cal-t' }, [ h( 'h3', {}, [ r.title ] ), h( 'span', { class: 'tcc-hm__sr' }, [ r.long ] ), times ] )
 			] ),
 			what,
 			note ? h( 'p', { class: 'tcc-hm__note' }, [ h( 'b', {}, [ 'From the director: ' ] ), note ] ) : null
