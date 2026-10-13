@@ -26,6 +26,7 @@ Source for [tildencommunitychoir.org](https://tildencommunitychoir.org): a WordP
 - **Join / About / Contact** — the contact form saves each message and emails the director.
 
 ### Backstage (`/backstage/`, one shared password)
+- **A friendly password page** — instead of WordPress's "This content is password-protected", visitors see what Backstage is, that the password comes from anyone taking part (or the director, linked), a "Come in" box, a gentle note when a password didn't work, and a link to joining.
 - **Sign-in without accounts.** A device is linked to a person once ("I've sung with the choir before" → find your name; "I'm new this year" → a one-minute sign-up that replaces the paper sheet; "Just browsing"). **"Who's practicing?"** — a quick switch for shared phones and iPads: everyone who has used the device, one tap each, with "Someone else", "New this year" and "Remove a name from this device". Where-you-left-off is kept per person. The director gets an email for **new** sign-ups only.
 - **Just browsing** — the same widget dashboard for someone a choir member shared the password with: a welcome, the join pitch from the Join page with an "I'd like to join" button, the next rehearsal, the countdown, the full schedule, and the practice tracks explained part by part. The sign-in doors (find my name / new this year / just browsing) use the same look, and a "Sign in" button sits where a member's name would.
 - **Personal dashboard** — an app-style grid of widgets: the next rehearsal as a calendar page (who's expected, *Required*, the songs with ★ focus, afterward items like team meetings, the director's note), *Continue practicing* at the exact spot you stopped, a red performance countdown, a *Full schedule* tile, and *Your songs* (each song's mark as a dot, totals, and a play button per song). Two columns on phones, three on computers.
@@ -129,4 +130,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.17.0**, theme **1.8.0**.
+Current versions: plugin **2.17.1**, theme **1.8.0**.
