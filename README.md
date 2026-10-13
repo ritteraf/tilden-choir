@@ -26,10 +26,11 @@ Source for [tildencommunitychoir.org](https://tildencommunitychoir.org): a WordP
 - **Join / About / Contact** — the contact form saves each message and emails the director.
 
 ### Backstage (`/backstage/`, one shared password)
-- **Sign-in without accounts.** A device is linked to a person once ("I've sung with the choir before" → find your name; "I'm new this year" → a one-minute sign-up that replaces the paper sheet; "Just browsing"). One-tap "Not you? Switch" for shared devices. The director gets an email for **new** sign-ups only.
+- **Sign-in without accounts.** A device is linked to a person once ("I've sung with the choir before" → find your name; "I'm new this year" → a one-minute sign-up that replaces the paper sheet; "Just browsing"). **"Who's practicing?"** — a quick switch for shared phones and iPads: everyone who has used the device, one tap each, with "Someone else", "New this year" and "Remove a name from this device". Where-you-left-off is kept per person. The director gets an email for **new** sign-ups only.
 - **Just browsing** — a welcome for someone a choir member shared the password with: the join pitch from the Join page, an "I'd like to join" button, the next rehearsal, and what the practice tracks are, part by part.
-- **Personal dashboard** — greeting, the next rehearsal (same layout as the schedule) with a "Full schedule" row, the singer's songs as tiles with a subtle "Played 3× · Tuesday" and their own mark, "Pick up where you left off", their team and documents.
-- **Home-screen app** — Backstage installs as **"Tilden Community Choir"** with its own icon (manifest + Apple tags). The dashboard detects the phone and browser (iPhone Safari/Chrome/Firefox/Edge, iPad, Android Chrome/Samsung/Firefox, Facebook/Instagram in-app browsers) and shows the right "Add to Home Screen" steps. Opened from the icon, the site header and footer disappear, inner pages get a "‹ Backstage" bar, and links that leave Backstage open in the browser instead.
+- **Personal dashboard** — an app-style grid of widgets: the next rehearsal as a calendar page (who's expected, *Required*, the songs with ★ focus, afterward items like team meetings, the director's note), *Continue practicing* at the exact spot you stopped, a red performance countdown, a *Full schedule* tile, and *Your songs* (each song's mark as a dot, totals, and a play button per song). Two columns on phones, three on computers.
+- **Tab bar** — Home · Practice · Schedule · Team · Docs on every Backstage page except the practice app: along the bottom on phones, across the top on computers. Team and Docs are tabs of the hub (`#team`, `#docs`).
+- **Home-screen app** — Backstage installs as **"Tilden Community Choir"** with its own icon (manifest + Apple tags). The dashboard detects the phone and browser (iPhone Safari/Chrome/Firefox/Edge, iPad, Android Chrome/Samsung/Firefox, Facebook/Instagram in-app browsers) and shows the right "Add to Home Screen" steps. Opened from the icon, the site header and footer disappear (the tab bar is the way around), and links that leave Backstage open in the browser instead.
 
 ### The practice app (`/practice/`)
 Full-screen, built for phones and older singers with "fat fingers" — big controls everywhere.
@@ -128,4 +129,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.15.3**, theme **1.7.1**.
+Current versions: plugin **2.16.0**, theme **1.7.1**.

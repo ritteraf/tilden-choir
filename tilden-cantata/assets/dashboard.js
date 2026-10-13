@@ -53,15 +53,6 @@
 		if ( st === 'help' ) { return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><text x="10" y="13.8" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor" font-family="sans-serif">?</text></svg>'; }
 		return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 	}
-	function pills( who ) {
-		var box = h( 'span', { class: 'tcc-db__pills' } );
-		if ( ! who || ! who.length ) { box.appendChild( h( 'span', { class: 'tcc-who tcc-who--all' }, [ 'Everyone' ] ) ); return box; }
-		who.forEach( function ( k ) {
-			var role = k.indexOf( 'role:' ) === 0;
-			box.appendChild( h( 'span', { class: 'tcc-who tcc-who--' + ( role ? 'role' : k ) }, [ role ? ( ( W.roles[ k.slice( 5 ) ] || {} ).label || k.slice( 5 ) ) : ( W.types[ k ] || k ) ] ) );
-		} );
-		return box;
-	}
 	function practiceUrl( part, song ) {
 		var u = W.urls.practice || W.urls.hub;
 		if ( part ) { u += ( u.indexOf( '?' ) === -1 ? '?' : '&' ) + 'part=' + part; }
@@ -226,47 +217,6 @@
 	}
 
 	/* your songs: the whole work, one tile per song */
-	function songs( next ) {
-		var parts = myTrackParts();
-		var primary = parts[ 0 ];
-		var have = {}; parts.forEach( function ( p ) { W.parts[ p ].songs.forEach( function ( i ) { have[ i ] = true; } ); } );
-		var nextSongs = next && ! next.full ? next.songs : [];
-		var focus = next ? next.focus : [];
-		var tag = next ? next.dow : '';
-		var grid = h( 'ol', { class: 'tcc-db__tiles' } );
-		W.songs.forEach( function ( title, i ) {
-			var ok = have[ i ], st = ok ? markOf( i ) : '', pl = ok ? playsOf( i ) : null, inNext = nextSongs.indexOf( i ) !== -1, isF = focus.indexOf( i ) !== -1;
-			var inner = [
-				h( 'span', { class: 'tcc-db__tile-top' }, [ h( 'span', { class: 'tcc-db__tile-n' }, [ String( i + 1 ) ] ), st ? h( 'span', { class: 'tcc-db__ring tcc-db__ring--' + st, title: { none: 'Not marked yet', some: 'You marked: getting there', good: 'You marked: feeling good', help: 'You marked: tricky spots' }[ st ], html: ring( st ) } ) : null ] ),
-				h( 'span', { class: 'tcc-db__tile-t' }, [ title ] ),
-				( inNext || isF ) ? h( 'span', { class: 'tcc-db__tile-tags' }, [ inNext ? h( 'span', { class: 'tcc-db__tile-tag' }, [ tag ] ) : null, isF ? h( 'span', { class: 'tcc-db__tile-star', title: 'The director says: focus on this one' }, [ '★ Focus' ] ) : null ] ) : null,
-				ok ? h( 'span', { class: 'tcc-db__tile-plays' + ( pl.n ? '' : ' is-none' ) }, [ pl.n ? 'Played ' + pl.n + '×' + ( pl.last ? ' · ' + whenShort( pl.last ) : '' ) : 'Not played yet' ] ) : h( 'span', { class: 'tcc-db__tile-plays is-none' }, [ 'No track for your part' ] )
-			];
-			grid.appendChild( h( 'li', {}, [ ok
-				? h( 'a', { class: 'tcc-db__tile' + ( inNext ? ' is-next' : '' ) + ( isF ? ' is-focus' : '' ), href: practiceUrl( primary, i ) }, inner )
-				: h( 'span', { class: 'tcc-db__tile is-off', title: 'No track for your part yet' }, inner ) ] ) );
-		} );
-		/* the one big button: pick up where you left off, else the next rehearsal's first song */
-		var last = null; try { last = JSON.parse( store( 'ls', 'tcc_last' ) || 'null' ); } catch ( e ) {}
-		var go;
-		if ( last && last.song >= 0 && W.songs[ last.song ] && W.parts[ last.part ] ) {
-			go = h( 'a', { class: 'tcc-db__go', href: practiceUrl( last.part, last.song ) }, [ h( 'span', { class: 'tcc-db__go-i', html: ICON.play } ), h( 'span', { class: 'tcc-db__go-t' }, [ h( 'small', {}, [ 'Pick up where you left off' ] ), ( last.song + 1 ) + '. ' + W.songs[ last.song ] ] ) ] );
-		} else {
-			var first = nextSongs.filter( function ( i ) { return have[ i ]; } ).sort( function ( a, b ) { return ( focus.indexOf( b ) !== -1 ) - ( focus.indexOf( a ) !== -1 ) || a - b; } )[ 0 ];
-			go = h( 'a', { class: 'tcc-db__go', href: practiceUrl( primary, first ) }, [ h( 'span', { class: 'tcc-db__go-i', html: ICON.play } ), h( 'span', { class: 'tcc-db__go-t' }, [ h( 'small', {}, [ first !== undefined ? 'Start with ' + tag + '’s songs' : 'Open the practice app' ] ), first !== undefined ? ( first + 1 ) + '. ' + W.songs[ first ] : W.voice[ P().part ].label + ' tracks' ] ) ] );
-		}
-		return h( 'section', { class: 'tcc-db__sec', id: 'tcc-songs' }, [
-			eyebrow( 'Your songs', h( 'a', { class: 'tcc-db__eyebrow-link', href: practiceUrl( primary ) }, [ W.voice[ P().part ].label + ' tracks' ] ) ),
-			go,
-			grid,
-			h( 'p', { class: 'tcc-db__legend' }, [
-				h( 'span', { class: 'tcc-db__ring tcc-db__ring--some', html: ring( 'some' ) } ), 'Getting there',
-				h( 'span', { class: 'tcc-db__ring tcc-db__ring--good', html: ring( 'good' ) } ), 'Feeling good',
-				h( 'span', { class: 'tcc-db__ring tcc-db__ring--help', html: ring( 'help' ) } ), 'Tricky spots',
-				h( 'span', { class: 'tcc-db__legend-note' }, [ 'Your own marks — set them on a song in the practice app. Only you see this.' ] )
-			] )
-		] );
-	}
 
 	function docList( groups, all ) {
 		var seen = {}, items = [];
@@ -363,46 +313,330 @@
 		if ( foot && ! foot.querySelector( '.tcc-db__a2hs-again' ) ) { var l = a2hsLink(); if ( l ) { foot.appendChild( document.createTextNode( ' · ' ) ); foot.appendChild( l ); } }
 	}
 
-	/* the person's own dashboard */
+	/* ---------- the home screen: widgets ---------- */
+	var SVG = {
+		cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+		calDots: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>',
+		music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+		play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l12 7-12 7z"/></svg>',
+		down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+		right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
+		phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+		x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+		check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+		team: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+	};
+	function fmtT( s ) { s = Math.max( 0, Math.round( s ) ); return Math.floor( s / 60 ) + ':' + ( '0' + ( s % 60 ) ).slice( -2 ); }
+	function firstOf( who ) { return who.first || who.name.split( ' ' )[ 0 ]; }
+	function initial( name ) { return ( name || '?' ).trim().charAt( 0 ).toUpperCase(); }
+	var AVATAR = [ '#355635', '#9c2b1a', '#8a5a00', '#3c5a7a', '#6b4a7a', '#1f1f1f' ];
+	function avatarColor( id ) { return AVATAR[ ( +id || 0 ) % AVATAR.length ]; }
+	function avatar( p, size ) { return h( 'span', { class: 'tcc-hm__av' + ( size ? ' tcc-hm__av--' + size : '' ), style: 'background:' + avatarColor( p.id ), 'aria-hidden': 'true' }, [ initial( p.name ) ] ); }
+	function plainText( html ) { var d = document.createElement( 'div' ); d.innerHTML = html || ''; return ( d.textContent || '' ).replace( /\s+/g, ' ' ).trim(); }
+	function whoLabel( k ) { return k.indexOf( 'role:' ) === 0 ? ( ( W.roles[ k.slice( 5 ) ] || {} ).label || k.slice( 5 ) ) + ' team' : ( W.types[ k ] || k ); }
+
+	/* the people who use this device, newest first — so a shared phone or iPad switches in one tap */
+	function people() { try { return JSON.parse( store( 'ls', 'tcc_people' ) || '[]' ) || []; } catch ( e ) { return []; } }
+	function savePeople( list ) { store( 'ls', 'tcc_people', JSON.stringify( list.slice( 0, 12 ) ) ); }
+	function remember( who ) {
+		if ( ! who || ! who.id ) { return; }
+		var list = people().filter( function ( p ) { return +p.id !== +who.id; } );
+		list.unshift( { id: who.id, name: who.name, part: who.part && W.voice[ who.part ] ? W.voice[ who.part ].label : '', at: Date.now() } );
+		savePeople( list );
+	}
+	function ago( t ) {
+		if ( ! t ) { return ''; }
+		var d = Math.floor( ( Date.now() - t ) / 864e5 );
+		return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d < 7 ? d + ' days ago' : d < 14 ? 'last week' : 'a while ago';
+	}
+	function switchTo( id ) {
+		return fetch( W.rest + 'who', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-TCC-Token': W.token }, body: JSON.stringify( { cantata: W.cantata.id, person: id } ) } ).then( function ( r ) { return r.json(); } );
+	}
+	/* "Who's practicing?" */
+	var sheetEl = null;
+	function closeSheet() { if ( ! sheetEl ) { return; } var s = sheetEl; sheetEl = null; s.classList.remove( 'is-open' ); setTimeout( function () { s.remove(); }, 200 ); document.removeEventListener( 'keydown', escClose ); }
+	function escClose( e ) { if ( e.key === 'Escape' ) { closeSheet(); } }
+	function openSheet( title, body, label ) {
+		closeSheet();
+		var box = h( 'section', { class: 'tcc-hm__sheet-box', role: 'dialog', 'aria-modal': 'true', 'aria-label': label || title }, [
+			h( 'span', { class: 'tcc-hm__sheet-grab', 'aria-hidden': 'true' } ),
+			h( 'div', { class: 'tcc-hm__sheet-head' }, [ h( 'h2', {}, [ title ] ), h( 'button', { type: 'button', class: 'tcc-hm__x', 'aria-label': 'Close', html: SVG.x, onclick: closeSheet } ) ] ),
+			body
+		] );
+		sheetEl = h( 'div', { class: 'tcc-hm__sheet', onclick: function ( e ) { if ( e.target === sheetEl ) { closeSheet(); } } }, [ box ] );
+		document.body.appendChild( sheetEl );
+		requestAnimationFrame( function () { if ( sheetEl ) { sheetEl.classList.add( 'is-open' ); } } );
+		document.addEventListener( 'keydown', escClose );
+		var f = box.querySelector( 'button' ); if ( f ) { setTimeout( function () { f.focus(); }, 60 ); }
+	}
+	function openSwitch() {
+		var cur = me && me.who ? me.who.id : 0, editing = false;
+		var listBox = h( 'div', { class: 'tcc-hm__people' } );
+		function paint() {
+			listBox.innerHTML = '';
+			var list = people();
+			if ( cur && ! list.some( function ( p ) { return +p.id === +cur; } ) ) { list.unshift( { id: cur, name: me.who.name, part: W.voice[ me.who.part ] ? W.voice[ me.who.part ].label : '', at: Date.now() } ); }
+			list.forEach( function ( p ) {
+				var on = +p.id === +cur;
+				var row = h( 'div', { class: 'tcc-hm__person-row' }, [
+					h( 'button', { type: 'button', class: 'tcc-hm__person' + ( on ? ' is-on' : '' ), 'aria-current': on ? 'true' : null, onclick: function () {
+						if ( on ) { closeSheet(); return; }
+						row.classList.add( 'is-busy' );
+						switchTo( p.id ).then( function () { closeSheet(); store( 'ss', 'tcc_browse', null ); load(); } ).catch( function () { row.classList.remove( 'is-busy' ); } );
+					} }, [
+						avatar( p ),
+						h( 'span', { class: 'tcc-hm__person-t' }, [ h( 'b', {}, [ p.name ] ), h( 'span', {}, [ [ p.part, on ? 'now' : ago( p.at ) ].filter( Boolean ).join( ' · ' ) ] ) ] ),
+						on ? h( 'span', { class: 'tcc-hm__person-on', html: SVG.check } ) : null
+					] ),
+					editing && ! on ? h( 'button', { type: 'button', class: 'tcc-hm__person-x', 'aria-label': 'Remove ' + p.name + ' from this device', html: SVG.x, onclick: function () { savePeople( people().filter( function ( q ) { return +q.id !== +p.id; } ) ); paint(); } } ) : null
+				] );
+				listBox.appendChild( row );
+			} );
+			if ( ! list.length ) { listBox.appendChild( h( 'p', { class: 'tcc-hm__fine' }, [ 'Nobody has signed in on this device yet.' ] ) ); }
+		}
+		paint();
+		var editBtn = h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { editing = ! editing; editBtn.textContent = editing ? 'Done' : 'Remove a name from this device'; paint(); } }, [ 'Remove a name from this device' ] );
+		openSheet( 'Who’s practicing?', h( 'div', { class: 'tcc-hm__switch' }, [
+			h( 'p', { class: 'tcc-hm__fine' }, [ 'Everyone who has used this device. One tap switches — notes, marks and where you left off follow each person.' ] ),
+			listBox,
+			h( 'div', { class: 'tcc-hm__more2' }, [
+				h( 'button', { type: 'button', class: 'tcc-hm__door', onclick: function () { closeSheet(); signIn( 'find' ); } }, [ h( 'b', {}, [ 'Someone else' ] ), h( 'span', {}, [ 'Find your name' ] ) ] ),
+				h( 'button', { type: 'button', class: 'tcc-hm__door', onclick: function () { closeSheet(); signIn( 'new' ); } }, [ h( 'b', {}, [ 'New this year' ] ), h( 'span', {}, [ 'Sign up' ] ) ] )
+			] ),
+			people().length > 1 ? editBtn : null
+		] ) );
+	}
+
+	function widget( cls, kids, tag ) { return h( tag || 'section', { class: 'tcc-hm__w ' + ( cls || '' ) }, kids ); }
+	function wk( text, cls ) { return h( 'span', { class: 'tcc-hm__k' + ( cls ? ' ' + cls : '' ) }, [ text ] ); }
+
+	/* next rehearsal: a calendar page for the day — the times, who comes, what's on, the director's word */
+	function rehearsalWidget( r, skippedFirst ) {
+		if ( ! r ) { return widget( 'tcc-hm__reh', [ wk( 'Next rehearsal', 'is-red' ), h( 'p', { class: 'tcc-hm__fine' }, [ 'Nothing on the calendar for you right now.' ] ) ] ); }
+		var rel = relDay( r.date );
+		var times = h( 'div', { class: 'tcc-hm__times' }, [
+			h( 'div', { class: 'tcc-hm__time' }, [ h( 'b', {}, [ r.time || 'All day' ] ), h( 'span', {}, [ r.type && r.type !== 'rehearsal' ? r.type.charAt( 0 ).toUpperCase() + r.type.slice( 1 ) : 'Rehearsal' ] ) ] )
+		].concat( ( r.after || [] ).map( function ( a ) {
+			var forWho = a.who && a.who.length ? a.who.map( whoLabel ).join( ', ' ) : '';
+			return h( 'div', { class: 'tcc-hm__time' + ( a.who && a.who.length && ! forMe( a.who ) ? ' is-other' : '' ) }, [ h( 'b', {}, [ a.time || 'After' ] ), h( 'span', {}, [ a.what + ( forWho ? ' · ' + forWho : '' ) ] ) ] );
+		} ) ) );
+		var tags = h( 'div', { class: 'tcc-hm__tags' } );
+		( r.who && r.who.length ? r.who : [ 'everyone' ] ).forEach( function ( k ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag' }, [ k === 'everyone' ? 'Everyone' : whoLabel( k ) ] ) ); } );
+		if ( requiredOfMe( r ) ) { tags.appendChild( h( 'span', { class: 'tcc-hm__tag is-must' }, [ 'Required' ] ) ); }
+		var what;
+		if ( r.full ) {
+			what = h( 'div', { class: 'tcc-hm__what' }, [ h( 'span', { html: SVG.music } ), h( 'span', {}, [ h( 'b', {}, [ 'Full run-through' ] ), ' · the whole work' ] ) ] );
+		} else if ( r.songs && r.songs.length ) {
+			what = h( 'ul', { class: 'tcc-hm__what tcc-hm__what--songs' }, r.songs.map( function ( i ) {
+				var f = r.focus && r.focus.indexOf( i ) !== -1;
+				return h( 'li', { class: f ? 'is-focus' : '' }, [ h( 'b', {}, [ String( i + 1 ) ] ), ' ' + ( W.songs[ i ] || '' ), f ? h( 'span', { class: 'tcc-hm__star' }, [ '★ focus' ] ) : null ] );
+			} ) );
+		}
+		var note = plainText( r.note );
+		return widget( 'tcc-hm__reh', [
+			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Next rehearsal', 'is-red' ), rel ? h( 'span', { class: 'tcc-hm__chip' }, [ rel ] ) : null ] ),
+			h( 'div', { class: 'tcc-hm__cal' }, [
+				h( 'div', { class: 'tcc-hm__page', 'aria-hidden': 'true' }, [ h( 'span', { class: 'tcc-hm__page-m' }, [ r.mon.toUpperCase() ] ), h( 'span', { class: 'tcc-hm__page-d' }, [ r.day ] ), h( 'span', { class: 'tcc-hm__page-w' }, [ r.dow.toUpperCase() ] ) ] ),
+				h( 'div', { class: 'tcc-hm__cal-t' }, [ h( 'h3', {}, [ r.title ] ), h( 'span', { class: 'tcc-hm__sr' }, [ r.long ] ), times, tags ] )
+			] ),
+			what || null,
+			note ? h( 'p', { class: 'tcc-hm__note' }, [ h( 'b', {}, [ 'From the director: ' ] ), note ] ) : null,
+			skippedFirst ? h( 'p', { class: 'tcc-hm__fine' }, [ skippedFirst ] ) : null
+		] );
+	}
+
+	/* continue practicing: where this person left off, at the spot they stopped */
+	function continueWidget( next ) {
+		var parts = myTrackParts(), primary = parts[ 0 ];
+		var whoId = me && me.who ? me.who.id : 0, last = null;
+		try { last = JSON.parse( store( 'ls', 'tcc_last_' + whoId ) || 'null' ); } catch ( e ) {}
+		var song, part, at = 0, dur = 0, small;
+		if ( last && last.song >= 0 && W.songs[ last.song ] && W.parts[ last.part ] && parts.indexOf( last.part ) !== -1 ) {
+			song = last.song; part = last.part;
+			at = parseFloat( store( 'ls', 'tcc_pos_' + whoId + '_' + last.id ) || '0' ) || 0;
+			dur = ( W.parts[ part ].durs || {} )[ song ] || 0;
+			small = W.voice[ P().part ].label + ( at > 5 ? ' · picks up at ' + fmtT( at ) : ' · from the top' );
+		} else {
+			var have = {}; parts.forEach( function ( p ) { W.parts[ p ].songs.forEach( function ( i ) { have[ i ] = true; } ); } );
+			var ns = next && ! next.full ? next.songs : [];
+			song = ns.filter( function ( i ) { return have[ i ]; } )[ 0 ];
+			if ( song === undefined ) { song = W.songs.map( function ( t, i ) { return i; } ).filter( function ( i ) { return have[ i ]; } )[ 0 ]; }
+			part = primary;
+			small = W.voice[ P().part ].label + ' · start here';
+		}
+		if ( song === undefined ) { return null; }
+		var pct = dur ? Math.min( 100, Math.round( at / dur * 100 ) ) : 0;
+		return widget( 'tcc-hm__cont', [
+			wk( last && last.song === song ? 'Continue practicing' : 'Start practicing' ),
+			h( 'div', { class: 'tcc-hm__cont-row' }, [
+				h( 'span', { class: 'tcc-hm__cont-n', 'aria-hidden': 'true' }, [ String( song + 1 ) ] ),
+				h( 'div', { class: 'tcc-hm__cont-t' }, [ h( 'b', {}, [ W.songs[ song ] ] ), h( 'span', {}, [ small ] ) ] ),
+				h( 'a', { class: 'tcc-hm__playbig', href: practiceUrl( part, song ), 'aria-label': 'Play ' + W.songs[ song ], html: SVG.play } )
+			] ),
+			dur ? h( 'div', { class: 'tcc-hm__bar', role: 'img', 'aria-label': pct + '% through' }, [ h( 'i', { style: 'width:' + pct + '%' } ) ] ) : null
+		] );
+	}
+
+	function countdownWidget() {
+		var c = W.cantata, days = +c.days;
+		if ( ! c.perfDay || ! ( days >= 0 ) ) { return null; }
+		var when = c.perfDay[ 0 ] + ', ' + c.perfDay[ 2 ] + ' ' + c.perfDay[ 1 ] + ( c.perfTime ? ' · ' + c.perfTime.replace( ':00', '' ) : '' );
+		return widget( 'tcc-hm__count', [
+			wk( 'Performance' ),
+			h( 'div', { class: 'tcc-hm__count-b' }, days === 0
+				? [ h( 'span', { class: 'tcc-hm__count-n tcc-hm__count-n--today' }, [ 'Today!' ] ), h( 'span', { class: 'tcc-hm__count-w' }, [ when ] ) ]
+				: [ h( 'span', { class: 'tcc-hm__count-n' }, [ String( days ) ] ), h( 'span', { class: 'tcc-hm__count-d' }, [ days === 1 ? 'day to go' : 'days to go' ] ), h( 'span', { class: 'tcc-hm__count-w' }, [ when ] ) ] )
+		] );
+	}
+	function scheduleWidget() {
+		if ( ! W.urls.schedule ) { return null; }
+		return h( 'a', { class: 'tcc-hm__w tcc-hm__sched', href: W.urls.schedule }, [
+			h( 'span', { class: 'tcc-hm__sched-i', html: SVG.calDots } ),
+			h( 'span', { class: 'tcc-hm__sched-t' }, [ h( 'b', {}, [ 'Full schedule' ] ), h( 'span', {}, [ 'Every rehearsal and what’s on' ] ) ] )
+		] );
+	}
+
+	/* your songs: how each one is going at a glance, then the list — tap one to practice it */
+	var MARK_LABEL = { none: 'Not marked yet', some: 'Getting there', good: 'Feeling good', help: 'Tricky spots', na: 'No track for your part' };
+	function songsWidget( next ) {
+		var parts = myTrackParts(), primary = parts[ 0 ];
+		var have = {}; parts.forEach( function ( p ) { W.parts[ p ].songs.forEach( function ( i ) { have[ i ] = true; } ); } );
+		var nextSongs = next && ! next.full ? next.songs : [], focus = next ? next.focus : [];
+		var count = { good: 0, some: 0, help: 0, none: 0 };
+		var dots = h( 'div', { class: 'tcc-hm__dots', style: 'grid-template-columns:repeat(' + W.songs.length + ',minmax(0,1fr))' } );
+		var list = h( 'ol', { class: 'tcc-hm__songs' } );
+		W.songs.forEach( function ( title, i ) {
+			var ok = !! have[ i ], st = ok ? markOf( i ) : 'na';
+			if ( ok ) { count[ st ]++; }
+			dots.appendChild( h( 'span', { class: 'tcc-hm__dot' }, [ h( 'span', { class: 'tcc-hm__ring tcc-hm__ring--' + st, role: 'img', 'aria-label': ( i + 1 ) + ': ' + MARK_LABEL[ st ], html: st === 'na' ? '' : ring( st ) } ), h( 'small', {}, [ String( i + 1 ) ] ) ] ) );
+			var pl = ok ? playsOf( i ) : null;
+			var bits = [];
+			if ( ! ok ) { bits.push( 'No track for your part' ); }
+			else { bits.push( pl.n ? 'Played ' + pl.n + '×' + ( pl.last ? ' · ' + whenShort( pl.last ) : '' ) : 'Not played yet' ); }
+			var inner = [
+				h( 'span', { class: 'tcc-hm__song-n' }, [ String( i + 1 ) ] ),
+				h( 'span', { class: 'tcc-hm__song-t' }, [ h( 'b', {}, [ title ] ), h( 'span', {}, [ bits.join( '' ),
+					ok && nextSongs.indexOf( i ) !== -1 && next.dow ? h( 'em', { class: 'tcc-hm__song-tag' }, [ next.dow ] ) : null,
+					ok && focus.indexOf( i ) !== -1 ? h( 'em', { class: 'tcc-hm__star' }, [ '★ focus' ] ) : null ] ) ] ),
+				ok ? h( 'span', { class: 'tcc-hm__ring tcc-hm__ring--' + st, title: MARK_LABEL[ st ], html: ring( st ) } ) : null,
+				h( 'span', { class: 'tcc-hm__play' + ( ok ? '' : ' is-off' ), html: SVG.play } )
+			];
+			list.appendChild( h( 'li', {}, [ ok ? h( 'a', { class: 'tcc-hm__song', href: practiceUrl( primary, i ), 'aria-label': 'Practice ' + title } , inner ) : h( 'span', { class: 'tcc-hm__song is-off' }, inner ) ] ) );
+		} );
+		var summary = h( 'div', { class: 'tcc-hm__sum' }, [
+			h( 'span', {}, [ h( 'b', { class: 'is-good' }, [ String( count.good ) ] ), ' feeling good' ] ),
+			h( 'span', {}, [ h( 'b', { class: 'is-some' }, [ String( count.some ) ] ), ' getting there' ] ),
+			h( 'span', {}, [ h( 'b', { class: 'is-help' }, [ String( count.help ) ] ), ' tricky spots' ] ),
+			h( 'span', {}, [ h( 'b', {}, [ String( count.none ) ] ), ' not marked' ] )
+		] );
+		return widget( 'tcc-hm__songsw', [
+			h( 'div', { class: 'tcc-hm__songs-top' }, [
+				h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Your songs · ' + W.voice[ P().part ].label, 'is-green' ), h( 'span', { class: 'tcc-hm__fine' }, [ 'Tap one to practice' ] ) ] ),
+				dots, summary,
+				h( 'p', { class: 'tcc-hm__fine' }, [ 'Mark a song with Feedback while it plays — your marks help the director plan rehearsals.' ] )
+			] ),
+			list
+		] );
+	}
+
+	/* add to home screen: one quiet strip; its steps open in a sheet */
+	function homeStrip() {
+		if ( isStandalone() || ! isTouch() || store( 'ls', 'tcc_a2hs' ) ) { return null; }
+		var steps = a2hsSteps();
+		var strip = h( 'div', { class: 'tcc-hm__w tcc-hm__a2hs' }, [
+			h( 'button', { type: 'button', class: 'tcc-hm__a2hs-go', onclick: function () {
+				openSheet( steps.app ? 'Open this in your browser first' : 'Add Backstage to your home screen', h( 'div', { class: 'tcc-hm__a2hs-steps' }, [
+					h( 'img', { src: W.icon, alt: '', width: '56', height: '56' } ),
+					h( 'p', { html: steps.html } ),
+					steps.app ? null : h( 'p', { class: 'tcc-hm__fine' }, [ 'You get a Tilden Community Choir icon, and the music gets the whole screen — no address bar.' ] ),
+					installEvt && ! steps.app ? h( 'button', { type: 'button', class: 'tcc-hm__btn', onclick: function () { installEvt.prompt(); installEvt.userChoice.then( function () { store( 'ls', 'tcc_a2hs', '1' ); strip.remove(); closeSheet(); } ); } }, [ 'Add it now' ] ) : null
+				] ) );
+			} }, [ h( 'span', { class: 'tcc-hm__a2hs-i', html: SVG.phone } ), h( 'span', { class: 'tcc-hm__a2hs-t' }, [ 'Add Backstage to your home screen' ] ), h( 'span', { class: 'tcc-hm__a2hs-how' }, [ 'How' ] ) ] ),
+			h( 'button', { type: 'button', class: 'tcc-hm__x tcc-hm__x--sm', 'aria-label': 'Hide this', html: SVG.x, onclick: function () { store( 'ls', 'tcc_a2hs', '1' ); strip.remove(); } } )
+		] );
+		return strip;
+	}
+
+	function head( who ) {
+		var meta = [];
+		if ( isSinger() && W.voice[ who.part ] ) { meta.push( W.voice[ who.part ].label ); }
+		who.types.forEach( function ( t ) { if ( t !== 'singers' && W.types[ t ] ) { meta.push( W.types[ t ].replace( /s$/, '' ) ); } } );
+		if ( who.role && W.roles[ who.role ] ) { meta.push( W.roles[ who.role ].label + ' team' ); }
+		return h( 'header', { class: 'tcc-hm__head' }, [
+			h( 'div', { class: 'tcc-hm__head-t' }, [
+				h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ),
+				h( 'h2', { class: 'tcc-hm__hello' }, [ greeting() + ', ' + firstOf( who ) ] ),
+				meta.length ? h( 'span', { class: 'tcc-hm__meta' }, [ meta.join( ' · ' ) ] ) : null
+			] ),
+			h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] )
+		] );
+	}
+
+	/* the person's own home */
 	function viewDash() {
 		var who = P();
-		var meta = [];
-		if ( isSinger() && W.voice[ who.part ] ) { meta.push( h( 'span', {}, [ W.voice[ who.part ].label ] ) ); }
-		who.types.forEach( function ( t ) { if ( t !== 'singers' && W.types[ t ] ) { meta.push( h( 'span', {}, [ W.types[ t ].replace( /s$/, '' ) ] ) ); } } );
-		if ( who.role && W.roles[ who.role ] ) { meta.push( h( 'span', {}, [ W.roles[ who.role ].label + ' team' ] ) ); }
-		var firstName = who.first || who.name.split( ' ' )[ 0 ];
-		var head = h( 'header', { class: 'tcc-db__hello' }, [
-			h( 'div', { class: 'tcc-db__hello-text' }, [
-				h( 'h2', { class: 'tcc-db__hello-h' }, [ greeting() + ', ' + firstName + '.' ] ),
-				h( 'p', { class: 'tcc-db__hello-meta' }, meta )
-			] ),
-			/* shared iPads and family phones: switching people is one tap away */
-			h( 'button', { type: 'button', class: 'tcc-db__switch', onclick: function () { signIn( 'switch' ); } }, [ h( 'span', { html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>' } ), 'Not ' + firstName + '? Switch' ] )
-		] );
-		var nodes = [ head, homeScreenCard() ];
-
 		var mine = W.rehearsals.filter( function ( r ) { return forMe( r.who ); } );
 		var next = mine[ 0 ], first = W.rehearsals[ 0 ];
-		var skipped = next && first && first.id !== next.id ? h( 'p', { class: 'tcc-db__skip' }, [ first.dow + ' ' + first.mon + ' ' + first.day + ' is for ', pills( first.who ), ' — you’re off that night.' ] ) : null;
-		nodes.push( comingUp( mine, true, skipped ) );
-
+		var skipped = next && first && first.id !== next.id ? first.dow + ' ' + first.mon + ' ' + first.day + ' (' + first.title + ') is for ' + ( first.who || [] ).map( whoLabel ).join( ', ' ) + ' — you’re off that night.' : '';
+		var grid = h( 'div', { class: 'tcc-hm__grid' } );
+		grid.appendChild( rehearsalWidget( next, skipped ) );
+		if ( isSinger() && myTrackParts().length ) { var cw = continueWidget( next ); if ( cw ) { grid.appendChild( cw ); } }
+		var cd = countdownWidget(), sw = scheduleWidget();
+		if ( cd ) { grid.appendChild( cd ); }
+		if ( sw ) { grid.appendChild( sw ); }
 		if ( isSinger() ) {
-			if ( myTrackParts().length ) { nodes.push( songs( next ) ); }
-			else { nodes.push( h( 'section', { class: 'tcc-db__sec' }, [ eyebrow( 'Your songs' ), h( 'p', { class: 'tcc-db__skip' }, [ W.voice[ who.part ] ? W.voice[ who.part ].label + ' tracks aren’t up yet — check back soon.' : 'We don’t have a voice part for you yet — the director will help you find it at the next rehearsal.', W.urls.practice ? ' ' : '', W.urls.practice ? h( 'a', { href: W.urls.practice }, [ 'Listen to what’s there' ] ) : null ] ) ] ) ); }
+			if ( myTrackParts().length ) { grid.appendChild( songsWidget( next ) ); }
+			else { grid.appendChild( widget( 'tcc-hm__wide', [ wk( 'Your songs', 'is-green' ), h( 'p', { class: 'tcc-hm__fine' }, [ W.voice[ who.part ] ? W.voice[ who.part ].label + ' tracks aren’t up yet — check back soon.' : 'We don’t have a voice part for you yet — the director will help you find it at the next rehearsal.' ] ) ] ) ); }
+		} else {
+			/* actors, narrators, crew: their materials take the songs' place */
+			var groups = [ 'everyone' ].concat( who.types.filter( function ( t ) { return W.types[ t ]; } ) );
+			var docs = docList( groups, false );
+			grid.appendChild( widget( 'tcc-hm__wide', [ wk( 'Your materials', 'is-green' ), docs || h( 'p', { class: 'tcc-hm__fine' }, [ 'Nothing posted for you yet.' ] ), W.urls.practice ? h( 'a', { class: 'tcc-hm__link', href: practiceUrl( W.parts.listen && W.parts.listen.count ? 'listen' : '' ) }, [ 'Hear the music in the practice app' ] ) : null ] ) );
 		}
+		var strip = homeStrip(); if ( strip ) { grid.appendChild( strip ); }
+		show( [ head( who ), grid, h( 'footer', { class: 'tcc-hm__foot' }, [
+			h( 'span', {}, [ who.name + ( W.voice[ who.part ] && isSinger() ? ' · ' + W.voice[ who.part ].label : '' ) + ' · ' ] ),
+			h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ),
+			W.canEdit && W.admin ? h( 'br' ) : null,
+			W.canEdit && W.admin ? h( 'a', { class: 'tcc-hm__link', href: W.admin }, [ 'Director: how the cantata is coming' ] ) : null
+		] ) ] );
+	}
 
-		/* non-singers: their materials come straight after Up next */
-		var groups = [ 'everyone' ].concat( who.types.filter( function ( t ) { return W.types[ t ]; } ) );
-		var docs = docList( groups, false );
-		if ( ! isSinger() && docs ) { nodes.push( h( 'section', { class: 'tcc-db__sec' }, [ eyebrow( 'Your materials' ), docs ] ) ); docs = null; }
-
-		var pair = h( 'div', { class: 'tcc-db__pair' }, [ teamCard(), docs ? h( 'section', { class: 'tcc-db__card' }, [ h( 'span', { class: 'tcc-db__card-k' }, [ 'Documents' ] ), docs ] ) : null ] );
-		nodes.push( pair );
-		if ( ! isSinger() && W.urls.practice ) { nodes.push( h( 'p', { class: 'tcc-db__skip' }, [ 'Want to hear the music? ', h( 'a', { href: practiceUrl( W.parts.listen && W.parts.listen.count ? 'listen' : '' ) }, [ 'Open the practice app' ] ) ] ) ); }
-
-		nodes.push( h( 'p', { class: 'tcc-db__foot' }, [ 'Signed in as ' + who.name + '. ', h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ), W.canEdit && W.admin ? ' · ' : '', W.canEdit && W.admin ? h( 'a', { href: W.admin }, [ 'Director: how the cantata is coming' ] ) : null ] ) );
+	/* ---------- the Team and Docs tabs ---------- */
+	function viewTeam() {
+		var who = me && me.who && me.who.onSeason ? me.who : null;
+		var nodes = [ h( 'header', { class: 'tcc-hm__head' }, [ h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ 'Teams' ] ), h( 'span', { class: 'tcc-hm__meta' }, [ 'Alongside singing, everyone takes on one small job for the season.' ] ) ] ), who ? h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) : null ] ) ];
+		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list' } );
+		if ( who ) { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide tcc-hm__myteam' }, [ teamCard() ] ) ); }
+		else { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ h( 'p', { class: 'tcc-hm__fine' }, [ 'Sign in to pick a team. ', h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { signIn( 'find' ); } }, [ 'Sign in' ] ) ] ) ] ) ); }
+		Object.keys( W.roles ).forEach( function ( k ) {
+			if ( who && who.role === k ) { return; }
+			var r = W.roles[ k ], names = W.teams[ k ] || [];
+			grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__team' }, [
+				h( 'span', { class: 'tcc-hm__team-i', html: SVG.team } ),
+				h( 'b', {}, [ r.label ] ),
+				r.desc ? h( 'span', { class: 'tcc-hm__fine' }, [ r.desc.charAt( 0 ).toUpperCase() + r.desc.slice( 1 ) + '.' ] ) : null,
+				h( 'span', { class: 'tcc-hm__team-who' }, [ names.length ? names.join( ', ' ) : 'Nobody yet' ] )
+			] ) );
+		} );
+		nodes.push( grid );
 		show( nodes );
-		paintA2hsLink();
+	}
+	function viewDocs() {
+		var who = me && me.who && me.who.onSeason ? me.who : null;
+		var nodes = [ h( 'header', { class: 'tcc-hm__head' }, [ h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ 'Documents' ] ) ] ), who ? h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) : null ] ) ];
+		var groups = [ 'everyone' ].concat( Object.keys( W.types ) );
+		var mineFirst = who ? [ 'everyone' ].concat( who.types ) : [ 'everyone' ];
+		var order = mineFirst.concat( groups.filter( function ( g ) { return mineFirst.indexOf( g ) === -1; } ) );
+		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list tcc-hm__grid--docs' } ), any = false;
+		order.forEach( function ( g ) {
+			var list = docList( [ g ], false ); if ( ! list ) { return; }
+			any = true;
+			grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ wk( g === 'everyone' ? 'For everyone' : 'For ' + ( W.types[ g ] || g ).toLowerCase(), 'is-red' ), list ] ) );
+		} );
+		if ( ! any ) { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ h( 'p', { class: 'tcc-hm__fine' }, [ 'No documents posted yet.' ] ) ] ) ); }
+		nodes.push( grid );
+		show( nodes );
 	}
 
 	/* ---------- go ---------- */
@@ -412,11 +646,23 @@
 		api( 'me', { cantata: W.cantata.id } ).then( function ( r ) {
 			me = r || {}; rows = {};
 			( r.rows || [] ).forEach( function ( row ) { rows[ row.song + '|' + row.part ] = row; } );
-			if ( store( 'ss', 'tcc_browse' ) ) { viewBrowse(); return; }
-			if ( ! r.who ) { viewChooser(); return; }
-			if ( ! r.who.onSeason ) { viewWelcomeBack( r.who ); return; }
-			viewDash();
-		} ).catch( function () { me = {}; viewBrowse(); } );
+			if ( r.who && r.who.onSeason ) { remember( r.who ); }
+			route();
+		} ).catch( function () { me = {}; route(); } );
 	}
+	/* the hub draws three tabs: Home (default), Team (#team) and Docs (#docs) */
+	function route() {
+		var tab = ( location.hash || '' ).replace( '#', '' );
+		document.documentElement.setAttribute( 'data-tcc-tab', tab === 'team' || tab === 'docs' ? tab : 'home' );
+		if ( window.tccTabs ) { window.tccTabs(); }
+		if ( tab === 'team' ) { viewTeam(); return; }
+		if ( tab === 'docs' ) { viewDocs(); return; }
+		var r = me || {};
+		if ( store( 'ss', 'tcc_browse' ) || ( ! r.who && ! me ) ) { viewBrowse(); return; }
+		if ( ! r.who ) { viewChooser(); return; }
+		if ( ! r.who.onSeason ) { viewWelcomeBack( r.who ); return; }
+		viewDash();
+	}
+	window.addEventListener( 'hashchange', function () { if ( me ) { route(); window.scrollTo( 0, 0 ); } } );
 	load();
 } )();

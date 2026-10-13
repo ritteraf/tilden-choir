@@ -996,14 +996,14 @@
 		audio.src = src.url;
 		audio.playbackRate = S.rate;
 		S.listened = 0; S.heard = 0; S.counted = false; S.lastT = 0; // heard: this song's whole listen, through any pauses
-		var resume = parseFloat( ls( 'tcc_pos_' + src.id ) || '0' );
+		var resume = parseFloat( ls( posKey( src.id ) ) || '0' );
 		audio.addEventListener( 'loadedmetadata', function once() {
 			audio.removeEventListener( 'loadedmetadata', once );
 			if ( was !== null ) { audio.currentTime = Math.min( was, audio.duration - 1 ); }
 			else if ( resume > 5 && resume < audio.duration - 10 ) { audio.currentTime = resume; toast( 'Picking up at ' + fmt( resume ) ); }
 			paintScrub(); paintMarks(); tickStream( true );
 		} );
-		if ( S.list.now && t.song >= 0 ) { ls( 'tcc_last', JSON.stringify( { part: S.list.part, song: t.song, id: src.id, title: t.title } ) ); }
+		if ( S.list.now && t.song >= 0 ) { ls( 'tcc_last' + ( S.who && S.who.id ? '_' + S.who.id : '' ), JSON.stringify( { part: S.list.part, song: t.song, id: src.id, title: t.title } ) ); }
 		/* the address follows the song, so a reload (or a shared link) opens this one */
 		try { history.replaceState( history.state, '', location.pathname + location.search + ( S.list.now && t.song >= 0 ? '#song-' + ( t.song + 1 ) : '' ) ); } catch ( e ) {}
 		if ( M.rec && M.rec.song !== t.song ) { M.rec = null; paintRec(); toast( 'Page-turn recording stopped — it was for another song.' ); }
@@ -1218,13 +1218,13 @@
 		S.lastT = now;
 		if ( S.loopA !== null && S.loopB !== null && now >= S.loopB ) { heat( 'loop', S.loopA, S.loopB ); audio.currentTime = S.loopA; }
 		if ( ! S.counted && audio.duration && S.heard >= audio.duration * 0.6 ) { flushPlay( true ); }
-		var t = current(); if ( t ) { ls( 'tcc_pos_' + ( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); }
+		var t = current(); if ( t ) { ls( posKey( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); }
 		paintScrub(); tickStream();
 	} );
 	onAudio( 'ended', function () {
 		var heardEnough = S.counted || ( audio.duration && S.heard >= audio.duration * 0.6 );
 		flushPlay( true );
-		var t = current(); if ( t ) { ls( 'tcc_pos_' + t.id, null ); }
+		var t = current(); if ( t ) { ls( posKey( t.id ), null ); }
 		if ( S.loopA !== null ) { audio.currentTime = S.loopA; audio.play(); return; }
 		if ( M.rec ) { toast( 'End of the song — tap Save to keep these ' + M.rec.times.length + ' turns.' ); return; } // never roll on to the next song mid-recording
 		if ( t && askAfter( t, heardEnough ) ) { return; }
@@ -1244,6 +1244,8 @@
 	} );
 
 	/* ---------- who, and where to start ---------- */
+	/* where each person stopped in each track: a shared iPad keeps everyone's place apart */
+	function posKey( id ) { return 'tcc_pos_' + ( S.who && S.who.id ? S.who.id + '_' : '' ) + id; }
 	function loadMe( switched ) {
 		return api( 'me', 'GET', { cantata: D.cantata.id } ).then( function ( r ) {
 			S.who = r && r.who ? r.who : null;

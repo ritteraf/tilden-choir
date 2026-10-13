@@ -118,13 +118,17 @@ function tcc_world( int $cantata_id ): array {
 	$tracks = tcc_tracks( $cantata_id );
 	$parts  = [];
 	foreach ( tcc_track_parts() as $k => $label ) {
-		$have = [];
+		$have = []; $ids = []; $durs = [];
 		foreach ( (array) ( $tracks[ $k ] ?? [] ) as $t ) {
 			if ( (int) $t['song'] >= 0 ) {
 				$have[] = (int) $t['song'];
+				/* for "continue practicing": which file is which song, and how long it runs */
+				$m = wp_get_attachment_metadata( $t['id'] ) ?: [];
+				$ids[ (int) $t['song'] ] = (int) $t['id'];
+				$durs[ (int) $t['song'] ] = (int) ( $m['length'] ?? 0 );
 			}
 		}
-		$parts[ $k ] = [ 'label' => trim( preg_replace( '/\s*\(.*$/', '', $label ) ), 'count' => count( (array) ( $tracks[ $k ] ?? [] ) ), 'songs' => array_values( array_unique( $have ) ) ];
+		$parts[ $k ] = [ 'label' => trim( preg_replace( '/\s*\(.*$/', '', $label ) ), 'count' => count( (array) ( $tracks[ $k ] ?? [] ) ), 'songs' => array_values( array_unique( $have ) ), 'ids' => (object) $ids, 'durs' => (object) $durs ];
 	}
 	$cues = [];
 	foreach ( tcc_cues( $cantata_id ) as $c ) {
