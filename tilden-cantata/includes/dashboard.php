@@ -244,6 +244,9 @@ add_action( 'init', function () {
 			wp_enqueue_style( 'tcc-dash', TCC_URL . 'assets/dashboard.css', [ 'tcc-signin' ], TCC_VERSION );
 			wp_enqueue_script( 'tcc-dash', TCC_URL . 'assets/dashboard.js', [ 'tcc-signin' ], TCC_VERSION, [ 'strategy' => 'defer' ] );
 			$world = tcc_world( $current );
+			if ( $view === 'home' && current_user_can( 'edit_posts' ) && function_exists( 'tcc_director_summary' ) ) {
+				$world['director'] = tcc_director_summary( $current );
+			}
 			if ( $view === 'schedule' ) {
 				/* the Schedule tab: the whole season, earlier rehearsals included */
 				$world['view']       = 'schedule';

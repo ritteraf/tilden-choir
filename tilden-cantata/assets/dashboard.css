@@ -400,6 +400,23 @@ a.tcc-hm__song:hover { background: #faf9f6; }
 .tcc-hm__body { margin: 0; font-size: 15px; line-height: 1.5; }
 .tcc-hm__parts .tcc-hm__song-t b { white-space: normal; }
 .tcc-hm__parts .tcc-hm__song { padding-left: 18px; }
+/* the director's glance */
+.tcc-hm__dir { grid-column: span 2; gap: 14px; }
+.tcc-hm__dir:hover { box-shadow: 0 0 0 2px var(--hm-ink) inset; }
+.tcc-hm__dir-go { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 700; color: var(--hm-muted); }
+.tcc-hm__dir-go svg { width: 18px; height: 18px; display: block; }
+.tcc-hm__dstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tcc-hm__dstat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tcc-hm__dstat b { font-family: var(--tcc-display); font-size: 26px; line-height: 1.05; font-weight: 700; white-space: nowrap; }
+.tcc-hm__dstat > span { font-size: 12px; color: var(--hm-muted); }
+.tcc-hm__dstat.is-alert b { color: var(--tcc-red); }
+.tcc-hm__dstat.is-warn b { color: #8a5a00; }
+.tcc-hm__dbars { display: flex; align-items: flex-end; gap: 4px; height: 56px; }
+.tcc-hm__dbar { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 3px; }
+.tcc-hm__dbar i { display: block; border-radius: 4px 4px 2px 2px; background: var(--tcc-green); }
+.tcc-hm__dbar.is-zero i { height: 3px !important; background: #e3ded3; }
+.tcc-hm__dbar small { font-size: 10px; font-weight: 600; text-align: center; color: var(--hm-muted); }
+@media (max-width: 520px) { .tcc-hm__dstats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; } }
 /* the Schedule tab */
 .tcc-dash--sched { padding-top: clamp(20px, 4vw, 40px); }
 .tcc-hm__segs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 6px; border-radius: 24px; background: var(--hm-card); }
@@ -426,7 +443,10 @@ a.tcc-hm__song:hover { background: #faf9f6; }
 @media (min-width: 900px) {
 	.tcc-hm__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 16px; }
 	.tcc-hm__reh { grid-column: span 2; grid-row: span 2; padding: 24px; }
-	.tcc-hm__cont, .tcc-hm__songsw, .tcc-hm__wide, .tcc-hm__a2hs { grid-column: span 3; }
+	.tcc-hm__cont, .tcc-hm__songsw, .tcc-hm__wide, .tcc-hm__a2hs, .tcc-hm__dir { grid-column: span 3; }
+	.tcc-hm__dir { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); grid-template-rows: auto 1fr; column-gap: 32px; }
+	.tcc-hm__dir > .tcc-hm__row { grid-column: 1 / -1; }
+	.tcc-hm__dbars { height: 64px; align-self: end; }
 	.tcc-hm__songsw { display: grid; grid-template-columns: 300px minmax(0, 1fr); }
 	.tcc-hm__songs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 8px; padding: 8px 14px 8px 0; align-content: start; }
 	.tcc-hm__songs .tcc-hm__song { border-top: 0; border-bottom: 1px solid var(--hm-line); }

@@ -236,3 +236,35 @@ add_action( 'init', function () {
 		},
 	] );
 } );
+
+/** The few numbers for the director's widget on the Backstage home: this practice week at a glance. */
+function tcc_director_summary( int $cantata_id ): array {
+	$weeks = tcc_director_weeks( $cantata_id );
+	$w     = $weeks[0];
+	$R     = tcc_director_report( $cantata_id, $w );
+	$roster = tcc_director_roster( $cantata_id );
+	$silent = 0;
+	foreach ( $R['cells'] as $c ) {
+		$any = $c['otherMins'] > 0;
+		foreach ( TCC_SECTIONS as $p ) { if ( $c[ $p ]['people'] ) { $any = true; } }
+		if ( ! $any ) { $silent++; }
+	}
+	/* per song: how many practiced it this week, all sections together */
+	$per = [];
+	foreach ( $R['cells'] as $c ) {
+		$n = 0;
+		foreach ( TCC_SECTIONS as $p ) { $n += $c[ $p ]['people']; }
+		$per[] = $n;
+	}
+	$p = get_page_by_path( 'director' );
+	return [
+		'url'      => $p && $p->post_status === 'publish' ? get_permalink( $p ) : '',
+		'week'     => $w['short'],
+		'active'   => $R['active'],
+		'singers'  => count( $roster['singers'] ),
+		'minutes'  => $R['minutes'],
+		'tricky'   => count( array_filter( $R['help'], fn( $x ) => ! $x['handled'] ) ),
+		'silent'   => $silent,
+		'songs'    => $per,
+	];
+}

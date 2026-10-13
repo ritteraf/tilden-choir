@@ -473,6 +473,27 @@
 		].concat( rehBody( r ), [ skippedFirst ? h( 'p', { class: 'tcc-hm__fine' }, [ skippedFirst ] ) : null ] ) );
 	}
 
+	/* the director's glance at the week: a tap opens the full report */
+	function directorWidget() {
+		var d = W.director; if ( ! d || ! d.url ) { return null; }
+		var mins = function ( m ) { return m < 60 ? m + ' min' : Math.floor( m / 60 ) + 'h ' + ( m % 60 ) + 'm'; };
+		var stat = function ( big, small, cls ) { return h( 'span', { class: 'tcc-hm__dstat' + ( cls ? ' ' + cls : '' ) }, [ h( 'b', {}, [ big ] ), h( 'span', {}, [ small ] ) ] ); };
+		var top = Math.max( 1, d.singers || 0, Math.max.apply( null, d.songs.concat( [ 1 ] ) ) );
+		var bars = h( 'span', { class: 'tcc-hm__dbars', 'aria-hidden': 'true' }, d.songs.map( function ( n, i ) {
+			return h( 'span', { class: 'tcc-hm__dbar' + ( n ? '' : ' is-zero' ), title: ( i + 1 ) + '. ' + ( W.songs[ i ] || '' ) + ' · ' + n + ' practiced' }, [ h( 'i', { style: 'height:' + ( n ? Math.max( 8, Math.round( n / top * 100 ) ) : 0 ) + '%' } ), h( 'small', {}, [ String( i + 1 ) ] ) ] );
+		} ) );
+		return h( 'a', { class: 'tcc-hm__w tcc-hm__dir', href: d.url }, [
+			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Director', 'is-red' ), h( 'span', { class: 'tcc-hm__dir-go' }, [ d.week, h( 'span', { html: SVG.right } ) ] ) ] ),
+			h( 'div', { class: 'tcc-hm__dstats' }, [
+				stat( d.active + ( d.singers ? '/' + d.singers : '' ), 'singers practiced' ),
+				stat( mins( d.minutes ), 'listening' ),
+				stat( String( d.tricky ), 'tricky', d.tricky ? 'is-alert' : '' ),
+				stat( String( d.silent ), 'not practiced', d.silent ? 'is-warn' : '' )
+			] ),
+			bars
+		] );
+	}
+
 	/* continue practicing: where this person left off, at the spot they stopped */
 	function continueWidget( next ) {
 		var parts = myTrackParts(), primary = parts[ 0 ];
@@ -611,6 +632,7 @@
 		var cd = countdownWidget(), sw = scheduleWidget();
 		if ( cd ) { grid.appendChild( cd ); }
 		if ( sw ) { grid.appendChild( sw ); }
+		var dw = directorWidget(); if ( dw ) { grid.appendChild( dw ); }
 		if ( isSinger() ) {
 			if ( myTrackParts().length ) { grid.appendChild( songsWidget( next ) ); }
 			else { grid.appendChild( widget( 'tcc-hm__wide', [ wk( 'Your songs', 'is-green' ), h( 'p', { class: 'tcc-hm__fine' }, [ W.voice[ who.part ] ? W.voice[ who.part ].label + ' tracks aren’t up yet — check back soon.' : 'We don’t have a voice part for you yet — the director will help you find it at the next rehearsal.' ] ) ] ) ); }
@@ -624,8 +646,8 @@
 		show( [ head( who ), grid, h( 'footer', { class: 'tcc-hm__foot' }, [
 			h( 'span', {}, [ who.name + ( W.voice[ who.part ] && isSinger() ? ' · ' + W.voice[ who.part ].label : '' ) + ' · ' ] ),
 			h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ),
-			W.canEdit && W.admin ? h( 'br' ) : null,
-			W.canEdit && W.admin ? h( 'a', { class: 'tcc-hm__link', href: W.admin }, [ 'Director: how the cantata is coming' ] ) : null
+			! W.director && W.canEdit && W.admin ? h( 'br' ) : null,
+			! W.director && W.canEdit && W.admin ? h( 'a', { class: 'tcc-hm__link', href: W.admin }, [ 'Director: how the cantata is coming' ] ) : null
 		] ) ] );
 	}
 

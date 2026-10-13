@@ -46,54 +46,63 @@
 		] );
 	}
 
+	function card( label, extra, kids, cls ) {
+		return h( 'section', { class: 'tcc-dir__card' + ( cls ? ' ' + cls : '' ) }, [ h( 'div', { class: 'tcc-dir__card-top' }, [ h( 'h3', { class: 'tcc-dir__k' }, [ label ] ), extra || null ] ) ].concat( kids ) );
+	}
+	function legend() {
+		return h( 'span', { class: 'tcc-dir__legend' }, [ [ 'good', 'Good' ], [ 'some', 'Getting there' ], [ 'help', 'Tricky' ] ].map( function ( o ) { return h( 'span', {}, [ h( 'i', { class: 'tcc-dir__swatch tcc-dir__dot--' + o[ 0 ] } ), o[ 1 ] ] ); } ) );
+	}
+
 	function render() {
 		var R = D.reports[ week ], W = weekOf( week );
 		root.innerHTML = '';
+		document.documentElement.setAttribute( 'data-tcc-tab', 'director' );
 
 		/* heading and week picker */
 		root.appendChild( h( 'header', { class: 'tcc-dir__head' }, [
 			h( 'span', { class: 'tcc-dir__eyebrow' }, [ 'Director · ' + D.cantata.year + ' · ' + D.cantata.title ] ),
-			h( 'h2', { class: 'tcc-dir__h' }, [ 'How the cantata is coming' ] ),
-			h( 'p', { class: 'tcc-dir__lede' }, [ 'From the practice app, one practice week at a time — rehearsal to rehearsal.' + ( D.since ? ' Practice has been recorded since ' + D.since + '; marks from before then still count.' : ' Nothing recorded yet — this fills in as people practice.' ) ] )
+			h( 'h2', { class: 'tcc-dir__h' }, [ 'How the cantata is coming' ] )
 		] ) );
 		var chips = h( 'div', { class: 'tcc-dir__weeks', role: 'tablist', 'aria-label': 'Practice week' } );
 		D.weeks.forEach( function ( w ) {
 			chips.appendChild( h( 'button', { type: 'button', role: 'tab', class: 'tcc-dir__week' + ( w.key === week ? ' is-on' : '' ), 'aria-selected': w.key === week ? 'true' : 'false', title: w.label, onclick: function () { week = w.key; render(); } }, [ w.short ] ) );
 		} );
-		root.appendChild( chips );
-		root.appendChild( h( 'p', { class: 'tcc-dir__weeklabel' }, [ W.label ] ) );
+		root.appendChild( h( 'div', { class: 'tcc-dir__bar' }, [ chips, W.label !== W.short ? h( 'span', { class: 'tcc-dir__weeklabel' }, [ W.label.replace( /^This week · /, '' ) ] ) : null ] ) );
 
 		/* the four numbers */
 		var silent = D.songs.filter( function ( t, i ) { var c = R.cells[ i ]; return c && ! SECT.some( function ( s ) { return c[ s.id ].people; } ) && ! c.otherMins; } );
 		var openHelp = R.help.filter( function ( x ) { return ! x.handled; } ).length;
 		root.appendChild( h( 'div', { class: 'tcc-dir__tiles' }, [
-			tile( R.active + ( D.singers ? ' of ' + D.singers : '' ), 'singers practiced' ),
-			tile( mins( R.minutes ), 'of listening' ),
-			tile( String( openHelp ), openHelp === 1 ? 'song marked tricky' : 'songs marked tricky', openHelp ? 'is-alert' : '' ),
-			tile( String( silent.length ), silent.length === 1 ? 'song nobody practiced' : 'songs nobody practiced', silent.length ? 'is-warn' : '' )
+			tile( R.active + ( D.singers ? '/' + D.singers : '' ), 'singers practiced' ),
+			tile( R.minutes < 60 ? R.minutes + ' min' : Math.floor( R.minutes / 60 ) + 'h ' + ( R.minutes % 60 ) + 'm', 'listening' ),
+			tile( String( openHelp ), 'tricky', openHelp ? 'is-alert' : '' ),
+			tile( String( silent.length ), 'not practiced', silent.length ? 'is-warn' : '' )
 		] ) );
+
+		var grid = h( 'div', { class: 'tcc-dir__cards' } );
 
 		/* getting ready for the next rehearsal */
 		if ( W.current && D.next && D.next.songs && D.next.songs.length ) {
-			/* a whole-work rehearsal: just the songs marked for focus (the grid below has the rest) */
+			/* a whole-work rehearsal: just the songs marked for focus (the grid has the rest) */
 			var list = D.next.full ? ( D.next.focus || [] ) : D.next.songs;
 			var rows = h( 'div', { class: 'tcc-dir__ready' } );
 			list.forEach( function ( i ) {
 				var c = R.cells[ i ]; if ( ! c ) { return; }
 				rows.appendChild( h( 'div', { class: 'tcc-dir__ready-row' }, [
-					h( 'span', { class: 'tcc-dir__ready-t' }, [ h( 'b', {}, [ ( i + 1 ) + '. ' + D.songs[ i ] ] ), D.next.focus && D.next.focus.indexOf( i ) !== -1 ? h( 'span', { class: 'tcc-dir__star', title: 'Focus' }, [ '★ focus' ] ) : null ] ),
-					h( 'div', { class: 'tcc-dir__ready-parts' }, SECT.map( function ( s ) { return h( 'div', { class: 'tcc-dir__ready-p' }, [ h( 'span', { class: 'tcc-dir__ready-k' }, [ s.label ] ), cell( c[ s.id ], s.size ) ] ); } ) )
+					h( 'span', { class: 'tcc-dir__ready-t' }, [ h( 'b', {}, [ ( i + 1 ) + '. ' + D.songs[ i ] ] ), D.next.focus && D.next.focus.indexOf( i ) !== -1 ? h( 'span', { class: 'tcc-dir__star' }, [ '★ focus' ] ) : null ] ),
+					h( 'div', { class: 'tcc-dir__ready-parts' }, SECT.map( function ( s ) { return h( 'div', {}, [ h( 'span', { class: 'tcc-dir__ready-k' }, [ s.label ] ), cell( c[ s.id ], s.size ) ] ); } ) )
 				] ) );
 			} );
-			root.appendChild( sec( 'Getting ready for ' + ( D.next.date || 'the next rehearsal' ),
-				D.next.full ? ( list.length ? 'The whole work is planned; these are the songs marked for focus. Every song is in the grid below.' : 'The whole work is planned — every song is in the grid below. Mark songs for ★ focus on the rehearsal to see them here.' ) : 'The songs planned for it, and how each section is doing on them this week.',
-				list.length ? [ rows ] : [] ) );
+			grid.appendChild( card( 'Next rehearsal', D.next.date ? h( 'span', { class: 'tcc-dir__chip' }, [ D.next.date ] ) : null, [
+				D.next.full ? h( 'p', { class: 'tcc-dir__fine' }, [ list.length ? 'Full run-through · focus songs' : 'Full run-through' ] ) : null,
+				list.length ? rows : null
+			] ) );
 		}
 
-		/* help requests */
+		/* tricky spots */
 		var help = h( 'ul', { class: 'tcc-dir__help' } );
 		R.help.forEach( function ( x ) {
-			var box = h( 'input', { type: 'checkbox', checked: x.handled ? true : null, 'aria-label': 'Handled' } );
+			var box = h( 'input', { type: 'checkbox', checked: x.handled ? true : null, 'aria-label': 'Checked in with ' + x.name } );
 			box.addEventListener( 'change', function () {
 				x.handled = box.checked; li.classList.toggle( 'is-done', x.handled );
 				fetch( D.rest + 'helpdone', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': D.nonce }, body: JSON.stringify( { cantata: D.cantata.id, key: x.key, done: x.handled ? 1 : 0 } ) } );
@@ -101,41 +110,37 @@
 			} );
 			var li = h( 'li', { class: 'tcc-dir__help-i' + ( x.handled ? ' is-done' : '' ) }, [
 				h( 'label', { class: 'tcc-dir__help-l' }, [ box,
-					h( 'span', {}, [ h( 'b', {}, [ x.name ] ), ' · ' + ( x.song + 1 ) + '. ' + ( D.songs[ x.song ] || 'Song' ) + ' · ' + ( ( SECT.filter( function ( s ) { return s.id === x.part; } )[ 0 ] || {} ).label || x.part ) ] ),
-					x.since ? h( 'span', { class: 'tcc-dir__help-when' }, [ 'since ' + x.since ] ) : null
+					h( 'span', { class: 'tcc-dir__help-t' }, [ h( 'b', {}, [ x.name ] ), h( 'span', {}, [ ( x.song + 1 ) + '. ' + ( D.songs[ x.song ] || 'Song' ) + ' · ' + ( ( SECT.filter( function ( s ) { return s.id === x.part; } )[ 0 ] || {} ).label || x.part ) ] ) ] ),
+					x.since ? h( 'span', { class: 'tcc-dir__help-when' }, [ x.since ] ) : null
 				] )
 			] );
 			help.appendChild( li );
 		} );
-		root.appendChild( sec( 'Tricky spots — who to check in with', R.help.length ? 'Singers who marked a song “Tricky spots”. Tick one off once you’ve worked on it with them; if they mark it again later, it comes back.' : null, [ R.help.length ? help : h( 'p', { class: 'tcc-dir__none' }, [ 'Nobody has marked a song tricky.' ] ) ] ) );
+		grid.appendChild( card( 'Tricky spots', R.help.length ? h( 'span', { class: 'tcc-dir__chip' }, [ 'Tick once checked in' ] ) : null, [ R.help.length ? help : h( 'p', { class: 'tcc-dir__fine' }, [ 'None marked.' ] ) ] ) );
 
-		/* song by part */
-		var grid = h( 'div', { class: 'tcc-dir__grid', role: 'table' } );
-		grid.appendChild( h( 'div', { class: 'tcc-dir__grid-row tcc-dir__grid-head', role: 'row' }, [ h( 'span', { role: 'columnheader' }, [ 'Song' ] ) ].concat( SECT.map( function ( s ) { return h( 'span', { role: 'columnheader', title: s.size + ' signed up' }, [ h( 'b', { class: 'tcc-dir__long' }, [ s.label ] ), h( 'b', { class: 'tcc-dir__short' }, [ SHORT[ s.id ] ] ), h( 'small', {}, [ s.size + ' in section' ] ) ] ); } ) ) ) );
+		/* song by section */
+		var tbl = h( 'div', { class: 'tcc-dir__grid', role: 'table' } );
+		tbl.appendChild( h( 'div', { class: 'tcc-dir__grid-row tcc-dir__grid-head', role: 'row' }, [ h( 'span', { role: 'columnheader' }, [ 'Song' ] ) ].concat( SECT.map( function ( s ) { return h( 'span', { role: 'columnheader', title: s.size + ' signed up' }, [ h( 'b', { class: 'tcc-dir__long' }, [ s.label ] ), h( 'b', { class: 'tcc-dir__short' }, [ SHORT[ s.id ] ] ), h( 'small', {}, [ String( s.size ) ] ) ] ); } ) ) ) );
 		D.songs.forEach( function ( title, i ) {
 			var c = R.cells[ i ]; if ( ! c ) { return; }
-			grid.appendChild( h( 'div', { class: 'tcc-dir__grid-row', role: 'row' }, [ h( 'span', { class: 'tcc-dir__grid-t', role: 'rowheader' }, [ h( 'b', {}, [ ( i + 1 ) + '. ' + title ] ), c.otherMins ? h( 'small', {}, [ mins( c.otherMins ) + ' with the accompaniment' ] ) : null ] ) ].concat( SECT.map( function ( s ) { return h( 'span', { role: 'cell' }, [ cell( c[ s.id ], s.size ) ] ); } ) ) ) );
+			tbl.appendChild( h( 'div', { class: 'tcc-dir__grid-row', role: 'row' }, [ h( 'span', { class: 'tcc-dir__grid-t', role: 'rowheader' }, [ h( 'b', {}, [ ( i + 1 ) + '. ' + title ] ), c.otherMins ? h( 'small', {}, [ '+ ' + mins( c.otherMins ) + ' accomp.' ] ) : null ] ) ].concat( SECT.map( function ( s ) { return h( 'span', { role: 'cell' }, [ cell( c[ s.id ], s.size ) ] ); } ) ) ) );
 		} );
-		root.appendChild( sec( 'Every song, every section', 'How many in each section practiced the song (of those signed up for that part), and how they marked it: ', [
-			h( 'p', { class: 'tcc-dir__legend' }, [ h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--good' }, [ '3' ] ), ' feeling good ', h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--some' }, [ '2' ] ), ' getting there ', h( 'span', { class: 'tcc-dir__dot tcc-dir__dot--help' }, [ '1' ] ), ' tricky spots. Marks are as they stood at the end of the week.' ] ),
-			h( 'div', { class: 'tcc-dir__scroll' }, [ grid ] )
-		] ) );
+		grid.appendChild( card( 'Every song, every section', legend(), [ h( 'div', { class: 'tcc-dir__scroll' }, [ tbl ] ) ], 'is-wide' ) );
 
-		/* heat maps */
-		/* one scale for every song this week, so a single rewind never looks like seventy loops */
+		/* heat maps: one scale for every song this week, so a single rewind never looks like seventy loops */
 		var heats = h( 'div', { class: 'tcc-dir__heats' } ), cold = [], light = [], top = 1;
 		Object.keys( R.heat ).forEach( function ( k ) { top = Math.max( top, Math.max.apply( null, R.heat[ k ].bins ) ); } );
 		D.songs.forEach( function ( title, i ) {
 			var H = R.heat[ i ], n = H ? H.loop + H.back + H.seek : 0;
-			if ( ! n ) { cold.push( ( i + 1 ) + '. ' + title ); return; }
-			if ( n < 3 ) { light.push( ( i + 1 ) + '. ' + title ); return; }
+			if ( ! n ) { cold.push( i + 1 ); return; }
+			if ( n < 3 ) { light.push( i + 1 ); return; }
 			heats.appendChild( heatRow( i, title, H, top ) );
 		} );
-		root.appendChild( sec( 'Where singers go back', 'Every loop, 5-second rewind and backward drag of the slider adds heat at that spot. The brightest places are the passages people keep repeating.', [
-			heats.children.length ? heats : h( 'p', { class: 'tcc-dir__none' }, [ light.length ? 'No song has been gone back to more than twice.' : 'No loops or rewinds yet.' ] ),
-			light.length ? h( 'p', { class: 'tcc-dir__cold' }, [ 'Once or twice: ' + light.join( ', ' ) + '.' ] ) : null,
-			cold.length && ( heats.children.length || light.length ) ? h( 'p', { class: 'tcc-dir__cold' }, [ 'Nobody went back in: ' + cold.join( ', ' ) + '.' ] ) : null
-		] ) );
+		grid.appendChild( card( 'Where singers go back', h( 'span', { class: 'tcc-dir__chip' }, [ 'Loops · rewinds · drags' ] ), [
+			heats.children.length ? heats : h( 'p', { class: 'tcc-dir__fine' }, [ light.length ? 'Nothing gone back to more than twice.' : 'No loops or rewinds yet.' ] ),
+			light.length ? h( 'p', { class: 'tcc-dir__fine' }, [ 'Once or twice: songs ' + light.join( ', ' ) ] ) : null,
+			cold.length && ( heats.children.length || light.length ) ? h( 'p', { class: 'tcc-dir__fine' }, [ 'None: songs ' + cold.join( ', ' ) ] ) : null
+		], 'is-wide' ) );
 
 		/* section balance */
 		var bal = h( 'div', { class: 'tcc-dir__balance' } );
@@ -143,7 +148,8 @@
 			if ( ! v.names.length && v.id === 'unknown' ) { return; }
 			bal.appendChild( h( 'details', { class: 'tcc-dir__voice' }, [ h( 'summary', {}, [ h( 'b', {}, [ String( v.names.length ) ] ), ' ' + v.label ] ), h( 'p', {}, [ v.names.join( ', ' ) || 'Nobody yet.' ] ) ] ) );
 		} );
-		root.appendChild( sec( 'Section balance', D.singers + ' singers signed up this season. Mezzos count toward Soprano and Alto above, Baritones toward Tenor and Bass.', [ bal ] ) );
+		grid.appendChild( card( 'Sections', h( 'span', { class: 'tcc-dir__chip' }, [ D.singers + ' singers' ] ), [ bal ], 'is-wide' ) );
+		root.appendChild( grid );
 	}
 
 	function tile( big, small, cls ) {
