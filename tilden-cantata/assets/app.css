@@ -405,3 +405,7 @@ body.tcc-app-on { overflow: hidden; }
 .ta-feelnote__t { flex-shrink: 0; font-family: var(--display); font-size: 14px; color: var(--dim); font-variant-numeric: tabular-nums; padding-top: 2px; }
 .ta-feelnote__g svg { width: 22px; height: 22px; }
 .ta-feelnote__x { font-size: 16px; line-height: 1.4; }
+/* the Voices/Accomp. button while it lines the other version up */
+.ta-tool.is-busy b { animation: ta-busy 0.7s ease-in-out infinite alternate; }
+@keyframes ta-busy { from { opacity: 1; } to { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .ta-tool.is-busy b { animation: none; opacity: 0.6; } }

@@ -35,7 +35,7 @@ Source for [tildencommunitychoir.org](https://tildencommunitychoir.org): a WordP
 Full-screen, built for phones and older singers with "fat fingers" — big controls everywhere.
 - **Tracks by part** — Soprano, Alto, Tenor, Bass (Mezzo and Baritone singers get both of their parts), plus past years' cantatas.
 - **Controls** — play/pause, previous/next song, back 5 s / forward 5 s, a scrub bar with note and page-turn marks, speed (1×, 0.85×, 0.75×), A–B loop, and lock-screen / headphone controls.
-- **Voices ⇄ Accompaniment** — one toggle swaps between the part track (people icon, "Voices") and the full accompaniment we perform with, no voices (music icon, "Accomp."), at the same spot in the song. Greyed out for a song that has no accompaniment track yet.
+- **Voices ⇄ Accompaniment** — for practicing your own part with the voices taken out: one toggle swaps between your part track (people icon, "Voices") and the full accompaniment we perform with (music icon, "Accomp."), seamlessly at the same spot — the other version waits ready in a second player and cuts in once it's lined up. Your part doesn't change. Greyed out for a song with no accompaniment track yet. (Accompaniment on its own is still a choice in the part switcher.)
 - **Sheet music, synced** — the score scrolls with the music. Two pages side by side on a wide screen, turning like a book (only once the right-hand page is done); one page at a time on a phone, fitted to the width. Pinch / double-tap zoom and pan, flick to look ahead ("Back to now" returns). The top bar shows the page and a countdown to the next turn.
 - **Director's notes** at a moment in the song — with a measure number, an optional gist icon (turtle = slower, rabbit = faster, louder, softer, breathe, fermata, cut-off, entrance, watch me, listen, higher, lower, short, smooth, count, smile, words, important) and a "shows for" length (8 s by default).
   - Desktop/tablet: notes **flow** beside the music — the next few wait in line with a countdown, each one lights up when the music reaches it and fades away when its time is up.
@@ -128,4 +128,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.15.2**, theme **1.7.1**.
+Current versions: plugin **2.15.3**, theme **1.7.1**.

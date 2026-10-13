@@ -114,6 +114,10 @@
 	function urlSong() { var m = location.hash.match( /#song-(\d+)/ ); return m ? parseInt( m[ 1 ], 10 ) - 1 : -1; }
 
 	var audio = new Audio();
+	/* a second player holds the other version of the song (voices ⇄ accompaniment), so switching is seamless */
+	var spare = new Audio(); spare.preload = 'metadata'; spare.muted = true;
+	/* listeners go on both players; only the one that is sounding counts */
+	function onAudio( ev, fn ) { [ audio, spare ].forEach( function ( el ) { el.addEventListener( ev, function ( e ) { if ( el === audio ) { fn.call( el, e ); } } ); } ); }
 	audio.preload = 'metadata';
 	try { audio.preservesPitch = true; audio.mozPreservesPitch = true; audio.webkitPreservesPitch = true; } catch ( e ) {}
 
@@ -189,7 +193,7 @@
 		ui.ttl.className = 'ta-top__title';
 		ui.ttl.textContent = t ? ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title + ( S.list.part === 'sections' && t.cd ? ' · CD ' + t.cd : '' ) : 'Choose a song';
 		ui.partBtn.innerHTML = '';
-		ui.partBtn.appendChild( h( 'span', {}, [ S.alt && altTrack() ? 'Accompaniment' : shortLabel( S.list ? S.list.part : S.part ) ] ) );
+		ui.partBtn.appendChild( h( 'span', {}, [ shortLabel( S.list ? S.list.part : S.part ) /* the toggle never changes the part — it only takes the voices out */ ] ) );
 		ui.partBtn.appendChild( h( 'span', { class: 'ta-chip__caret', html: I.down } ) );
 		document.title = ( t ? t.title + ' · ' : '' ) + 'Practice';
 	}
@@ -243,7 +247,7 @@
 		var head = h( 'section', { class: 'ta-songhead' + ( CUES.length ? '' : ' is-alone' ) }, [
 			h( 'span', { class: 'ta-songhead__num' }, [ t.song >= 0 ? String( t.song + 1 ) : '♪' ] ),
 			h( 'h1', { class: 'ta-songhead__title' }, [ t.title ] ),
-			h( 'p', { class: 'ta-songhead__sub' }, [ ( S.alt && altTrack() ? 'Accompaniment (no voices)' : label( S.list.part ) ) + ' · ' + fmt( t.dur || audio.duration ) + ( CUES.length ? ' · ' + CUES.length + ( CUES.length === 1 ? ' note' : ' notes' ) : '' ) ] ),
+			h( 'p', { class: 'ta-songhead__sub' }, [ ( label( S.list.part ) + ( S.alt && altTrack() ? ' · voices off' : '' ) ) + ' · ' + fmt( t.dur || audio.duration ) + ( CUES.length ? ' · ' + CUES.length + ( CUES.length === 1 ? ' note' : ' notes' ) : '' ) ] ),
 			tags.length ? h( 'div', { class: 'ta-songhead__tags' }, tags ) : null,
 			S.who && st !== '' ? feelRow( t.song, st ) : null
 		] );
@@ -1008,6 +1012,14 @@
 		paintTop(); paintStream(); paintSide(); paintTools(); paintLoop();
 		mediaSession( t );
 		if ( autoplay ) { audio.play().catch( function () {} ); }
+		prepSpare();
+	}
+	/* the other version of this song, loaded just enough (its length) to be ready when someone switches */
+	function prepSpare() {
+		var t = current(), a = t ? altTrack() : null;
+		var other = ! t ? null : S.alt ? t : ( a && a.track );
+		if ( ! other ) { if ( spare._id ) { spare.removeAttribute( 'src' ); spare.load(); spare._id = null; } return; }
+		if ( spare._id !== other.id ) { spare.src = other.url; spare._id = other.id; }
 	}
 	function toggle() {
 		if ( ! current() ) { var L = LISTS[ 'now:' + S.part ]; if ( L ) { playList( L.key, 0 ); } return; }
@@ -1076,7 +1088,52 @@
 		else { S.loopA = S.loopB = null; toast( 'Loop off' ); }
 		paintTools(); paintLoop();
 	}
-	function toggleAlt() { if ( ! current() || ! altTrack() && ! S.alt ) { return; } S.alt = ! S.alt; var playing = ! audio.paused; loadTrack( playing, true ); toast( S.alt ? 'Accompaniment — the music we perform with, no voices. You sing your part.' : 'Back to ' + label( S.list.part ) + ', with voices' ); }
+	/*
+	 * Voices ⇄ accompaniment without a hiccup: the current version keeps sounding while the other one
+	 * (already loaded in the spare player) starts silently, finds the same spot and lines itself up;
+	 * only then does the sound cut over. Nothing else on screen redraws — it's the same song.
+	 */
+	var swapping = false;
+	function toggleAlt() {
+		var t = current(); if ( ! t || ( ! altTrack() && ! S.alt ) || swapping ) { return; }
+		var next = S.alt ? t : altTrack().track;
+		if ( spare._id !== next.id ) { spare.src = next.url; spare._id = next.id; }
+		var from = audio, to = spare, playing = ! from.paused, tries = 0, done = false;
+		swapping = true; S.alt = ! S.alt;
+		paintTools(); paintTop(); ui.altBtn.classList.add( 'is-busy' );
+		to.muted = true; to.playbackRate = S.rate;
+		function cut() {
+			if ( done ) { return; } done = true; clearTimeout( guard );
+			audio = to; spare = from;
+			to.muted = false;
+			if ( playing && to.paused ) { to.play().catch( function () {} ); }
+			from.pause(); from.muted = true;
+			ui.play.innerHTML = audio.paused ? I.play : I.pause; ui.play.setAttribute( 'aria-label', audio.paused ? 'Play' : 'Pause' );
+			swapping = false; ui.altBtn.classList.remove( 'is-busy' );
+			paintScrub(); paintTools();
+			toast( S.alt ? 'Accompaniment' : 'Voices' );
+		}
+		/* close enough? cut over; otherwise nudge it to where the music is now and check again */
+		function once( evs, fn ) { var fired = false; evs.forEach( function ( ev ) { to.addEventListener( ev, function () { if ( ! fired ) { fired = true; fn(); } }, { once: true } ); } ); }
+		function line() {
+			if ( done ) { return; }
+			/* still buffering after the seek: wait until it's really sounding before comparing */
+			if ( playing && ( to.paused || to.readyState < 3 || to.seeking ) ) { once( [ 'playing', 'canplay', 'seeked' ], function () { setTimeout( line, 60 ); } ); return; }
+			var drift = to.currentTime - from.currentTime;
+			if ( Math.abs( drift ) <= 0.06 || tries >= 3 ) { cut(); return; }
+			tries++;
+			once( [ 'seeked' ], function () { setTimeout( line, playing ? 60 : 0 ); } );
+			to.currentTime = Math.max( 0, from.currentTime + ( playing ? 0.06 : 0 ) ); // within what's buffered, a seek is near-instant
+		}
+		function start() {
+			to.currentTime = Math.max( 0, Math.min( from.currentTime + ( playing ? 0.25 : 0 ), ( to.duration || 1e9 ) - 0.3 ) );
+			once( [ 'seeked' ], function () { setTimeout( line, playing ? 60 : 0 ); } );
+		}
+		if ( playing ) { var pr = to.play(); if ( pr && pr.catch ) { pr.catch( function () { cut(); } ); } } // started inside the tap, so phones allow it
+		if ( to.readyState >= 1 ) { start(); } else { to.addEventListener( 'loadedmetadata', start, { once: true } ); }
+		/* a slow connection: don't leave them waiting — switch anyway after a few seconds */
+		var guard = setTimeout( function () { if ( ! done ) { try { to.currentTime = from.currentTime; } catch ( e ) {} cut(); } }, 4000 );
+	}
 	function paintTools() {
 		ui.rateBtn.querySelector( 'b' ).textContent = S.rate + '×';
 		ui.rateBtn.classList.toggle( 'is-on', S.rate !== 1 );
@@ -1155,7 +1212,7 @@
 		S.listened = 0;
 		if ( done ) { paintSide(); }
 	}
-	audio.addEventListener( 'timeupdate', function () {
+	onAudio( 'timeupdate', function () {
 		var now = audio.currentTime, prev = S.lastT;
 		if ( ! audio.paused && now > prev && now - prev < 2 ) { S.listened += now - prev; S.heard = ( S.heard || 0 ) + ( now - prev ); }
 		S.lastT = now;
@@ -1164,7 +1221,7 @@
 		var t = current(); if ( t ) { ls( 'tcc_pos_' + ( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); }
 		paintScrub(); tickStream();
 	} );
-	audio.addEventListener( 'ended', function () {
+	onAudio( 'ended', function () {
 		var heardEnough = S.counted || ( audio.duration && S.heard >= audio.duration * 0.6 );
 		flushPlay( true );
 		var t = current(); if ( t ) { ls( 'tcc_pos_' + t.id, null ); }
@@ -1173,9 +1230,9 @@
 		if ( t && askAfter( t, heardEnough ) ) { return; }
 		step( 1 );
 	} );
-	audio.addEventListener( 'play', function () { ui.play.innerHTML = I.pause; ui.play.setAttribute( 'aria-label', 'Pause' ); ui.app.classList.add( 'is-playing' ); setFollow( S.follow ); } );
-	audio.addEventListener( 'pause', function () { flushHeat(); ui.play.innerHTML = I.play; ui.play.setAttribute( 'aria-label', 'Play' ); ui.app.classList.remove( 'is-playing' ); ui.followBtn.hidden = true; flushPlay(); } );
-	audio.addEventListener( 'durationchange', function () { paintScrub(); paintMarks(); paintLoop(); } );
+	onAudio( 'play', function () { ui.play.innerHTML = I.pause; ui.play.setAttribute( 'aria-label', 'Pause' ); ui.app.classList.add( 'is-playing' ); setFollow( S.follow ); } );
+	onAudio( 'pause', function () { flushHeat(); ui.play.innerHTML = I.play; ui.play.setAttribute( 'aria-label', 'Play' ); ui.app.classList.remove( 'is-playing' ); ui.followBtn.hidden = true; flushPlay(); } );
+	onAudio( 'durationchange', function () { paintScrub(); paintMarks(); paintLoop(); } );
 	window.addEventListener( 'pagehide', function () { flushPlay(); flushHeat( true ); } );
 	document.addEventListener( 'keydown', function ( e ) {
 		if ( e.target.matches( 'input, textarea, select' ) ) { if ( e.key === 'Escape' ) { closeSheet(); } return; }
