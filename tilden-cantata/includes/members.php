@@ -116,7 +116,6 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 		<p class="tcc-gate__p">Backstage is where the Tilden Community Choir gets ready<?php echo $title ? ' for <i>' . esc_html( $title ) . '</i>' : ''; ?>: the rehearsal schedule, practice tracks and sheet music. It’s kept behind one shared password, just to keep it among the people taking part.</p>
 		<p class="tcc-gate__p"><b>Don’t have the password?</b> Ask anyone singing or helping with this year’s cantata — they can share it with you.<?php echo $contact ? ' Or <a href="' . esc_url( $contact ) . '">send the director a note</a> and you’ll get it back.' : ''; ?></p>
 		<form class="tcc-gate__form" action="<?php echo esc_url( site_url( 'wp-login.php?action=postpass', 'login_post' ) ); ?>" method="post">
-			<input type="hidden" name="redirect_to" value="<?php echo esc_url( get_permalink( $post ) ); ?>">
 			<?php if ( $wrong ) : ?>
 			<p class="tcc-gate__wrong" role="alert">That password didn’t work. Check the spelling with whoever shared it — it may also have changed for this season.</p>
 			<?php endif; ?>
@@ -124,6 +123,7 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 			<div class="tcc-gate__row">
 				<input class="tcc-gate__input" name="post_password" id="<?php echo esc_attr( $id ); ?>" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off" required>
 				<button class="tcc-gate__go" type="submit">Come in</button>
+				<input type="hidden" name="redirect_to" value="<?php echo esc_url( get_permalink( $post ) ); ?>">
 			</div>
 		</form>
 		<?php if ( $join ) : ?>
@@ -147,6 +147,7 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 .tcc-gate__go:hover { background: #7a2214; }
 .tcc-gate__go:focus-visible { outline: 3px solid #9c2b1a; outline-offset: 3px; }
 .tcc-gate__wrong { margin: 0 0 4px; padding: 10px 14px; border-radius: 12px; background: #f6e3df; color: #7a2214; font-size: 15px; line-height: 1.45; }
+.tcc-gate p:empty, .tcc-gate br { display: none; }
 .tcc-gate__fine { margin: 4px 0 0; font-size: 15px; color: #5f5d58; }
 @media (max-width: 480px) { .tcc-gate__go { flex: 1 1 100%; } }
 </style>
