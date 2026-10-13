@@ -151,5 +151,6 @@ add_filter( 'the_password_form', function ( $output, $post = null ) {
 @media (max-width: 480px) { .tcc-gate__go { flex: 1 1 100%; } }
 </style>
 	<?php
-	return ob_get_clean();
+	/* one line: the post content filters (wpautop) would otherwise pad the card with empty paragraphs */
+	return trim( preg_replace( '/\s*\n\s*/', ' ', preg_replace( '/>\s+</', '><', ob_get_clean() ) ) );
 }, 10, 2 );
