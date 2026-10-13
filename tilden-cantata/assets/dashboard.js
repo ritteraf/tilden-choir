@@ -245,27 +245,6 @@
 		} ) );
 	}
 
-	function teamCard() {
-		var who = P();
-		if ( ! who.role || ! W.roles[ who.role ] ) {
-			return h( 'section', { class: 'tcc-db__card' }, [ h( 'span', { class: 'tcc-db__card-k' }, [ 'Your team' ] ), h( 'p', {}, [ 'Alongside singing, everyone takes on one small job for the season.' ] ), h( 'button', { type: 'button', class: 'tcc-dash__link', onclick: function () { signIn( undefined, { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Pick a team' ] ) ] );
-		}
-		var role = W.roles[ who.role ], key = 'role:' + who.role, meet = null;
-		W.rehearsals.some( function ( r ) {
-			var a = r.after.filter( function ( x ) { return x.who.indexOf( key ) !== -1; } )[ 0 ];
-			if ( a ) { meet = r.dow + ' ' + r.mon + ' ' + r.day + ( a.time ? ', ' + a.time : ', after rehearsal' ) + ' — ' + a.what; return true; }
-			if ( r.who.indexOf( key ) !== -1 ) { meet = r.dow + ' ' + r.mon + ' ' + r.day + ( r.time ? ', ' + r.time : '' ) + ' — ' + r.title; return true; }
-			return false;
-		} );
-		var others = ( W.teams[ who.role ] || [] ).filter( function ( n ) { return n !== who.name; } );
-		return h( 'section', { class: 'tcc-db__card' }, [
-			h( 'span', { class: 'tcc-db__card-k' }, [ 'Your team' ] ),
-			h( 'h4', { class: 'tcc-db__card-t' }, [ role.label ] ),
-			role.desc ? h( 'p', {}, [ role.desc.charAt( 0 ).toUpperCase() + role.desc.slice( 1 ) + '.' ] ) : null,
-			meet ? ( function () { var m = h( 'p', { class: 'tcc-db__card-meet', html: W.icons.then } ); m.appendChild( h( 'span', {}, [ 'Meets ' + meet ] ) ); return m; } )() : null,
-			h( 'p', { class: 'tcc-db__card-fine' }, [ others.length ? 'With ' + others.join( ', ' ) + '.' : 'You’re the first on this team.' ] )
-		] );
-	}
 
 	/* "Put Backstage on your home screen" */
 	var installEvt = null;
@@ -629,6 +608,7 @@
 		var grid = h( 'div', { class: 'tcc-hm__grid' } );
 		grid.appendChild( rehearsalWidget( next, skipped ) );
 		if ( isSinger() && myTrackParts().length ) { var cw = continueWidget( next ); if ( cw ) { grid.appendChild( cw ); } }
+		var tw = taskWidget(); if ( tw ) { grid.appendChild( tw ); }
 		var cd = countdownWidget(), sw = scheduleWidget();
 		if ( cd ) { grid.appendChild( cd ); }
 		if ( sw ) { grid.appendChild( sw ); }
@@ -652,40 +632,136 @@
 	}
 
 	/* ---------- the Team and Docs tabs ---------- */
-	function viewTeam() {
-		var who = me && me.who && me.who.onSeason ? me.who : null;
-		var nodes = [ h( 'header', { class: 'tcc-hm__head' }, [ h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ 'Teams' ] ), h( 'span', { class: 'tcc-hm__meta' }, [ 'Alongside singing, everyone takes on one small job for the season.' ] ) ] ), who ? h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) : null ] ) ];
-		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list' } );
-		if ( who ) { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide tcc-hm__myteam' }, [ teamCard() ] ) ); }
-		else { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ h( 'p', { class: 'tcc-hm__fine' }, [ 'Sign in to pick a team. ', h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { signIn( 'find' ); } }, [ 'Sign in' ] ) ] ) ] ) ); }
-		Object.keys( W.roles ).forEach( function ( k ) {
-			if ( who && who.role === k ) { return; }
-			var r = W.roles[ k ], names = W.teams[ k ] || [];
-			grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__team' }, [
-				h( 'span', { class: 'tcc-hm__team-i', html: SVG.team } ),
-				h( 'b', {}, [ r.label ] ),
-				r.desc ? h( 'span', { class: 'tcc-hm__fine' }, [ r.desc.charAt( 0 ).toUpperCase() + r.desc.slice( 1 ) + '.' ] ) : null,
-				h( 'span', { class: 'tcc-hm__team-who' }, [ names.length ? names.join( ', ' ) : 'Nobody yet' ] )
-			] ) );
+	function post( path, body ) {
+		return fetch( W.rest + path, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-TCC-Token': W.token }, body: JSON.stringify( Object.assign( { cantata: W.cantata.id }, body ) ) } ).then( function ( r ) { if ( ! r.ok ) { throw new Error( r.status ); } return r.json(); } );
+	}
+	function teamName( k ) { var l = ( W.roles[ k ] || {} ).label || 'Your team'; return /team$/i.test( l ) ? l : l + ' team'; }
+	function myTeam() { var who = me && me.who && me.who.onSeason ? me.who : null; return who && who.role && W.roles[ who.role ] ? who.role : ''; }
+	function myTasks() { var t = myTeam(); return t ? ( W.tasks || [] ).filter( function ( x ) { return x.team === t; } ) : []; }
+	function doneByMe( x ) { var id = me.who.id; return x.done.some( function ( d ) { return +d.id === +id; } ); }
+	/* "Due Fri", "Due today", "Overdue · Oct 10", "Due Oct 20" */
+	function dueLabel( due, finished ) {
+		if ( ! due ) { return null; }
+		var d = new Date( due + 'T12:00:00' ), t = new Date( ( W.today || ymd( new Date() ) ) + 'T12:00:00' );
+		var days = Math.round( ( d - t ) / 864e5 ), md = d.toLocaleDateString( undefined, { month: 'short', day: 'numeric' } );
+		if ( days < 0 ) { return finished ? [ md, '' ] : [ 'Overdue · ' + md, 'is-late' ]; }
+		if ( days === 0 ) { return [ 'Due today', finished ? '' : 'is-soon' ]; }
+		if ( days === 1 ) { return [ 'Due tomorrow', finished ? '' : 'is-soon' ]; }
+		if ( days < 7 ) { return [ 'Due ' + d.toLocaleDateString( undefined, { weekday: 'short' } ), finished ? '' : 'is-soon' ]; }
+		return [ 'Due ' + md, '' ];
+	}
+	function taskRow( x, redraw ) {
+		var mine = doneByMe( x ), others = x.done.filter( function ( d ) { return +d.id !== +me.who.id; } );
+		var due = dueLabel( x.due, mine );
+		var box = h( 'input', { type: 'checkbox', checked: mine ? true : null, 'aria-label': 'Done: ' + x.text } );
+		box.addEventListener( 'change', function () {
+			var on = box.checked;
+			if ( on ) { x.done.push( { id: me.who.id, name: me.who.name } ); } else { x.done = x.done.filter( function ( d ) { return +d.id !== +me.who.id; } ); }
+			redraw();
+			post( 'taskdone', { task: x.id, done: on ? 1 : 0 } ).catch( function () {
+				if ( on ) { x.done = x.done.filter( function ( d ) { return +d.id !== +me.who.id; } ); } else { x.done.push( { id: me.who.id, name: me.who.name } ); }
+				redraw();
+			} );
 		} );
+		return h( 'li', { class: 'tcc-hm__task' + ( mine ? ' is-done' : '' ) }, [
+			h( 'label', { class: 'tcc-hm__task-l' }, [ box, h( 'span', { class: 'tcc-hm__task-box', html: SVG.check, 'aria-hidden': 'true' } ),
+				h( 'span', { class: 'tcc-hm__task-t' }, [
+					h( 'b', {}, [ x.text ] ),
+					x.details ? h( 'span', {}, [ x.details ] ) : null,
+					others.length ? h( 'span', { class: 'tcc-hm__task-who' }, [ '✓ ' + others.map( function ( d ) { return d.name.split( ' ' )[ 0 ]; } ).join( ', ' ) ] ) : null
+				] ),
+				due ? h( 'span', { class: 'tcc-hm__chip tcc-hm__due ' + due[ 1 ] }, [ due[ 0 ] ] ) : null
+			] )
+		] );
+	}
+	function tasksList( list, redraw ) {
+		/* still to do first, soonest due; my finished ones sink to the bottom */
+		var sorted = list.slice().sort( function ( a, b ) { return ( doneByMe( a ) - doneByMe( b ) ) || ( ( a.due || '9999' ) < ( b.due || '9999' ) ? -1 : ( a.due || '9999' ) > ( b.due || '9999' ) ? 1 : 0 ); } );
+		return h( 'ul', { class: 'tcc-hm__tasks' }, sorted.map( function ( x ) { return taskRow( x, redraw ); } ) );
+	}
+	/* Home: a nudge when one of my team's tasks is due within the week (or late) and I haven't ticked it */
+	function taskWidget() {
+		var soon = myTasks().filter( function ( x ) {
+			if ( doneByMe( x ) || ! x.due ) { return false; }
+			var days = Math.round( ( new Date( x.due + 'T12:00:00' ) - new Date( ( W.today || ymd( new Date() ) ) + 'T12:00:00' ) ) / 864e5 );
+			return days < 7;
+		} );
+		if ( ! soon.length ) { return null; }
+		var wrap = h( 'div' );
+		function draw() {
+			var left = soon.filter( function ( x ) { return ! doneByMe( x ); } );
+			wrap.innerHTML = '';
+			wrap.appendChild( tasksList( soon, draw ) );
+			lbl.textContent = left.length ? W.roles[ myTeam() ].label + ' · ' + ( left.length === 1 ? '1 task due' : left.length + ' tasks due' ) : W.roles[ myTeam() ].label + ' · all done';
+		}
+		var lbl = h( 'span', { class: 'tcc-hm__fine' } );
+		var w = widget( 'tcc-hm__wide tcc-hm__taskw', [ h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Team tasks', 'is-red' ), h( 'a', { class: 'tcc-hm__dir-go', href: '#team' }, [ 'Team', h( 'span', { html: SVG.right } ) ] ) ] ), lbl, wrap ] );
+		draw();
+		return w;
+	}
+	function nextMeeting( key ) {
+		var meet = null;
+		W.rehearsals.some( function ( r ) {
+			var a = ( r.after || [] ).filter( function ( x ) { return x.who.indexOf( key ) !== -1; } )[ 0 ];
+			if ( a ) { meet = r.dow + ' ' + r.mon + ' ' + r.day + ( a.time ? ' · ' + a.time : '' ) + ' · ' + a.what; return true; }
+			if ( r.who.indexOf( key ) !== -1 ) { meet = r.dow + ' ' + r.mon + ' ' + r.day + ( r.time ? ' · ' + r.time : '' ) + ' · ' + r.title; return true; }
+			return false;
+		} );
+		return meet;
+	}
+	function viewTeam() {
+		var who = me && me.who && me.who.onSeason ? me.who : null, team = myTeam();
+		var role = team ? W.roles[ team ] : null;
+		var nodes = [ personHead( role ? role.label : 'Teams', role && role.desc ? role.desc.charAt( 0 ).toUpperCase() + role.desc.slice( 1 ) : '' ) ];
+		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--team' } );
+		var pick = function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); };
+		if ( role ) {
+			var list = myTasks(), box = h( 'div' );
+			var draw = function () { box.innerHTML = ''; box.appendChild( list.length ? tasksList( list, draw ) : h( 'p', { class: 'tcc-hm__fine' }, [ 'No tasks yet.' ] ) ); };
+			draw();
+			grid.appendChild( widget( 'tcc-hm__teamtasks', [ wk( 'Tasks', 'is-red' ), box ] ) );
+			var others = ( W.teams[ team ] || [] ).filter( function ( n ) { return n !== who.name; } ), meet = nextMeeting( 'role:' + team );
+			grid.appendChild( widget( 'tcc-hm__teaminfo', [
+				wk( 'Your team' ),
+				meet ? h( 'p', { class: 'tcc-hm__meet' }, [ h( 'span', { html: SVG.cal } ), h( 'span', {}, [ h( 'b', {}, [ 'Meets ' ] ), meet ] ) ] ) : null,
+				h( 'p', { class: 'tcc-hm__body' }, [ others.length ? 'With ' + others.join( ', ' ) : 'You’re the first on this team.' ] ),
+				h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: pick }, [ 'Change team' ] )
+			] ) );
+		} else {
+			grid.appendChild( widget( 'tcc-hm__wide', [ wk( 'Your team', 'is-red' ),
+				h( 'p', { class: 'tcc-hm__body' }, [ 'Alongside singing, everyone takes on one small job for the season.' ] ),
+				who ? h( 'button', { type: 'button', class: 'tcc-hm__btn', onclick: pick }, [ 'Pick a team', h( 'span', { html: SVG.right } ) ] )
+					: h( 'button', { type: 'button', class: 'tcc-hm__btn', onclick: openSwitch }, [ 'Sign in', h( 'span', { html: SVG.right } ) ] )
+			] ) );
+		}
 		nodes.push( grid );
+		var rest = Object.keys( W.roles ).filter( function ( k ) { return k !== team; } );
+		if ( rest.length ) {
+			nodes.push( h( 'h3', { class: 'tcc-hm__month' }, [ role ? 'Other teams' : 'Teams' ] ) );
+			nodes.push( h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list' }, rest.map( function ( k ) {
+				var r = W.roles[ k ], names = W.teams[ k ] || [];
+				return h( 'div', { class: 'tcc-hm__w tcc-hm__team' }, [
+					h( 'b', {}, [ r.label ] ),
+					r.desc ? h( 'span', { class: 'tcc-hm__fine' }, [ r.desc.charAt( 0 ).toUpperCase() + r.desc.slice( 1 ) ] ) : null,
+					h( 'span', { class: 'tcc-hm__team-who' }, [ names.length ? names.join( ', ' ) : 'Nobody yet' ] )
+				] );
+			} ) ) );
+		}
 		show( nodes );
 	}
+	/* Docs: just what's for me — everyone's, my groups', my team's */
 	function viewDocs() {
-		var who = me && me.who && me.who.onSeason ? me.who : null;
-		var nodes = [ h( 'header', { class: 'tcc-hm__head' }, [ h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ 'Documents' ] ) ] ), who ? h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) : null ] ) ];
-		var groups = [ 'everyone' ].concat( Object.keys( W.types ) );
-		var mineFirst = who ? [ 'everyone' ].concat( who.types ) : [ 'everyone' ];
-		var order = mineFirst.concat( groups.filter( function ( g ) { return mineFirst.indexOf( g ) === -1; } ) );
+		var who = me && me.who && me.who.onSeason ? me.who : null, team = myTeam();
+		var groups = [ 'everyone' ].concat( who ? who.types.filter( function ( t ) { return W.types[ t ]; } ) : [] ).concat( team ? [ 'role:' + team ] : [] );
 		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list tcc-hm__grid--docs' } ), any = false;
-		order.forEach( function ( g ) {
+		groups.forEach( function ( g ) {
 			var list = docList( [ g ], false ); if ( ! list ) { return; }
 			any = true;
-			grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ wk( g === 'everyone' ? 'For everyone' : 'For ' + ( W.types[ g ] || g ).toLowerCase(), 'is-red' ), list ] ) );
+			var label = g === 'everyone' ? 'For everyone' : g.indexOf( 'role:' ) === 0 ? teamName( g.slice( 5 ) ) : 'For ' + ( W.types[ g ] || g ).toLowerCase();
+			grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ wk( label, 'is-red' ), list ] ) );
 		} );
-		if ( ! any ) { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ h( 'p', { class: 'tcc-hm__fine' }, [ 'No documents posted yet.' ] ) ] ) ); }
-		nodes.push( grid );
-		show( nodes );
+		if ( ! any ) { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ h( 'p', { class: 'tcc-hm__fine' }, [ 'Nothing posted yet.' ] ) ] ) ); }
+		show( [ personHead( 'Documents' ), grid ] );
 	}
 
 	/* ---------- the Schedule tab: every rehearsal, month by month ---------- */

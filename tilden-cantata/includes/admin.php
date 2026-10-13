@@ -8,7 +8,6 @@ function tcc_settings_fields(): array {
 		'directions_url' => [ 'Directions link', 'url', 'Optional. A Google Maps link. Left blank, one is built from the address.' ],
 		'join_url'       => [ 'Join page link', 'url', 'Where "Join the choir" buttons go. Defaults to /join/.' ],
 		'emblem'         => [ 'Emblem image', 'image', 'The choir illustration shown faintly behind an entry that has no photo yet. Defaults to the theme\'s emblem.' ],
-		'roles'          => [ 'Volunteer teams', 'textarea', 'One per line as "Name — what it involves". The description is what singers see when they sign in and pick a team, so write it for someone who has never heard of it.' ],
 		'contact_to'     => [ 'Messages go to', 'email', 'Where the contact form sends email. A copy of every message is also kept under Cantata → Messages.' ],
 		'contact_from'   => [ 'Send email from', 'email', 'Must be an address on this site\'s own domain or mail will be junked — e.g. alex@tildencommunitychoir.org. Replies go to the person who wrote, not here.' ],
 	];

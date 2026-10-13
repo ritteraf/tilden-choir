@@ -313,8 +313,8 @@ function tcc_render_docs_control( int $post_id ) {
 	$rows  = array_values( array_filter( $rows, 'is_array' ) );
 	$rows[] = [ 'title' => '', 'file' => 0, 'url' => '', 'who' => [], 'note' => '' ];
 	$rows[] = [ 'title' => '', 'file' => 0, 'url' => '', 'who' => [], 'note' => '' ];
-	$types = function_exists( 'tcc_attendee_types' ) ? tcc_attendee_types() : [];
-	echo '<table class="widefat striped" style="max-width:980px"><thead><tr><th>Title</th><th style="width:230px">File</th><th style="width:220px">or link</th><th style="width:250px">For</th><th>Note</th></tr></thead><tbody>';
+	$types = function_exists( 'tcc_doc_audiences' ) ? tcc_doc_audiences() : tcc_attendee_types();
+	echo '<table class="widefat striped" style="max-width:1100px"><thead><tr><th>Title</th><th style="width:230px">File</th><th style="width:220px">or link</th><th style="width:300px">For</th><th>Note</th></tr></thead><tbody>';
 	foreach ( $rows as $i => $row ) {
 		$base = '_tcc_docs[' . $i . ']';
 		$fid  = absint( $row['file'] ?? 0 );
@@ -333,5 +333,5 @@ function tcc_render_docs_control( int $post_id ) {
 		printf( '<td><input type="text" name="%s[note]" value="%s" class="large-text" placeholder="One line, optional"></td>', esc_attr( $base ), esc_attr( $row['note'] ?? '' ) );
 		echo '</tr>';
 	}
-	echo '</tbody></table><p class="description">Nothing ticked under "For" means everyone. Rows without a title, or with neither a file nor a link, are ignored. Two blank rows are always offered; save for more.</p>';
+	echo '</tbody></table><p class="description">Nothing ticked under "For" means everyone. Rows without a title, or with neither a file nor a link, are ignored. Two blank rows are always offered; save for more. To remove a document, clear its title.</p>';
 }

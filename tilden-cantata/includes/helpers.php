@@ -22,7 +22,6 @@ function tcc_fields(): array {
 		'listen'      => [ 'Listening video (YouTube)', 'url', 'The publisher\'s recording of the whole work, for singers to learn from. Shown on the singers page.' ],
 		'cover'       => [ 'Cover art', 'image', 'The published cover of the work.' ],
 		'program'     => [ 'Program PDF', 'file', 'Optional. Linked as "Program and song list".' ],
-		'docs'        => [ 'Documents', 'docs', 'Scripts, staging directions, run sheets, logo files. Each shows on the Backstage page for the group it\'s for.' ],
 		'members'     => [ 'Backstage page', 'page', 'The password-protected members page for this cantata: singers, narrators, actors and tech crew. The header\'s Backstage button goes here.' ],
 		'offering_to' => [ 'Offering supports', 'text', 'Shown on the upcoming entry only.' ],
 		'offering_note' => [ 'Offering note', 'textarea', 'One or two sentences on who they are and why.' ],
@@ -335,7 +334,7 @@ function tcc_sanitize_docs( $rows ): array {
 		if ( $title === '' || ( ! $file && ! $url ) ) {
 			continue;
 		}
-		$who = function_exists( 'tcc_attendee_types' ) ? array_values( array_intersect( array_map( 'sanitize_key', (array) ( $row['who'] ?? [] ) ), array_keys( tcc_attendee_types() ) ) ) : [];
+		$who = array_values( array_intersect( array_map( fn( $k ) => preg_replace( '/[^a-z0-9:_-]/', '', strtolower( (string) $k ) ), (array) ( $row['who'] ?? [] ) ), array_keys( function_exists( 'tcc_doc_audiences' ) ? tcc_doc_audiences() : tcc_attendee_types() ) ) );
 		$out[] = [ 'title' => $title, 'file' => $file, 'url' => $url, 'who' => $who, 'note' => sanitize_text_field( (string) ( $row['note'] ?? '' ) ) ];
 	}
 	return $out;

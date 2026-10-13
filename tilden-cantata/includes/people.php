@@ -23,18 +23,9 @@ function tcc_default_roles(): string {
 	return "Marketing — social media posts, the paper, posters and signs around town\nWelcoming team — hospitality and catering for the social after the performance\nStaging — brainstorm, design and build the stage elements of the work\nCostuming — brainstorm, design and make costumes for the characters";
 }
 
-/** Volunteer roles with their descriptions: [ slug => [ 'label', 'desc' ] ]. Editable under Cantata → Settings. */
+/** Volunteer roles (teams) with their descriptions: [ slug => [ 'label', 'desc' ] ]. Edited under Cantata → Teams. */
 function tcc_volunteer_role_info(): array {
-	$raw = tcc_option( 'roles', tcc_default_roles() );
-	$out = [];
-	foreach ( array_filter( array_map( 'trim', explode( "\n", $raw ) ) ) as $line ) {
-		$bits  = preg_split( '/\s+(?:—|–|-)\s+|:\s+/u', $line, 2 );
-		$label = trim( $bits[0] );
-		if ( $label !== '' ) {
-			$out[ sanitize_title( $label ) ] = [ 'label' => $label, 'desc' => trim( $bits[1] ?? '' ) ];
-		}
-	}
-	return $out;
+	return function_exists( 'tcc_teams' ) ? tcc_teams() : [];
 }
 
 /** Volunteer roles as [ slug => label ]. */
@@ -51,7 +42,7 @@ function tcc_person_fields(): array {
 		'solos'   => [ 'Interested in solos', 'check', 'Singers only.' ],
 		'phone'   => [ 'Phone', 'tel', '' ],
 		'email'   => [ 'Email', 'email', '' ],
-		'role'    => [ 'Volunteer role', 'role', 'Their secondary job for the cantata. Edit the list under Cantata → Settings.' ],
+		'role'    => [ 'Volunteer role', 'role', 'Their secondary job for the cantata. Edit the list under Cantata → Teams.' ],
 		'seasons' => [ 'Seasons', 'seasons', 'Which cantatas they took part in.' ],
 		'hidden'  => [ 'Keep off the site', 'check', 'Tick if this person would rather not be listed publicly. They still appear in the roster here.' ],
 		'notes'   => [ 'Notes', 'textarea', 'Private. Never shown on the site.' ],

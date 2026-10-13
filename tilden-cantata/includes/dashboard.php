@@ -47,12 +47,13 @@ function tcc_docs_data( int $cantata_id ): array {
 			$icon = 'link';
 		}
 		$row = [ 'title' => (string) ( $d['title'] ?? '' ), 'url' => $url, 'note' => (string) ( $d['note'] ?? '' ), 'icon' => $icon ];
-		$who = (array) ( $d['who'] ?? [] );
-		if ( ! $who || count( $who ) >= count( tcc_attendee_types() ) ) {
+		$who    = (array) ( $d['who'] ?? [] );
+		$groups = array_intersect( $who, array_keys( tcc_attendee_types() ) );
+		if ( ! $who || count( $groups ) >= count( tcc_attendee_types() ) ) {
 			$by['everyone'][] = $row;
 		} else {
 			foreach ( $who as $w ) {
-				if ( isset( $by[ $w ] ) ) {
+				if ( isset( $by[ $w ] ) || str_starts_with( $w, 'role:' ) ) {
 					$by[ $w ][] = $row;
 				}
 			}
@@ -179,6 +180,8 @@ function tcc_world( int $cantata_id ): array {
 		'rtypes'     => function_exists( 'tcc_rehearsal_types' ) ? tcc_rehearsal_types() : [],
 		'roles'      => array_map( fn( $r ) => [ 'label' => $r['label'], 'desc' => $r['desc'] ], $roles ),
 		'teams'      => $teams,
+		'tasks'      => function_exists( 'tcc_tasks_data' ) ? tcc_tasks_data( $cantata_id ) : [],
+		'today'      => current_time( 'Y-m-d' ),
 		'urls'       => $urls,
 		'signin'     => tcc_signin_config( $cantata_id ),
 		'rest'       => esc_url_raw( rest_url( 'tcc/v1/' ) ),
