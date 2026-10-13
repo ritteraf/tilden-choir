@@ -274,7 +274,8 @@
 	function paintFeelBtn() {
 		if ( ! ui.viewBtn ) { return; }
 		var ok = canFeel(), st = ok && S.who ? stateOf( current().song ) : 'none';
-		ui.viewBtn.disabled = ! ok;
+		ui.viewBtn.disabled = ! ok || ! S.who; // a guest: we don't know whose feedback it would be
+		ui.viewBtn.title = ok && ! S.who ? 'Sign in to leave notes and feedback' : '';
 		ui.viewBtn.querySelector( 'b' ).innerHTML = ring( st );
 		ui.viewBtn.className = 'ta-tool ta-tool--feel ta-tool--' + st;
 	}
@@ -1089,7 +1090,9 @@
 		ui.altBtn.classList.toggle( 'is-on', S.alt );
 		ui.altBtn.querySelector( 'b' ).innerHTML = S.alt ? I.accomp : I.people;
 		ui.altBtn.querySelector( 'span' ).textContent = S.alt ? 'Accomp.' : 'Voices';
-		ui.noteBtn.disabled = ! current();
+		/* guests can't keep notes (nobody to keep them for); the director can always leave notes for the singers */
+		ui.noteBtn.disabled = ! current() || ( ! S.who && ! D.canEdit );
+		ui.noteBtn.title = current() && ! S.who && ! D.canEdit ? 'Sign in to leave notes and feedback' : '';
 		paintFeelBtn();
 		applyView();
 	}
@@ -1194,7 +1197,7 @@
 			if ( ! S.who ) { S.notes = []; done(); return; }
 			return api( 'state', 'GET', { cantata: D.cantata.id } ).then( function ( st ) { S.notes = st && st.notes || []; done(); } );
 		} ).catch( function () { done(); } );
-		function done() { paintTop(); paintSide(); paintStream(); }
+		function done() { paintTop(); paintSide(); paintStream(); paintTools(); }
 	}
 	function start() {
 		var saved = ls( 'tcc_part' ) || '';
