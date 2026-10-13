@@ -362,6 +362,11 @@ a.tcc-hm__song:hover { background: #faf9f6; }
 	.tcc-hm__grid--list .tcc-hm__wide { grid-column: span 3; }
 	.tcc-hm__grid--docs .tcc-hm__wide { grid-column: auto; }
 	.tcc-hm__head { padding-top: 28px; }
+	html.tcc-navme .tcc-hm__head .tcc-hm__me { display: none; }
+	.tcc-tabs__who { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 14px 4px 4px; border-radius: 26px; border: 1px solid #dedbd3; background: #fff; color: #1f1f1f; font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+	.tcc-tabs__who:hover { background: #f3f1ec; }
+	.tcc-tabs__who:focus-visible { outline: 3px solid #9c2b1a; outline-offset: 2px; }
+	.tcc-tabs__who .tcc-hm__av { width: 40px; height: 40px; font-size: 19px; }
 	.tcc-hm__songsw .tcc-hm__row { flex-direction: column; align-items: flex-start; gap: 4px; }
 	.tcc-hm__sheet { align-items: center; }
 	.tcc-hm__sheet-box { border-radius: 24px; padding-bottom: 24px; }

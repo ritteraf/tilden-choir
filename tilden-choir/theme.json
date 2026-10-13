@@ -3,7 +3,7 @@
 	"version": 3,
 	"settings": {
 		"appearanceTools": true,
-		"layout": { "contentSize": "820px", "wideSize": "1280px" },
+		"layout": { "contentSize": "1280px", "wideSize": "1280px" },
 		"color": {
 			"defaultPalette": false,
 			"defaultGradients": false,

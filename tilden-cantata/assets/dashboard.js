@@ -650,8 +650,19 @@
 			route();
 		} ).catch( function () { me = {}; route(); } );
 	}
+	/* on computers the person switch lives in the tab bar, as in an app's title bar */
+	function navMe() {
+		var slot = document.querySelector( '.tcc-tabs__me' ); if ( ! slot ) { return; }
+		var who = me && me.who && me.who.onSeason ? me.who : null;
+		slot.innerHTML = '';
+		document.documentElement.classList.toggle( 'tcc-navme', !! who );
+		if ( ! who ) { return; }
+		var part = W.voice[ who.part ] && isSinger() ? ' · ' + W.voice[ who.part ].label : '';
+		slot.appendChild( h( 'button', { type: 'button', class: 'tcc-tabs__who', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', {}, [ who.name + part ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) );
+	}
 	/* the hub draws three tabs: Home (default), Team (#team) and Docs (#docs) */
 	function route() {
+		navMe();
 		var tab = ( location.hash || '' ).replace( '#', '' );
 		document.documentElement.setAttribute( 'data-tcc-tab', tab === 'team' || tab === 'docs' ? tab : 'home' );
 		if ( window.tccTabs ) { window.tccTabs(); }

@@ -133,12 +133,12 @@ add_action( 'wp_footer', function () {
 	if ( ! $cfg ) {
 		return;
 	}
-	echo '<nav class="tcc-tabs" aria-label="Backstage"><span class="tcc-tabs__brand">Backstage</span><div class="tcc-tabs__row">';
+	echo '<nav class="tcc-tabs" aria-label="Backstage"><div class="tcc-tabs__in"><span class="tcc-tabs__brand">Backstage</span><div class="tcc-tabs__row">';
 	foreach ( $cfg['tabs'] as $k => $t ) {
 		$cur = $cfg['on'] === $k ? ' aria-current="page"' : '';
 		echo '<a class="tcc-tabs__a" data-tab="' . esc_attr( $k ) . '" href="' . esc_url( $t[1] ) . '"' . $cur . '>' . tcc_tab_icon( $k ) . '<span>' . esc_html( $t[0] ) . '</span></a>';
 	}
-	echo '</div></nav>';
+	echo '</div><div class="tcc-tabs__me"></div></div></nav>';
 	?>
 <script>
 (function () {
@@ -214,7 +214,7 @@ add_action( 'wp', function () {
 .tcc-standalone body { padding-top: env(safe-area-inset-top); }
 .tcc-tabbed .tcc-phead__back { display: none !important; }
 .tcc-tabs { position: fixed; z-index: 60; left: 0; right: 0; bottom: 0; display: block; padding: 4px max(4px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); background: rgba(255,255,255,.97); border-top: 1px solid #dedbd3; font-family: 'Libre Franklin', system-ui, sans-serif; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
-.tcc-tabs__brand { display: none; }
+.tcc-tabs__brand, .tcc-tabs__me { display: none; }
 .tcc-tabs__row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: 560px; margin: 0 auto; }
 .tcc-tabs__a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 54px; border-radius: 14px; color: #5f5d58 !important; font-size: 12px; font-weight: 600; line-height: 1.1; text-decoration: none !important; -webkit-tap-highlight-color: transparent; }
 .tcc-tabs__a[aria-current="page"] { color: #9c2b1a !important; font-weight: 700; }
@@ -222,7 +222,9 @@ add_action( 'wp', function () {
 .tcc-tabs__a:focus-visible { outline: 3px solid #9c2b1a; outline-offset: -3px; }
 body.tcc-tabbed { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
 @media (min-width: 900px) {
-	.tcc-tabs { position: sticky; top: 0; bottom: auto; display: flex; align-items: center; gap: 28px; min-height: 68px; padding: 0 max(32px, env(safe-area-inset-right)) 0 max(32px, env(safe-area-inset-left)); border-top: 0; border-bottom: 1px solid #dedbd3; }
+	.tcc-tabs { position: sticky; top: 0; bottom: auto; padding: 0 var(--wp--style--root--padding-right, 32px) 0 var(--wp--style--root--padding-left, 32px); border-top: 0; border-bottom: 1px solid #dedbd3; }
+	.tcc-tabs__in { display: flex; align-items: center; gap: 28px; min-height: 68px; max-width: var(--wp--style--global--wide-size, 1280px); margin: 0 auto; }
+	.tcc-tabs__me { display: block; margin-left: auto; }
 	.tcc-tabs__brand { display: block; font-family: 'Zilla Slab', Georgia, serif; font-size: 22px; font-weight: 700; color: #9c2b1a; }
 	.tcc-tabs__row { display: flex; gap: 4px; max-width: none; margin: 0; }
 	.tcc-tabs__a { flex-direction: row; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 22px; color: #3d3c39 !important; font-size: 15px; }

@@ -3,7 +3,7 @@ Theme Name: Cantata Theme (Tilden)
 Theme URI: https://tildencommunitychoir.org
 Author: Tilden Community Choir
 Description: Block theme for the Tilden Community Choir. The home page is a rolling stack of every Christmas cantata, newest first. Requires the Tilden Cantata plugin for the stack and cantata fields.
-Version: 1.7.1
+Version: 1.8.0
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.1
@@ -103,6 +103,9 @@ Text Domain: tilden-choir
 
 /* ---------- posts, pages ---------- */
 .tc-page-title { border-bottom: 1px solid rgba(31, 31, 31, 0.14); padding-bottom: 0.75rem; }
+/* Pages use the full header width, lined up with the logo. Running text keeps a comfortable
+   reading measure (long lines are hard to follow), sitting on the same left edge. */
+.is-layout-constrained > :is(p, ul, ol, blockquote, h2, h3, h4, h5, h6, .wp-block-quote, .wp-block-buttons, .post-password-form):not(.alignwide):not(.alignfull):not(.has-text-align-center) { max-width: 46rem; margin-left: 0 !important; margin-right: auto !important; }
 .tc-post-body :where(figure.wp-block-gallery) { margin-top: 2rem; }
 .tc-photos-anchor { scroll-margin-top: 1rem; }
 .post-password-form { max-width: 520px; padding: 1.5rem; border: 1.5px solid var(--wp--preset--color--ink); border-radius: 4px; }
