@@ -11,7 +11,7 @@
 	--d-gold: var(--wp--preset--color--gold, #d29d33);
 	--d-display: var(--wp--preset--font-family--zilla-slab, "Zilla Slab", Georgia, serif);
 	--d-body: var(--wp--preset--font-family--libre-franklin, "Libre Franklin", system-ui, sans-serif);
-	font-family: var(--d-body); color: var(--d-ink); line-height: 1.45; max-width: none; margin: 0;
+	font-family: var(--d-body); color: var(--d-ink); line-height: 1.45; max-width: none; margin: 0; padding-top: 40px;
 }
 .tcc-dir--locked { padding: 24px 0; color: var(--d-slate); }
 .tcc-dir__eyebrow { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d-ash); }
