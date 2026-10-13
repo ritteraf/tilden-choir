@@ -510,6 +510,8 @@ function tcc_player_list( array $tracks, array $songs ): array {
 			'title' => $t['song'] >= 0 && isset( $songs[ $t['song'] ] ) ? $songs[ $t['song'] ] : tcc_clean_song_title( $t['title'] ),
 			'url'   => wp_get_attachment_url( $t['id'] ),
 			'dur'   => (int) ( $meta['length'] ?? 0 ),
+			/* the CD track number — for the sectioned accompaniment it matches the circled number in the score */
+			'cd'    => (int) ( $meta['track_number'] ?? 0 ) ?: ( preg_match( '/(?:track|^)\s*0*(\d{1,3})\b/i', get_the_title( $t['id'] ), $mm ) ? (int) $mm[1] : 0 ),
 		];
 	}
 	return $out;

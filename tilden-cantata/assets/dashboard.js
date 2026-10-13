@@ -145,8 +145,8 @@
 		alto: 'The lower women’s voices.',
 		tenor: 'The higher men’s voices.',
 		bass: 'The lowest men’s voices.',
-		accompaniment: 'Just the piano, to sing along with.',
-		sections: 'The piano part in short pieces, for working on one spot.',
+		accompaniment: 'The whole song on piano — you sing your part.',
+		sections: 'Piano in sections, starting at the circled CD numbers in the score.',
 		listen: 'Everyone together, the way it will sound.'
 	};
 	function perfLine() {
