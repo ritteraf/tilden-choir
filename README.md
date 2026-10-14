@@ -50,7 +50,8 @@ Full-screen, built for phones and older singers with "fat fingers" — big contr
   - Tap any note to play from 4 s before it. The pencil edits a note (yours, or any director note when signed in to WordPress): words, time (±1 s or "move it to where the music is now"), measure, icon, length, who sees it, delete.
 - **Personal notes** — singers can leave themselves notes at a moment in a song; only they see them.
 - **Feedback** — the Feedback button (its circle shows your mark) opens three big choices: *Feeling good*, *Getting there*, *Tricky spots* — plus every note on the song. When a song finishes, the same three choices slide up with a 10-second countdown before the next song plays anyway. It only asks when the singer has heard most of the song (pauses don't reset that), at most once a day per song, never while looping or recording page turns. Wording is deliberately calm: "Your marks help the director decide what to work on at rehearsal."
-- **Sectioned accompaniment** — the CD tracks (split at the circled numbers in the score) are listed as "CD 5 · starts 0:12 in"; the app knows where each starts in its song so pages and notes stay in step.
+- **Conductor mode** (director only) — pick *Conductor* in the part menu to rehearse the choir from the whole-song accompaniment: a *Jump to* list (each song's *Whole song* button plus its CD numbers), *Go to CD* number pad (or just type the number on a keyboard), prev/next step by CD, and *Stop at CD* (off = plays straight through). Notes made here become the singers' cues as usual. No feedback prompts or practice logging.
+- **CD marks** — where each circled CD number starts, as a time in the whole-song tracks (voices and accompaniment are aligned, so one set serves all). Seeded from the old sectioned files' lengths; in conductor mode use *Set CD marks* to tap them in exactly, like page turns. Everyone sees the CD numbers on the progress bar and can tap one to start there. The seeded marks are saved the first time the player loads, so after that the sectioned files can be removed.
 
 ### Director tools
 - **Director report** (`/director/`, editors only) — "How the cantata is coming", one practice week at a time (rehearsal to rehearsal), or the whole season:
@@ -136,4 +137,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.22.3**, theme **1.8.0**.
+Current versions: plugin **2.23.0**, theme **1.8.0**.

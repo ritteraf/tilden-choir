@@ -46,6 +46,9 @@
 		score: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2"/><line x1="7" y1="7" x2="17" y2="7"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/><line x1="7" y1="17" x2="17" y2="17"/><circle cx="10" cy="17" r="1.4" fill="currentColor"/><line x1="11.4" y1="17" x2="11.4" y2="12.5"/></svg>',
 		notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
 		left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+		keypad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 18h.01M12 18h4"/></svg>',
+		stopAfter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>',
+		del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M18 9l-6 6M12 9l6 6"/></svg>',
 		right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>'
 	};
 	/* the gentle states — the only "progress" a singer ever sees */
@@ -75,7 +78,7 @@
 
 	/* ---------- data ---------- */
 	var VOICE = [ 'soprano', 'alto', 'tenor', 'bass' ];
-	var ORDER = VOICE.concat( [ 'accompaniment', 'sections', 'listen' ] );
+	var ORDER = VOICE.concat( [ 'accompaniment', 'listen' ] );
 	var LISTS = {};
 	Object.keys( D.lists || {} ).forEach( function ( p ) { LISTS[ 'now:' + p ] = { key: 'now:' + p, now: true, cantata: { id: D.cantata.id, token: D.token, title: D.cantata.title, year: D.cantata.year }, part: p, tracks: D.lists[ p ] }; } );
 	/* the sectioned accompaniment: each CD section starts partway into its song, so notes and page turns need that offset */
@@ -147,8 +150,9 @@
 		ui.fill = h( 'div', { class: 'ta-scrub__fill' } );
 		ui.loopBand = h( 'div', { class: 'ta-scrub__loop', hidden: true } );
 		ui.marks = h( 'div', { class: 'ta-scrub__marks' } );
+		ui.cds = h( 'div', { class: 'ta-scrub__cds' } );
 		ui.knob = h( 'div', { class: 'ta-scrub__knob' } );
-		ui.scrub.appendChild( ui.rail ); ui.scrub.appendChild( ui.loopBand ); ui.scrub.appendChild( ui.fill ); ui.scrub.appendChild( ui.marks ); ui.scrub.appendChild( ui.knob );
+		ui.scrub.appendChild( ui.rail ); ui.scrub.appendChild( ui.loopBand ); ui.scrub.appendChild( ui.fill ); ui.scrub.appendChild( ui.marks ); ui.scrub.appendChild( ui.cds ); ui.scrub.appendChild( ui.knob );
 		ui.tcur = h( 'span', {}, [ '0:00' ] ); ui.tdur = h( 'span', {}, [ '0:00' ] );
 		ui.play = h( 'button', { type: 'button', class: 'ta-play', 'aria-label': 'Play', html: I.play, onclick: toggle } );
 		ui.rateBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: cycleRate, 'aria-label': 'Speed' }, [ h( 'b', {}, [ '1×' ] ), h( 'span', {}, [ 'Speed' ] ) ] );
@@ -159,17 +163,27 @@
 		ui.songsBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--songs', onclick: openSongs }, [ h( 'b', { html: I.list } ), h( 'span', {}, [ 'Songs' ] ) ] );
 		ui.viewBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--feel', onclick: function () { openFeel(); } }, [ h( 'b', { html: ring( 'none' ) } ), h( 'span', {}, [ 'Feedback' ] ) ] );
 		ui.strip = h( 'div', { class: 'ta-flow', hidden: true, 'aria-live': 'polite' } );
+		/* conductor mode */
+		ui.goBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: openKeypad, hidden: true }, [ h( 'b', { html: I.keypad } ), h( 'span', {}, [ 'Go to CD' ] ) ] );
+		ui.stopBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: toggleStopAfter, hidden: true, 'aria-pressed': 'false' }, [ h( 'b', { html: I.stopAfter } ), h( 'span', {}, [ 'Stop at CD' ] ) ] );
+		ui.jump = h( 'div', { class: 'ta-jumpwrap', hidden: true } );
+		ui.cdRec = h( 'div', { class: 'ta-rec ta-rec--cd', hidden: true } );
+		ui.prevLbl = h( 'span', { class: 'ta-icon__cd' } ); ui.nextLbl = h( 'span', { class: 'ta-icon__cd' } );
+		ui.prevBtn = h( 'button', { type: 'button', class: 'ta-icon ta-icon--nav', 'aria-label': 'Previous song', onclick: function () { if ( S.cond ) { cdStep( -1 ); } else { step( -1 ); } } }, [ h( 'span', { html: I.prev } ), ui.prevLbl ] );
+		ui.nextBtn = h( 'button', { type: 'button', class: 'ta-icon ta-icon--nav', 'aria-label': 'Next song', onclick: function () { if ( S.cond ) { cdStep( 1 ); } else { step( 1 ); } } }, [ h( 'span', { html: I.next } ), ui.nextLbl ] );
 		ui.app.appendChild( h( 'footer', { class: 'ta-dock' }, [
 			ui.strip,
+			ui.jump,
+			ui.cdRec,
 			h( 'div', { class: 'ta-dock__scrub' }, [ ui.tcur, ui.scrub, ui.tdur ] ),
 			h( 'div', { class: 'ta-dock__main' }, [
 				h( 'button', { type: 'button', class: 'ta-icon ta-icon--dim', 'aria-label': 'Back five seconds', html: I.back5, onclick: function () { back5(); } } ),
-				h( 'button', { type: 'button', class: 'ta-icon', 'aria-label': 'Previous song', html: I.prev, onclick: function () { step( -1 ); } } ),
+				ui.prevBtn,
 				ui.play,
-				h( 'button', { type: 'button', class: 'ta-icon', 'aria-label': 'Next song', html: I.next, onclick: function () { step( 1 ); } } ),
+				ui.nextBtn,
 				h( 'button', { type: 'button', class: 'ta-icon ta-icon--dim', 'aria-label': 'Forward five seconds', html: I.fwd5, onclick: function () { seek( audio.currentTime + 5 ); } } )
 			] ),
-			h( 'div', { class: 'ta-dock__tools' }, [ ui.viewBtn, ui.rateBtn, ui.loopBtn, ui.altBtn, ui.noteBtn, ui.songsBtn ] )
+			h( 'div', { class: 'ta-dock__tools' }, [ ui.goBtn, ui.viewBtn, ui.noteBtn, ui.rateBtn, ui.loopBtn, ui.stopBtn, ui.altBtn, ui.songsBtn ] )
 		] ) );
 		ui.toast = h( 'div', { class: 'ta-toast', role: 'status', 'aria-live': 'polite' } );
 		ui.app.appendChild( ui.toast );
@@ -178,6 +192,7 @@
 		ui.scrub.addEventListener( 'pointerdown', scrubStart );
 		ui.scrub.addEventListener( 'keydown', function ( e ) { if ( e.key === 'ArrowLeft' ) { back5(); } if ( e.key === 'ArrowRight' ) { seek( audio.currentTime + 5 ); } } );
 		[ 'wheel', 'touchmove' ].forEach( function ( ev ) { ui.stream.addEventListener( ev, function () { if ( current() ) { setFollow( false ); } }, { passive: true } ); } );
+		ui.app.classList.toggle( 'is-cond', !! S.cond );
 		paintTop(); paintStream(); paintSide(); paintTools();
 	}
 
@@ -191,9 +206,11 @@
 		var t = current();
 		ui.eyebrow.textContent = ( S.list ? ( S.list.now ? '' : S.list.cantata.year + ' · ' ) : '' ) + ( S.list ? S.list.cantata.title : D.cantata.title );
 		ui.ttl.className = 'ta-top__title';
-		ui.ttl.textContent = t ? ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title + ( S.list.part === 'sections' && t.cd ? ' · CD ' + t.cd : '' ) : 'Choose a song';
+		var cdh = S.cond ? cdNow() : null;
+		ui.ttl.textContent = t ? ( cdh ? 'CD ' + cdh.n + ' · ' : '' ) + ( t.song >= 0 ? ( t.song + 1 ) + '. ' : '' ) + t.title : 'Choose a song';
 		ui.partBtn.innerHTML = '';
-		ui.partBtn.appendChild( h( 'span', {}, [ shortLabel( S.list ? S.list.part : S.part ) /* the toggle never changes the part — it only takes the voices out */ ] ) );
+		ui.partBtn.appendChild( h( 'span', {}, [ S.cond ? 'Conductor' : shortLabel( S.list ? S.list.part : S.part ) /* the toggle never changes the part — it only takes the voices out */ ] ) );
+		ui.partBtn.classList.toggle( 'is-cond', !! S.cond );
 		ui.partBtn.appendChild( h( 'span', { class: 'ta-chip__caret', html: I.down } ) );
 		document.title = ( t ? t.title + ' · ' : '' ) + 'Practice';
 	}
@@ -802,7 +819,15 @@
 		return ol;
 	}
 	function paintSide() {
+		paintJump();
 		ui.side.innerHTML = '';
+		if ( S.cond ) {
+			ui.side.appendChild( h( 'div', { class: 'ta-side__head' }, [ h( 'span', {}, [ 'Jump to' ] ), h( 'button', { type: 'button', class: 'ta-link', onclick: startCdRec }, [ 'Set CD marks' ] ) ] ) );
+			ui.side.appendChild( jumpList() );
+			ui.side.appendChild( h( 'p', { class: 'ta-fine' }, [ 'Or just type a CD number.' ] ) );
+			if ( ui.sheetList ) { ui.sheetList.replaceWith( ui.sheetList = jumpList() ); }
+			return;
+		}
 		ui.side.appendChild( h( 'div', { class: 'ta-side__head' }, [ h( 'span', {}, [ label( S.part ) + ( VOICE.indexOf( S.part ) !== -1 ? ' tracks' : '' ) ] ), h( 'button', { type: 'button', class: 'ta-link', onclick: openParts }, [ 'Change part' ] ) ] ) );
 		ui.side.appendChild( songList( S.part, false ) );
 		if ( ui.sheetList ) { ui.sheetList.replaceWith( ui.sheetList = songList( S.part, true ) ); }
@@ -825,6 +850,12 @@
 	var onSheetClose = null;
 	function closeSheet() { if ( ! sheet ) { return; } var s = sheet; sheet = null; ui.sheetList = null; s.classList.remove( 'is-open' ); setTimeout( function () { s.remove(); }, 220 ); var f = onSheetClose; onSheetClose = null; if ( f ) { f(); } }
 	function openSongs() {
+		if ( S.cond ) {
+			ui.sheetList = jumpList();
+			openSheet( 'Jump to', ui.sheetList, 'ta-sheet--tall' );
+			var here = sheet.querySelector( '.ta-jump__song.is-on' ); if ( here ) { here.scrollIntoView( { block: 'center' } ); }
+			return;
+		}
 		ui.sheetList = songList( S.part, true );
 		openSheet( label( S.part ) + ( VOICE.indexOf( S.part ) !== -1 ? ' tracks' : '' ), ui.sheetList, 'ta-sheet--tall' );
 		var on = sheet.querySelector( '.ta-row.is-on' ); if ( on ) { on.scrollIntoView( { block: 'center' } ); }
@@ -832,9 +863,14 @@
 	function openParts() {
 		var mine = myParts();
 		var box = h( 'div', { class: 'ta-parts' } );
+		if ( canCond() ) {
+			box.appendChild( h( 'button', { type: 'button', class: 'ta-part ta-part--cond' + ( S.cond ? ' is-on' : '' ), onclick: function () { closeSheet(); setCond( true ); } }, [
+				h( 'b', {}, [ 'Conductor' ] ), h( 'small', {}, [ 'Rehearsal' ] )
+			] ) );
+		}
 		ORDER.forEach( function ( p ) {
 			if ( ! LISTS[ 'now:' + p ] ) { return; }
-			box.appendChild( h( 'button', { type: 'button', class: 'ta-part' + ( p === S.part ? ' is-on' : '' ), onclick: function () { setPart( p ); closeSheet(); } }, [
+			box.appendChild( h( 'button', { type: 'button', class: 'ta-part' + ( p === S.part && ! S.cond ? ' is-on' : '' ), onclick: function () { closeSheet(); if ( S.cond ) { setCond( false ); } setPart( p ); } }, [
 				h( 'b', {}, [ label( p ) ] ),
 				mine.indexOf( p ) !== -1 ? h( 'small', {}, [ 'Your part' ] ) : null
 			] ) );
@@ -850,7 +886,7 @@
 		// keep the same song going in the new part, at the same moment
 		var t = current(), L = LISTS[ 'now:' + p ];
 		var j = -1; L.tracks.some( function ( x, i ) { if ( x.song === t.song && t.song >= 0 ) { j = i; return true; } return false; } );
-		if ( j >= 0 && S.list.now ) { var playing = ! audio.paused; flushPlay(); S.list = L; S.idx = j; S.alt = false; S.playPart = p; loadTrack( playing, true ); toast( label( p ) ); }
+		if ( j >= 0 && S.list.now ) { var playing = ! audio.paused; flushPlay(); S.list = L; S.idx = j; S.alt = false; S.playPart = p; loadTrack( playing, true ); toast( S.cond ? 'Conductor' : label( p ) ); }
 	}
 	function signIn() {
 		if ( ! D.signin || ! window.tccSignin ) { return; }
@@ -966,6 +1002,176 @@
 		else { api( 'note', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { S.notes = S.notes.filter( function ( x ) { return String( x.id ) !== String( c.id ); } ); paintStream(); toast( 'Note deleted' ); } ).catch( fail ); }
 	}
 
+	/* ---------- conductor mode: rehearsing the choir from the podium ---------- */
+	/* CD marks: where each circled number in the score starts, in seconds into its song */
+	var CD = D.cdmarks || {};
+	function marksFor( song ) { return ( CD[ song ] || [] ).map( function ( m ) { return { n: +m.n, t: +m.t, song: +song }; } ).sort( function ( a, b ) { return a.t - b.t; } ); }
+	/* every mark in the order the work runs: song by song, then time */
+	function allMarks() { var out = []; Object.keys( CD ).map( Number ).sort( function ( a, b ) { return a - b; } ).forEach( function ( s ) { out = out.concat( marksFor( s ) ); } ); return out; }
+	function markN( n ) { return allMarks().filter( function ( m ) { return m.n === n; } )[ 0 ] || null; }
+	function cdNow() {
+		var t = current(); if ( ! t || ! S.list || ! S.list.now || t.song < 0 ) { return null; }
+		var now = songNow() + 0.05, cur = null;
+		marksFor( t.song ).forEach( function ( m ) { if ( m.t <= now ) { cur = m; } } );
+		return cur;
+	}
+	function canCond() { return !! ( D.canEdit && LISTS[ 'now:accompaniment' ] ); }
+	function setCond( on ) {
+		S.cond = !! on && canCond(); ls( 'tcc_cond', S.cond ? '1' : null );
+		if ( S.cond ) { S.alt = false; if ( S.part !== 'accompaniment' || ( S.list && S.list.part !== 'accompaniment' ) ) { setPart( 'accompaniment' ); } }
+		S.cdKey = '';
+		toast( S.cond ? 'Conductor mode' : 'Practice mode' );
+		paintTop(); paintSide(); paintStream(); paintTools(); paintMarks();
+	}
+	function accIndex( song ) { var L = LISTS[ 'now:accompaniment' ], j = -1; if ( L ) { L.tracks.some( function ( x, i ) { if ( x.song === song ) { j = i; return true; } return false; } ); } return j; }
+	function goMark( m ) {
+		if ( ! m ) { return; }
+		var L = LISTS[ 'now:accompaniment' ], j = accIndex( m.song );
+		if ( j < 0 ) { toast( 'No accompaniment track for that song yet.' ); return; }
+		toast( 'CD ' + m.n );
+		S.cdKey = m.song + ':' + m.n;
+		if ( S.list === L && S.idx === j && audio.duration ) { seek( m.t ); if ( audio.paused ) { audio.play().catch( function () {} ); } paintTop(); paintSide(); return; }
+		playList( L.key, j );
+		S.cdKey = m.song + ':' + m.n;
+		audio.addEventListener( 'loadedmetadata', function () { seek( m.t ); }, { once: true } );
+	}
+	function goCD( n ) { var m = markN( +n ); if ( ! m ) { toast( 'There’s no CD ' + n + '.' ); return; } goMark( m ); }
+	function playWhole( i ) { var L = LISTS[ 'now:accompaniment' ]; if ( L ) { playList( L.key, i ); } }
+	/* back: to the start of this CD, or to the one before if we're just past its start */
+	function cdStep( dir ) {
+		if ( ! current() ) { toggle(); return; }
+		var all = allMarks(), t = current(), now = songNow(), at = -1;
+		all.forEach( function ( m, i ) { if ( m.song < t.song || ( m.song === t.song && m.t <= now + 0.05 ) ) { at = i; } } );
+		if ( dir < 0 ) {
+			if ( at >= 0 && all[ at ].song === t.song && now - all[ at ].t > 2 ) { goMark( all[ at ] ); return; }
+			if ( at > 0 ) { goMark( all[ at - 1 ] ); } else { seek( 0 ); }
+			return;
+		}
+		if ( at + 1 < all.length ) { goMark( all[ at + 1 ] ); } else { toast( 'That’s the last CD.' ); }
+	}
+	function paintCdNav() {
+		if ( ! ui.prevLbl ) { return; }
+		var on = !! S.cond, all = on ? allMarks() : [], t = current(), now = songNow(), at = -1;
+		if ( on && t ) { all.forEach( function ( m, i ) { if ( m.song < t.song || ( m.song === t.song && m.t <= now + 0.05 ) ) { at = i; } } ); }
+		var prev = on && at >= 0 && all[ at ].song === t.song && now - all[ at ].t > 2 ? all[ at ] : on && at > 0 ? all[ at - 1 ] : null, next = on && at + 1 < all.length ? all[ at + 1 ] : null;
+		var pl = prev ? 'CD ' + prev.n : ''; if ( ui.prevLbl.textContent !== pl ) { ui.prevLbl.textContent = pl; }
+		ui.nextLbl.textContent = next ? 'CD ' + next.n : '';
+		ui.prevBtn.setAttribute( 'aria-label', on ? 'Back a CD' : 'Previous song' );
+		ui.nextBtn.setAttribute( 'aria-label', on ? ( next ? 'Next: CD ' + next.n : 'Next CD' ) : 'Next song' );
+	}
+	/* while it plays: follow the CD number; stop at the next one when asked */
+	function tickCd( dt ) {
+		var c = cdNow(), k = c ? c.song + ':' + c.n : '';
+		if ( k !== S.cdKey ) {
+			var was = S.cdKey; S.cdKey = k;
+			if ( was && c && S.stopAfter && ! audio.paused && dt > 0 && dt < 1.5 && ! CDREC ) {
+				audio.pause(); seek( c.t - OFF() ); toast( 'Stopped · CD ' + c.n + ' is next' );
+			}
+		}
+		if ( k === S.cdShown ) { paintCdNav(); return; }
+		S.cdShown = k;
+		paintTop(); paintSide(); paintCdNav();
+	}
+	function toggleStopAfter() {
+		S.stopAfter = ! S.stopAfter; ls( 'tcc_cd_stop', S.stopAfter ? '1' : null );
+		paintTools(); toast( S.stopAfter ? 'Stops at the end of each CD' : 'Plays straight through' );
+	}
+	/* typing a number on a computer: "1", "4" … then a pause (or Enter) and it goes */
+	function typeCd( d ) {
+		S.typed = ( ( S.typed || '' ) + d ).slice( -3 );
+		var m = markN( +S.typed );
+		toast( 'CD ' + S.typed + ( m ? ' · ' + ( m.song + 1 ) + '. ' + ( D.songs[ m.song ] || '' ) : '' ) );
+		clearTimeout( typeCd.t ); typeCd.t = setTimeout( goTyped, 1100 );
+	}
+	function goTyped() { clearTimeout( typeCd.t ); var n = S.typed; S.typed = ''; if ( n ) { goCD( +n ); } }
+	function pageFor( m ) {
+		if ( ! SC || ! SC.songs[ m.song ] ) { return ''; }
+		var r = SC.songs[ m.song ], n = 0; ( SC.turns[ m.song ] || [] ).forEach( function ( x ) { if ( x <= m.t + 0.05 ) { n++; } } );
+		return 'p. ' + printedNo( Math.min( r[ 1 ], r[ 0 ] + n ) );
+	}
+	function jumpList() {
+		var L = LISTS[ 'now:accompaniment' ], wrap = h( 'div', { class: 'ta-jump' } );
+		if ( ! L ) { wrap.appendChild( h( 'p', { class: 'ta-empty' }, [ 'No accompaniment tracks yet.' ] ) ); return wrap; }
+		var cur = cdNow();
+		L.tracks.forEach( function ( x, i ) {
+			if ( x.song < 0 ) { return; }
+			var on = !! ( S.list === L && S.idx === i ), cds = marksFor( x.song );
+			wrap.appendChild( h( 'div', { class: 'ta-jump__song' + ( on ? ' is-on' : '' ) }, [
+				h( 'div', { class: 'ta-jump__top' }, [
+					h( 'span', { class: 'ta-jump__t' }, [ ( x.song + 1 ) + '. ' + x.title ] ),
+					h( 'button', { type: 'button', class: 'ta-jump__whole', 'aria-label': 'Play the whole song: ' + x.title, onclick: function () { closeSheet(); playWhole( i ); } }, [ h( 'span', { html: I.play } ), 'Whole song' ] )
+				] ),
+				cds.length ? h( 'div', { class: 'ta-jump__cds' }, cds.map( function ( m ) {
+					var here = on && cur && cur.n === m.n;
+					return h( 'button', { type: 'button', class: 'ta-jump__cd' + ( here ? ' is-on' : '' ), 'aria-current': here ? 'true' : null, 'aria-label': here ? 'CD ' + m.n + ', playing' : 'Play CD ' + m.n, onclick: function () { closeSheet(); goMark( m ); } }, [ String( m.n ) ] );
+				} ) ) : null
+			] ) );
+		} );
+		return wrap;
+	}
+	/* tablet held sideways with the music up: the jump list takes the notes' place beside the score */
+	function paintJump() {
+		if ( ! ui.jump ) { return; }
+		ui.jump.hidden = ! S.cond;
+		ui.jump.innerHTML = '';
+		if ( S.cond ) { ui.jump.appendChild( h( 'div', { class: 'ta-jumpwrap__head' }, [ h( 'span', {}, [ 'Jump to' ] ), h( 'button', { type: 'button', class: 'ta-link', onclick: startCdRec }, [ 'Set CD marks' ] ) ] ) ); ui.jump.appendChild( jumpList() ); var on = ui.jump.querySelector( '.ta-jump__song.is-on' ); if ( on && on.scrollIntoViewIfNeeded ) { on.scrollIntoViewIfNeeded(); } }
+	}
+	/* the number pad: for a tablet or phone on the music stand */
+	function openKeypad() {
+		var val = '';
+		var disp = h( 'b', { class: 'ta-keys__n' }, [ '–' ] ), info = h( 'span', { class: 'ta-keys__info' } );
+		var go = h( 'button', { type: 'button', class: 'ta-keys__k ta-keys__go', onclick: function () { var n = +val; closeSheet(); goCD( n ); } }, [ h( 'span', { html: I.play } ), 'Play' ] );
+		function upd() {
+			disp.textContent = val || '–';
+			var m = val ? markN( +val ) : null;
+			info.textContent = ! val ? 'Type a CD number' : m ? ( m.song + 1 ) + '. ' + ( D.songs[ m.song ] || '' ) + ( pageFor( m ) ? ' · ' + pageFor( m ) : '' ) : 'There’s no CD ' + val;
+			go.disabled = ! m;
+		}
+		var keys = h( 'div', { class: 'ta-keys' } );
+		[ '1', '2', '3', '4', '5', '6', '7', '8', '9' ].forEach( function ( k ) { keys.appendChild( h( 'button', { type: 'button', class: 'ta-keys__k', onclick: function () { if ( val.length < 3 ) { val += k; upd(); } } }, [ k ] ) ); } );
+		keys.appendChild( h( 'button', { type: 'button', class: 'ta-keys__k ta-keys__k--dim', 'aria-label': 'Delete', html: I.del, onclick: function () { val = val.slice( 0, -1 ); upd(); } } ) );
+		keys.appendChild( h( 'button', { type: 'button', class: 'ta-keys__k', onclick: function () { if ( val.length < 3 && val ) { val += '0'; upd(); } } }, [ '0' ] ) );
+		keys.appendChild( go );
+		openSheet( 'Go to CD', h( 'div', { class: 'ta-keypad' }, [ h( 'div', { class: 'ta-keys__show' }, [ disp, info ] ), keys ] ) );
+		upd();
+	}
+	/* the director taps where each CD starts, the way page turns are set */
+	var CDREC = null;
+	function startCdRec() {
+		var t = current();
+		if ( ! S.cond || ! t || t.song < 0 ) { toast( 'Play a song first, then set its CD marks.' ); return; }
+		var ex = marksFor( t.song ), before = allMarks().filter( function ( m ) { return m.song < t.song; } );
+		var n0 = ex.length ? ex[ 0 ].n : before.length ? before[ before.length - 1 ].n + 1 : 1;
+		CDREC = { song: t.song, marks: [ { n: n0, t: 0 } ] };
+		seek( 0 ); audio.play().catch( function () {} );
+		paintCdRec(); paintMarks();
+	}
+	function paintCdRec() {
+		var bar = ui.cdRec; if ( ! bar ) { return; }
+		bar.innerHTML = '';
+		if ( ! CDREC ) { bar.hidden = true; return; }
+		bar.hidden = false;
+		var ms = CDREC.marks, next = ms[ ms.length - 1 ].n + 1;
+		function renum( d ) { var n0 = Math.max( 1, ms[ 0 ].n + d ); ms.forEach( function ( m, i ) { m.n = n0 + i; } ); paintCdRec(); paintMarks(); }
+		bar.appendChild( h( 'div', { class: 'ta-rec__msg' }, [
+			h( 'b', {}, [ 'Tap when CD ' + next + ' starts.' ] ),
+			h( 'span', { class: 'ta-rec__first' }, [ 'Song starts at CD ', h( 'button', { type: 'button', class: 'ta-rec__nb', 'aria-label': 'One lower', onclick: function () { renum( -1 ); } }, [ '−' ] ), h( 'b', {}, [ String( ms[ 0 ].n ) ] ), h( 'button', { type: 'button', class: 'ta-rec__nb', 'aria-label': 'One higher', onclick: function () { renum( 1 ); } }, [ '+' ] ), ' · ' + ms.length + ' marked' ] )
+		] ) );
+		bar.appendChild( h( 'div', { class: 'ta-rec__go' }, [
+			h( 'button', { type: 'button', class: 'ta-rec__turn', onclick: function () { ms.push( { n: next, t: Math.max( 0, Math.round( ( songNow() - 0.3 ) * 10 ) / 10 ) } ); paintCdRec(); paintMarks(); } }, [ 'CD ' + next ] ),
+			h( 'button', { type: 'button', class: 'ta-btn', disabled: ms.length > 1 ? null : true, onclick: function () { ms.pop(); paintCdRec(); paintMarks(); } }, [ 'Undo' ] ),
+			h( 'button', { type: 'button', class: 'ta-btn ta-btn--gold', onclick: saveCdRec }, [ 'Save' ] ),
+			h( 'button', { type: 'button', class: 'ta-link', onclick: function () { CDREC = null; paintCdRec(); paintMarks(); } }, [ 'Cancel' ] )
+		] ) );
+	}
+	function saveCdRec() {
+		var rec = CDREC, t = current();
+		api( 'cdmarks', 'POST', { cantata: D.cantata.id, song: rec.song, marks: rec.marks } ).then( function ( r ) {
+			if ( r && r.ok ) { CD[ rec.song ] = r.marks; CDREC = null; paintCdRec(); paintMarks(); paintSide(); paintTop(); toast( r.marks.length + ' CD marks saved for ' + ( t ? t.title : 'this song' ) ); }
+			else { toast( 'Couldn’t save — try again.' ); }
+		} ).catch( function () { toast( 'Couldn’t save — try again.' ); } );
+	}
+
 	/* ---------- playback ---------- */
 	var queue = null;
 	function current() { return S.list ? S.list.tracks[ S.idx ] : null; }
@@ -996,17 +1202,19 @@
 		audio.src = src.url;
 		audio.playbackRate = S.rate;
 		S.listened = 0; S.heard = 0; S.counted = false; S.lastT = 0; // heard: this song's whole listen, through any pauses
-		var resume = parseFloat( ls( posKey( src.id ) ) || '0' );
+		var resume = S.cond ? 0 : parseFloat( ls( posKey( src.id ) ) || '0' );
 		audio.addEventListener( 'loadedmetadata', function once() {
 			audio.removeEventListener( 'loadedmetadata', once );
 			if ( was !== null ) { audio.currentTime = Math.min( was, audio.duration - 1 ); }
 			else if ( resume > 5 && resume < audio.duration - 10 ) { audio.currentTime = resume; toast( 'Picking up at ' + fmt( resume ) ); }
 			paintScrub(); paintMarks(); tickStream( true );
 		} );
-		if ( S.list.now && t.song >= 0 ) { ls( 'tcc_last' + ( S.who && S.who.id ? '_' + S.who.id : '' ), JSON.stringify( { part: S.list.part, song: t.song, id: src.id, title: t.title } ) ); }
+		if ( S.list.now && t.song >= 0 && ! S.cond ) { ls( 'tcc_last' + ( S.who && S.who.id ? '_' + S.who.id : '' ), JSON.stringify( { part: S.list.part, song: t.song, id: src.id, title: t.title } ) ); }
 		/* the address follows the song, so a reload (or a shared link) opens this one */
 		try { history.replaceState( history.state, '', location.pathname + location.search + ( S.list.now && t.song >= 0 ? '#song-' + ( t.song + 1 ) : '' ) ); } catch ( e ) {}
 		if ( M.rec && M.rec.song !== t.song ) { M.rec = null; paintRec(); toast( 'Page-turn recording stopped — it was for another song.' ); }
+		if ( CDREC && CDREC.song !== t.song ) { CDREC = null; paintCdRec(); toast( 'CD marking stopped — it was for another song.' ); }
+		S.cdKey = '';
 		setFollow( true );
 		M.manual = null;
 		paintTop(); paintStream(); paintSide(); paintTools(); paintLoop();
@@ -1063,6 +1271,7 @@
 	/* ---------- where people go back: loops, rewinds and backward scrubs, for the director's heat map ---------- */
 	var HEAT = [];
 	function heat( kind, a, b ) {
+		if ( S.cond ) { return; } // rehearsing the choir isn't anyone's practice
 		var t = current();
 		if ( ! t || ! S.list || ! S.list.now || t.song < 0 || ! ( b > a ) ) { return; }
 		var o = OFF();
@@ -1149,6 +1358,16 @@
 		ui.altBtn.querySelector( 'span' ).textContent = S.alt ? 'Accomp.' : 'Voices';
 		/* guests can't keep notes (nobody to keep them for); the director can always leave notes for the singers */
 		ui.noteBtn.disabled = ! current() || ( ! S.who && ! D.canEdit );
+		/* conductor mode: no feedback, no voices toggle; jump by CD instead */
+		ui.viewBtn.hidden = !! S.cond;
+		ui.altBtn.hidden = !! S.cond;
+		ui.goBtn.hidden = ! S.cond;
+		ui.stopBtn.hidden = ! S.cond;
+		ui.stopBtn.classList.toggle( 'is-on', !! S.stopAfter );
+		ui.stopBtn.setAttribute( 'aria-pressed', S.stopAfter ? 'true' : 'false' );
+		ui.songsBtn.querySelector( 'span' ).textContent = S.cond ? 'Jump to' : 'Songs';
+		ui.app.classList.toggle( 'is-cond', !! S.cond );
+		paintCdNav();
 		ui.noteBtn.title = current() && ! S.who && ! D.canEdit ? 'Sign in to leave notes and feedback' : '';
 		paintFeelBtn();
 		applyView();
@@ -1167,6 +1386,21 @@
 		var o = OFF();
 		CUES.forEach( function ( c ) { var x = c.t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--' + c.kind } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } );
 		if ( S.view === 'music' ) { turnsFor().forEach( function ( t ) { var x = t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--turn' } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } ); }
+		paintCdLabels( d, o );
+	}
+	/* the circled CD numbers from the score, along the bar: tap one to start there */
+	function paintCdLabels( d, o ) {
+		ui.cds.innerHTML = '';
+		var t = current(); if ( ! t || ! S.list || ! S.list.now || t.song < 0 || ! d ) { return; }
+		var ms = CDREC && CDREC.song === t.song ? CDREC.marks : marksFor( t.song );
+		ms.forEach( function ( m ) {
+			var x = m.t - ( o || 0 ); if ( x < 0 || x > d ) { return; }
+			var b = h( 'button', { type: 'button', class: 'ta-cd', title: 'Start at CD ' + m.n, 'aria-label': 'Start at CD ' + m.n }, [ String( m.n ) ] );
+			b.style.left = ( x / d * 100 ) + '%';
+			b.addEventListener( 'pointerdown', function ( e ) { e.stopPropagation(); } );
+			b.addEventListener( 'click', function ( e ) { e.stopPropagation(); seek( x ); S.cdKey = t.song + ':' + m.n; if ( audio.paused ) { audio.play().catch( function () {} ); } toast( 'CD ' + m.n ); } );
+			ui.cds.appendChild( b );
+		} );
 	}
 	function paintLoop() {
 		var d = audio.duration;
@@ -1199,6 +1433,7 @@
 
 	/* ---------- keeping track, gently ---------- */
 	function flushPlay( complete ) {
+		if ( S.cond ) { S.listened = 0; return; }
 		var t = current();
 		if ( ! t || ! S.who || ! S.list.now || t.song < 0 ) { return; }
 		var secs = Math.round( S.listened );
@@ -1218,7 +1453,8 @@
 		S.lastT = now;
 		if ( S.loopA !== null && S.loopB !== null && now >= S.loopB ) { heat( 'loop', S.loopA, S.loopB ); audio.currentTime = S.loopA; }
 		if ( ! S.counted && audio.duration && S.heard >= audio.duration * 0.6 ) { flushPlay( true ); }
-		var t = current(); if ( t ) { ls( posKey( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); }
+		var t = current(); if ( t && ! S.cond ) { ls( posKey( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); }
+		if ( S.cond ) { tickCd( now - prev ); }
 		paintScrub(); tickStream();
 	} );
 	onAudio( 'ended', function () {
@@ -1227,6 +1463,12 @@
 		var t = current(); if ( t ) { ls( posKey( t.id ), null ); }
 		if ( S.loopA !== null ) { audio.currentTime = S.loopA; audio.play(); return; }
 		if ( M.rec ) { toast( 'End of the song — tap Save to keep these ' + M.rec.times.length + ' turns.' ); return; } // never roll on to the next song mid-recording
+		if ( CDREC ) { toast( 'End of the song — tap Save to keep these CD marks.' ); return; }
+		if ( S.cond ) {
+			/* rehearsal: straight on into the next song, or wait there when stopping after each CD */
+			if ( S.stopAfter ) { if ( S.list && S.idx + 1 < S.list.tracks.length ) { S.idx++; loadTrack( false ); toast( 'Ready: ' + current().title ); } return; }
+			step( 1 ); return;
+		}
 		if ( t && askAfter( t, heardEnough ) ) { return; }
 		step( 1 );
 	} );
@@ -1237,6 +1479,8 @@
 	document.addEventListener( 'keydown', function ( e ) {
 		if ( e.target.matches( 'input, textarea, select' ) ) { if ( e.key === 'Escape' ) { closeSheet(); } return; }
 		if ( e.key === 'Escape' ) { closeSheet(); }
+		if ( S.cond && ! sheet && /^[0-9]$/.test( e.key ) ) { typeCd( e.key ); return; }
+		if ( S.cond && ! sheet && e.key === 'Enter' && S.typed ) { e.preventDefault(); goTyped(); return; }
 		if ( e.key === ' ' ) { e.preventDefault(); toggle(); }
 		if ( S.view === 'music' && ( e.key === 'PageDown' || e.key === 'PageUp' ) ) { e.preventDefault(); manualPage( e.key === 'PageDown' ? 1 : -1 ); return; }
 		if ( e.key === 'ArrowLeft' && ! sheet ) { back5(); }
@@ -1261,6 +1505,9 @@
 	function start() {
 		var saved = ls( 'tcc_part' ) || '';
 		S.part = urlPart() || ( LISTS[ 'now:' + saved ] ? saved : '' ) || ORDER.filter( function ( p ) { return LISTS[ 'now:' + p ]; } )[ 0 ] || 'soprano';
+		S.cond = canCond() && ls( 'tcc_cond' ) === '1' && ! urlPart();
+		S.stopAfter = ls( 'tcc_cd_stop' ) === '1';
+		if ( S.cond ) { S.part = 'accompaniment'; }
 		build();
 		loadMe().then( function () {
 			// first visit without ?part= : land on their own part

@@ -528,7 +528,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 	$songs  = tcc_song_titles( $current );
 	$tracks = tcc_tracks( $current );
 	$lists  = [];
-	foreach ( $page ? array_keys( tcc_track_parts() ) : [ $part, 'listen', 'accompaniment', 'sections' ] as $p ) {
+	foreach ( $page ? array_diff( array_keys( tcc_track_parts() ), [ 'sections' ] ) : [ $part, 'listen', 'accompaniment' ] as $p ) {
 		if ( ! empty( $tracks[ $p ] ) ) {
 			$lists[ $p ] = tcc_player_list( $tracks[ $p ], $songs );
 		}
@@ -575,6 +575,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'partLabels'=> array_map( fn( $l ) => trim( preg_replace( '/\s*\(.*$/', '', $l ) ), tcc_track_parts() ),
 		'songs'     => array_values( $songs ),
 		'lists'     => $lists,
+		'cdmarks'   => (object) ( function_exists( 'tcc_cd_marks' ) ? tcc_cd_marks( $current ) : [] ),
 		'cues'      => $cues,
 		'cueIcons'  => tcc_cue_icons(),
 		'next'      => tcc_next_rehearsal_songs( $current ),

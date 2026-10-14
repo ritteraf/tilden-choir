@@ -412,3 +412,60 @@ body.tcc-app-on { overflow: hidden; }
 .ta-tool.is-busy b { animation: ta-busy 0.7s ease-in-out infinite alternate; }
 @keyframes ta-busy { from { opacity: 1; } to { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .ta-tool.is-busy b { animation: none; opacity: 0.6; } }
+
+/* ---------- conductor mode ---------- */
+.ta-chip.is-cond { border-color: var(--gold); color: var(--gold); }
+.ta-part--cond small { color: var(--gold); }
+/* prev / next carry the CD they go to */
+.ta-icon--nav { position: relative; }
+.ta-icon__cd { position: absolute; left: 50%; top: 100%; transform: translate(-50%, -4px); font-size: 11px; font-weight: 700; color: var(--gold); white-space: nowrap; pointer-events: none; }
+.ta-icon__cd:empty { display: none; }
+/* CD numbers along the bar (everyone sees them; tap one to start there) */
+.ta-dock__scrub:has(.ta-cd) { padding-top: 10px; }
+.ta-scrub__cds { position: absolute; left: 0; right: 0; top: -9px; height: 0; }
+.ta-cd { position: absolute; top: 0; transform: translateX(-50%); min-width: 20px; height: 18px; padding: 0 5px; border: 1.5px solid rgba(210, 157, 51, 0.7); border-radius: 9px; background: #231e12; color: var(--gold) !important; font-size: 10px; font-weight: 700; line-height: 15px; font-variant-numeric: tabular-nums; cursor: pointer; z-index: 1; }
+.ta-cd::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1.5px; height: 7px; margin-left: -0.75px; background: rgba(210, 157, 51, 0.7); }
+.ta-cd:hover, .ta-cd:focus-visible { background: var(--gold); color: #1a1408 !important; outline: none; }
+/* the jump list: every song, a Whole song button, then its CDs */
+.ta-jump { display: flex; flex-direction: column; gap: 10px; }
+.ta-jump__song { padding: 12px 12px 12px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: rgba(255, 255, 255, 0.03); }
+.ta-jump__song.is-on { border-color: rgba(210, 157, 51, 0.7); background: rgba(210, 157, 51, 0.08); }
+.ta-jump__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ta-jump__t { min-width: 0; font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ta-jump__song.is-on .ta-jump__t { color: var(--gold); }
+.ta-jump__whole { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px 7px 9px; border-radius: 16px; border: 1.5px solid rgba(255, 255, 255, 0.22); background: transparent; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.ta-jump__whole svg { width: 14px; height: 14px; }
+.ta-jump__whole:hover { border-color: var(--gold); color: var(--gold) !important; }
+.ta-jump__cds { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; margin-top: 10px; }
+.ta-jump__cd { height: 44px; border-radius: 10px; border: 0; background: rgba(255, 255, 255, 0.08); font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; }
+.ta-jump__cd:hover { background: rgba(255, 255, 255, 0.14); }
+.ta-jump__cd.is-on { background: var(--gold); color: #1a1408 !important; }
+.ta-jumpwrap { display: none; }
+/* Go to CD: the number pad */
+.ta-keypad { display: flex; flex-direction: column; gap: 14px; }
+.ta-keys__show { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 16px; background: #161616; }
+.ta-keys__n { flex-shrink: 0; width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--gold); color: var(--gold); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 32px; font-variant-numeric: tabular-nums; }
+.ta-keys__info { min-width: 0; font-size: 15px; font-weight: 600; color: var(--dim); }
+.ta-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ta-keys__k { height: 60px; border: 0; border-radius: 16px; background: rgba(255, 255, 255, 0.08); font-size: 24px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ta-keys__k:active { background: rgba(255, 255, 255, 0.16); }
+.ta-keys__k--dim { background: transparent; color: var(--dim) !important; }
+.ta-keys__k--dim svg { width: 26px; height: 26px; }
+.ta-keys__go { background: var(--gold); color: #1a1408 !important; font-size: 18px; font-weight: 700; }
+.ta-keys__go svg { width: 18px; height: 18px; }
+.ta-keys__go:disabled { opacity: 0.35; cursor: default; }
+/* setting CD marks: a bar in the dock, above the scrub */
+.ta-rec.ta-rec--cd { position: static; margin: 0 auto 10px; border: 1px solid rgba(210, 157, 51, 0.4); border-radius: 12px; }
+.ta-rec__first { display: inline-flex; align-items: center; gap: 6px; margin-top: 2px; }
+.ta-rec__first b { color: var(--ink); min-width: 2ch; text-align: center; }
+.ta-rec__nb { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.22); background: transparent; font-size: 16px; font-weight: 700; line-height: 1; cursor: pointer; }
+@media (min-width: 900px) and (orientation: landscape) {
+	.ta.is-cond.is-music .ta-flow { display: none !important; }
+	.ta.is-cond.is-music .ta-jumpwrap:not([hidden]) { display: block; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px; }
+	.ta.is-cond.is-music .ta-rec--cd { flex-direction: column; align-items: stretch; }
+}
+.ta-jumpwrap__head { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 10px; }
+.ta-jumpwrap__head span { font-family: var(--display); font-size: 20px; font-weight: 700; }
+.ta-jumpwrap__head .ta-link { font-size: 13px; }
+/* six tools with longer words: let each take the width its label needs */
+.ta.is-cond .ta-dock__tools .ta-tool { flex: 1 1 auto; padding-left: 2px; padding-right: 2px; }
