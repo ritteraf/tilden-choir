@@ -476,7 +476,7 @@
 		var on = days.filter( function ( x ) { return x.min > 0; } ).length;
 		var stat = function ( big, small ) { return h( 'span', { class: 'tcc-hm__dstat' }, [ h( 'b', {}, [ big ] ), h( 'span', {}, [ small ] ) ] ); };
 		return widget( 'tcc-hm__dir tcc-hm__pract', [
-			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Your practice', 'is-green' ), h( 'span', { class: 'tcc-hm__fine' }, [ 'Line = ' + GOOD_MIN + ' min' ] ) ] ),
+			wk( 'Your practice', 'is-green' ),
 			h( 'div', { class: 'tcc-hm__dstats tcc-hm__dstats--2' }, [ stat( fmtMin( week ), 'last 7 days' ), stat( String( on ), on === 1 ? 'day practiced' : 'days practiced' ) ] ),
 			dayChart( days, 1 )
 		] );
