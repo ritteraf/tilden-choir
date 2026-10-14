@@ -208,6 +208,20 @@ add_action( 'rest_api_init', function () {
 		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT song, part, plays, seconds, flag, last_played FROM ' . tcc_practice_table() . ' WHERE person_id = %d AND cantata_id = %d', $who, $cantata ), ARRAY_A );
 		$notes = $wpdb->get_results( $wpdb->prepare( 'SELECT song, COUNT(*) AS n FROM ' . tcc_pnotes_table() . ' WHERE person_id = %d AND cantata_id = %d GROUP BY song', $who, $cantata ), ARRAY_A );
 		$name  = get_the_title( $who );
+		/* minutes listened per day over the last two weeks, for the "Your practice" card */
+		$today = new DateTimeImmutable( 'today', wp_timezone() );
+		$from  = $today->modify( '-13 days' );
+		$by    = [];
+		if ( function_exists( 'tcc_events_table' ) ) {
+			foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT DATE(created) d, SUM(b) secs FROM ' . tcc_events_table() . " WHERE person_id = %d AND cantata_id = %d AND kind = 'listen' AND created >= %s GROUP BY DATE(created)", $who, $cantata, $from->format( 'Y-m-d 00:00:00' ) ), ARRAY_A ) as $x ) {
+				$by[ $x['d'] ] = (float) $x['secs'];
+			}
+		}
+		$days = [];
+		for ( $d = $from; $d <= $today; $d = $d->modify( '+1 day' ) ) {
+			$k = $d->format( 'Y-m-d' );
+			$days[] = [ 'd' => $k, 'min' => (int) round( ( $by[ $k ] ?? 0 ) / 60 ) ];
+		}
 		return [
 			'who' => [
 				'id'       => $who,
@@ -221,6 +235,7 @@ add_action( 'rest_api_init', function () {
 			],
 			'rows'  => array_map( fn( $x ) => [ 'song' => (int) $x['song'], 'part' => $x['part'], 'plays' => (int) $x['plays'], 'seconds' => (int) $x['seconds'], 'flag' => $x['flag'], 'last' => $x['last_played'] ], $rows ),
 			'notes' => array_map( fn( $x ) => [ 'song' => (int) $x['song'], 'n' => (int) $x['n'] ], $notes ),
+			'days'  => $days,
 		];
 	} ] );
 } );

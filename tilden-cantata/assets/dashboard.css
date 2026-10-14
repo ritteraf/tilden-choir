@@ -419,6 +419,9 @@ a.tcc-hm__dir-go { text-decoration: none; }
 .tcc-hm__dbar.is-zero i { height: 3px !important; background: #e3ded3; }
 .tcc-hm__dbar small { font-size: 10px; font-weight: 600; text-align: center; color: var(--hm-muted); }
 @media (max-width: 520px) { .tcc-hm__dstats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; } }
+.tcc-hm__dstats--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tcc-hm__pract:hover { box-shadow: none; }
+.tcc-hm__pbars .tcc-hm__dbar.is-today small { color: var(--hm-ink); font-weight: 700; }
 /* team tasks */
 .tcc-hm__tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .tcc-hm__task { border-radius: 16px; background: var(--hm-soft); }

@@ -452,6 +452,28 @@
 		].concat( rehBody( r ), [ skippedFirst ? h( 'p', { class: 'tcc-hm__fine' }, [ skippedFirst ] ) : null ] ) );
 	}
 
+	/* your own practice, day by day over the last two weeks */
+	function practiceWidget() {
+		var days = me && me.days; if ( ! days || ! days.length ) { return null; }
+		var mins = function ( m ) { return m < 60 ? m + ' min' : Math.floor( m / 60 ) + 'h ' + ( m % 60 ) + 'm'; };
+		var week = days.slice( -7 ).reduce( function ( a, x ) { return a + x.min; }, 0 );
+		var on = days.filter( function ( x ) { return x.min > 0; } ).length;
+		var top = Math.max( 10, Math.max.apply( null, days.map( function ( x ) { return x.min; } ) ) );
+		var bars = h( 'span', { class: 'tcc-hm__dbars tcc-hm__pbars', 'aria-hidden': 'true' }, days.map( function ( x, i ) {
+			var d = new Date( x.d + 'T12:00:00' ), last = i === days.length - 1;
+			return h( 'span', { class: 'tcc-hm__dbar' + ( x.min ? '' : ' is-zero' ) + ( last ? ' is-today' : '' ), title: d.toLocaleDateString( undefined, { weekday: 'short', month: 'short', day: 'numeric' } ) + ' · ' + mins( x.min ) }, [
+				h( 'i', { style: 'height:' + ( x.min ? Math.max( 8, Math.round( x.min / top * 100 ) ) : 0 ) + '%' } ),
+				h( 'small', {}, [ d.toLocaleDateString( undefined, { weekday: 'narrow' } ) ] )
+			] );
+		} ) );
+		var stat = function ( big, small ) { return h( 'span', { class: 'tcc-hm__dstat' }, [ h( 'b', {}, [ big ] ), h( 'span', {}, [ small ] ) ] ); };
+		return widget( 'tcc-hm__dir tcc-hm__pract', [
+			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Your practice', 'is-green' ), h( 'span', { class: 'tcc-hm__fine' }, [ 'Last 2 weeks' ] ) ] ),
+			h( 'div', { class: 'tcc-hm__dstats tcc-hm__dstats--2' }, [ stat( mins( week ), 'last 7 days' ), stat( String( on ), on === 1 ? 'day practiced' : 'days practiced' ) ] ),
+			bars
+		] );
+	}
+
 	/* the director's glance at the week: a tap opens the full report */
 	function directorWidget() {
 		var d = W.director; if ( ! d || ! d.url ) { return null; }
@@ -613,6 +635,7 @@
 		if ( cd ) { grid.appendChild( cd ); }
 		if ( sw ) { grid.appendChild( sw ); }
 		var dw = directorWidget(); if ( dw ) { grid.appendChild( dw ); }
+		if ( isSinger() ) { var pw = practiceWidget(); if ( pw ) { grid.appendChild( pw ); } }
 		if ( isSinger() ) {
 			if ( myTrackParts().length ) { grid.appendChild( songsWidget( next ) ); }
 			else { grid.appendChild( widget( 'tcc-hm__wide', [ wk( 'Your songs', 'is-green' ), h( 'p', { class: 'tcc-hm__fine' }, [ W.voice[ who.part ] ? W.voice[ who.part ].label + ' tracks aren’t up yet — check back soon.' : 'We don’t have a voice part for you yet — the director will help you find it at the next rehearsal.' ] ) ] ) ); }
