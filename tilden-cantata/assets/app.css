@@ -666,3 +666,5 @@ body.tcc-app-on { overflow: hidden; }
 .ta-pin.is-on .ta-pin__ic, .ta-pin.is-draft .ta-pin__ic { color: #6b4300; }
 .ta-pin__glow { fill: #f0a92e; }
 .ta-pin.is-on .ta-pin__glow, .ta-pin.is-draft .ta-pin__glow { opacity: 1; }
+/* "shows for" worked out from the note's length (until set by hand) */
+.ta-step .ta-at__t.is-auto { color: var(--dim); }

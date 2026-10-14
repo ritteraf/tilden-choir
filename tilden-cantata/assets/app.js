@@ -235,15 +235,19 @@
 
 	/* ---------- the stream ---------- */
 	var ICONS = D.cueIcons || {};
+	/* every director note is a star note: the star musicians already write in the margin for "see note" */
+	var STAR = ICONS.star || { label: 'Note', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2l2.7 5.5 6 .9-4.35 4.25 1 6L12 17l-5.35 2.85 1-6L3.3 9.6l6-.9z"/></svg>' };
 	/* every note has an end: lit for its own length (the director can change it), 3 seconds by default */
 	var NOTE_SECS = 3;
-	function durOf( c ) { return c && c.d > 0 ? c.d : NOTE_SECS; }
+	/* 3 seconds, plus about a second for every three words past six: long enough to read it while singing */
+	function autoDur( text ) { var w = String( text || '' ).trim().split( /\s+/ ).filter( Boolean ).length; return Math.min( 20, Math.round( NOTE_SECS + Math.max( 0, w - 6 ) / 3 ) ); }
+	function durOf( c ) { return c && c.d > 0 ? c.d : autoDur( c && c.text ); }
 	function canEditNote( c ) { return !! c && ( ( c.kind === 'mine' && !! S.who ) || ( c.kind === 'cue' && director() ) ); }
 	/* the director writes for the choir (and marks the music) only in conductor mode; practice mode looks like a singer's */
 	function director() { return !! ( D.canEdit && S.cond ); }
 	/* the director's gist icon for a note, as a small badge */
 	function gist( c, cls ) {
-		var ic = c && c.icon && ICONS[ c.icon ];
+		var ic = c && c.kind === 'cue' ? STAR : c && c.icon && ICONS[ c.icon ];
 		return ic ? h( 'span', { class: cls || 'ta-gist', role: 'img', 'aria-label': ic.label, title: ic.label, html: ic.svg } ) : null;
 	}
 	function cuesForCurrent() {
@@ -979,8 +983,8 @@
 				pinRow.hidden = ! pinRow.firstChild;
 				paintInkUi();
 			};
-			S.pinSet = function ( p ) { S.pinDraft = { pg: p.pg, x: p.x, y: p.y, icon: S.pinDraft ? S.pinDraft.icon : icon }; paintPin(); paintInk(); };
-			paintPin();
+			S.pinSet = function ( p ) { S.pinDraft = { pg: p.pg, x: p.x, y: p.y, icon: 'star' }; paintPin(); paintInk(); };
+			paintPin(); paintInk();
 		}
 		var at = edit ? +edit.t : Math.max( 0, songNow() - ( audio.paused ? 0 : 0.8 ) ); // people tap a beat late
 		var kind = edit ? edit.kind : ( director() ? 'cue' : 'mine' );
@@ -1011,40 +1015,21 @@
 		}
 		function seg( b ) { b.parentNode.querySelectorAll( '.ta-seg__b' ).forEach( function ( x ) { x.classList.toggle( 'is-on', x === b ); } ); }
 		/* director notes: a measure number and a gist icon */
-		var extras = null, mInput = null, icon = edit && edit.icon || '', dur = edit ? durOf( edit ) : NOTE_SECS;
+		var extras = null, mInput = null, icon = 'star', durAuto = ! ( edit && edit.d > 0 ), dur = durAuto ? autoDur( edit ? edit.text : '' ) : edit.d;
 		if ( partsRow ) {
 			mInput = h( 'input', { type: 'text', class: 'ta-input ta-input--m', maxlength: '12', placeholder: host ? '' : 'e.g. 42', 'aria-label': 'Measure number', autocomplete: 'off' } );
 			if ( edit && edit.m ) { mInput.value = edit.m; }
-			var icName = h( 'span', { class: 'ta-icpick__name' }, [] );
-			var grid = h( 'div', { class: 'ta-icpick', role: 'radiogroup', 'aria-label': 'Icon' } );
-			var paintIc = function () {
-				grid.querySelectorAll( '.ta-icpick__b' ).forEach( function ( b ) { var on = b.getAttribute( 'data-k' ) === icon; b.classList.toggle( 'is-on', on ); b.setAttribute( 'aria-checked', on ? 'true' : 'false' ); } );
-				icName.textContent = icon && ICONS[ icon ] ? ICONS[ icon ].label : 'none — tap one to add';
-				if ( S.pinDraft ) { S.pinDraft.icon = icon; paintInk(); }
-			};
-			Object.keys( ICONS ).forEach( function ( k ) {
-				grid.appendChild( h( 'button', { type: 'button', class: 'ta-icpick__b', role: 'radio', 'data-k': k, title: ICONS[ k ].label, 'aria-label': ICONS[ k ].label, html: ICONS[ k ].svg, onclick: function () { icon = icon === k ? '' : k; paintIc(); } } ) );
-			} );
-			paintIc();
-			var durOut = h( 'b', { class: 'ta-at__t' }, [ dur + 's' ] );
-			var durStep = function ( d ) { dur = Math.max( 1, Math.min( 60, Math.round( dur ) + d ) ); durOut.textContent = dur + 's'; };
+			var durOut = h( 'b', { class: 'ta-at__t' + ( durAuto ? ' is-auto' : '' ), title: 'How long it stays lit' }, [ dur + 's' ] );
+			var durStep = function ( d ) { durAuto = false; durOut.classList.remove( 'is-auto' ); dur = Math.max( 1, Math.min( 60, Math.round( dur ) + d ) ); durOut.textContent = dur + 's'; };
+			input.addEventListener( 'input', function () { if ( durAuto ) { dur = autoDur( input.value ); durOut.textContent = dur + 's'; } } );
 			extras = host ? h( 'div', { class: 'ta-extras' }, [
 				h( 'div', { class: 'ta-crow' }, [
 					h( 'label', { class: 'ta-mfield', title: 'Measure' }, [ 'm.', mInput ] ),
 					h( 'div', { class: 'ta-step', role: 'group', 'aria-label': 'How long it stays lit', title: 'How long it stays lit' }, [ h( 'span', { class: 'ta-step__ic', html: I.clock } ),
 						h( 'button', { type: 'button', class: 'ta-step__b', 'aria-label': 'Shorter', onclick: function () { durStep( -1 ); } }, [ '−' ] ), durOut,
 						h( 'button', { type: 'button', class: 'ta-step__b', 'aria-label': 'Longer', onclick: function () { durStep( 1 ); } }, [ '+' ] ) ] )
-				] ),
-				grid
-			] ) : h( 'div', { class: 'ta-extras' }, [
-				h( 'div', { class: 'ta-extras__row' }, [
-					h( 'label', { class: 'ta-extras__m' }, [ h( 'span', {}, [ 'Measure' ] ), h( 'span', { class: 'ta-extras__mm' }, [ 'm.', mInput ] ) ] ),
-					h( 'div', { class: 'ta-extras__d' }, [ h( 'span', {}, [ 'Shows for' ] ),
-						h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'Show it 2 seconds shorter', onclick: function () { durStep( -1 ); } }, [ '−' ] ), durOut,
-						h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'Show it 2 seconds longer', onclick: function () { durStep( 1 ); } }, [ '+' ] ) ] )
-				] ),
-				h( 'div', { class: 'ta-extras__ic' }, [ h( 'span', { class: 'ta-extras__k' }, [ 'Icon: ', icName ] ), grid ] )
-			] );
+				] )
+			] ) : null;
 		}
 		var atRow = host ? h( 'div', { class: 'ta-crow' }, [
 			h( 'div', { class: 'ta-step', role: 'group', 'aria-label': 'When' }, [
@@ -1082,7 +1067,7 @@
 			var done = edit ? 'Note updated' : 'Note saved at ' + fmt( at );
 			if ( k === 'cue' ) {
 				var parts = Array.prototype.map.call( partsRow.querySelectorAll( 'input:checked' ), function ( c ) { return c.value; } );
-				var req = { cantata: D.cantata.id, song: t.song, t: at, text: text, parts: parts, m: mInput ? mInput.value.trim() : '', icon: icon, d: dur };
+				var req = { cantata: D.cantata.id, song: t.song, t: at, text: text, parts: parts, m: mInput ? mInput.value.trim() : '', icon: 'star', d: durAuto ? 0 : dur };
 				if ( S.pinDraft ) { req.pg = S.pinDraft.pg; req.x = Math.round( S.pinDraft.x * 1e4 ) / 1e4; req.y = Math.round( S.pinDraft.y * 1e4 ) / 1e4; }
 				if ( edit ) { req.id = edit.id; }
 				api( 'cue', 'POST', req ).then( function ( r ) {
@@ -1350,7 +1335,7 @@
 		if ( ! list.length ) { box.appendChild( h( 'p', { class: 'ta-empty' }, [ 'No notes on this song yet.' ] ) ); return; }
 		var ul = h( 'div', { class: 'ta-cn__list' } );
 		list.forEach( function ( c ) {
-			var ic = c.icon && ICONS[ c.icon ] ? ICONS[ c.icon ].svg : I.pen;
+			var ic = c.kind === 'cue' ? STAR.svg : I.pen;
 			var row = h( 'div', { class: 'ta-cn__i' + ( c.kind === 'mine' ? ' ta-cn__i--mine' : '' ) }, [
 				h( 'button', { type: 'button', class: 'ta-cn__go', 'aria-label': 'Play from ' + fmt( c.t ) + ': ' + c.text, onclick: function () { jumpTo( c ); } }, [
 					h( 'span', { class: 'ta-cn__ic', html: ic } ),
@@ -1392,7 +1377,7 @@
 		return s.pts.map( function ( p, i ) { return ( i ? 'L' : 'M' ) + ( p[ 0 ] * 1000 ).toFixed( 1 ) + ' ' + ( p[ 1 ] * vh ).toFixed( 1 ); } ).join( '' );
 	}
 	function pinSvg( c, vh, cls ) {
-		var ic = c.icon && ICONS[ c.icon ] ? ICONS[ c.icon ].svg : I.pen;
+		var ic = STAR.svg;
 		return '<g class="ta-pin' + ( cls ? ' ' + cls : '' ) + '" data-id="' + c.id + '" transform="translate(' + ( c.x * 1000 ).toFixed( 1 ) + ' ' + ( c.y * vh ).toFixed( 1 ) + ')">' +
 			'<circle class="ta-pin__glow" r="34" filter="url(#ta-soft)"/>' + ic.replace( '<svg ', '<svg class="ta-pin__ic" x="-17" y="-17" width="34" height="34" ' ) + '</g>';
 	}
