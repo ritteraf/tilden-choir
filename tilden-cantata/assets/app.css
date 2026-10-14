@@ -684,3 +684,38 @@ body.tcc-app-on { overflow: hidden; }
 .ta-pin.is-draft .ta-pin__glow { animation: none; }
 @keyframes ta-starbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
 @media (prefers-reduced-motion: reduce) { .ta-pin.is-on .ta-pin__star, .ta-pin.is-draft .ta-pin__star { animation: none; } }
+
+/* ---------- a seek bar for thumbs ---------- */
+/* phones: a little more to hold on to */
+.ta-scrub { height: 44px; }
+.ta-scrub__rail, .ta-scrub__fill { top: 19px; height: 6px; border-radius: 3px; }
+.ta-scrub__knob { top: 12px; width: 20px; height: 20px; margin-left: -10px; }
+.ta-scrub__loop { top: 15px; height: 14px; }
+.ta-mark { top: 27px; }
+.ta-mark--turn { top: 8px; }
+.ta-cd::after { height: 10px; }
+/* tablets and computers: a proper thumb target, bigger CD numbers, one row of buttons, no empty-notes card */
+@media (min-width: 900px) {
+	.ta-dock__scrub { font-size: 14px; }
+	.ta-dock__scrub:has(.ta-cd) { padding-top: 14px; }
+	.ta-scrub { height: 56px; }
+	.ta-scrub__rail, .ta-scrub__fill { top: 24px; height: 8px; border-radius: 4px; }
+	.ta-scrub__knob { top: 15px; width: 26px; height: 26px; margin-left: -13px; }
+	.ta-scrub__loop { top: 20px; height: 16px; }
+	.ta-mark { top: 34px; height: 9px; }
+	.ta-mark--turn { top: 12px; }
+	.ta-scrub__cds { top: -8px; }
+	.ta-cd { min-width: 26px; height: 24px; padding: 0 6px; border-radius: 12px; font-size: 12px; line-height: 21px; }
+	.ta-cd::after { height: 8px; }
+	.ta-flow__empty { display: none; }
+}
+@media (min-width: 900px) and (orientation: landscape) {
+	.ta.is-music:not(.is-cond) .ta-dock__tools { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+	.ta.is-music:not(.is-cond) .ta-tool { min-height: 60px; }
+	.ta.is-music:not(.is-cond) .ta-tool span { font-size: 12px; }
+}
+@media (min-width: 900px) and (orientation: landscape) {
+	.ta.is-music:not(.is-cond) .ta-dock__tools { gap: 5px; }
+	.ta.is-music:not(.is-cond) .ta-tool { padding-left: 0; padding-right: 0; }
+	.ta.is-music:not(.is-cond) .ta-tool span { font-size: 11px; letter-spacing: -0.02em; }
+}
