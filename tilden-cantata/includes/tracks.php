@@ -194,7 +194,7 @@ function tcc_cue_measure( $v ): string {
 /** How long a note stays lit, in seconds; 0 means the app's default (8 s). */
 function tcc_cue_dur( $v ): float {
 	$v = round( (float) $v, 1 );
-	return $v <= 0 ? 0.0 : min( 120.0, max( 2.0, $v ) );
+	return $v <= 0 ? 0.0 : min( 120.0, max( 1.0, $v ) );
 }
 
 /** An icon key, if it is one of ours. */

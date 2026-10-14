@@ -235,8 +235,8 @@
 
 	/* ---------- the stream ---------- */
 	var ICONS = D.cueIcons || {};
-	/* every note has an end: lit for its own length (the director can change it), 8 seconds by default */
-	var NOTE_SECS = 8;
+	/* every note has an end: lit for its own length (the director can change it), 3 seconds by default */
+	var NOTE_SECS = 3;
 	function durOf( c ) { return c && c.d > 0 ? c.d : NOTE_SECS; }
 	function canEditNote( c ) { return !! c && ( ( c.kind === 'mine' && !! S.who ) || ( c.kind === 'cue' && director() ) ); }
 	/* the director writes for the choir (and marks the music) only in conductor mode; practice mode looks like a singer's */
@@ -1027,21 +1027,21 @@
 			} );
 			paintIc();
 			var durOut = h( 'b', { class: 'ta-at__t' }, [ dur + 's' ] );
-			var durStep = function ( d ) { dur = Math.max( 2, Math.min( 60, dur + d ) ); durOut.textContent = dur + 's'; };
+			var durStep = function ( d ) { dur = Math.max( 1, Math.min( 60, Math.round( dur ) + d ) ); durOut.textContent = dur + 's'; };
 			extras = host ? h( 'div', { class: 'ta-extras' }, [
 				h( 'div', { class: 'ta-crow' }, [
 					h( 'label', { class: 'ta-mfield', title: 'Measure' }, [ 'm.', mInput ] ),
 					h( 'div', { class: 'ta-step', role: 'group', 'aria-label': 'How long it stays lit', title: 'How long it stays lit' }, [ h( 'span', { class: 'ta-step__ic', html: I.clock } ),
-						h( 'button', { type: 'button', class: 'ta-step__b', 'aria-label': 'Shorter', onclick: function () { durStep( -2 ); } }, [ '−' ] ), durOut,
-						h( 'button', { type: 'button', class: 'ta-step__b', 'aria-label': 'Longer', onclick: function () { durStep( 2 ); } }, [ '+' ] ) ] )
+						h( 'button', { type: 'button', class: 'ta-step__b', 'aria-label': 'Shorter', onclick: function () { durStep( -1 ); } }, [ '−' ] ), durOut,
+						h( 'button', { type: 'button', class: 'ta-step__b', 'aria-label': 'Longer', onclick: function () { durStep( 1 ); } }, [ '+' ] ) ] )
 				] ),
 				grid
 			] ) : h( 'div', { class: 'ta-extras' }, [
 				h( 'div', { class: 'ta-extras__row' }, [
 					h( 'label', { class: 'ta-extras__m' }, [ h( 'span', {}, [ 'Measure' ] ), h( 'span', { class: 'ta-extras__mm' }, [ 'm.', mInput ] ) ] ),
 					h( 'div', { class: 'ta-extras__d' }, [ h( 'span', {}, [ 'Shows for' ] ),
-						h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'Show it 2 seconds shorter', onclick: function () { durStep( -2 ); } }, [ '−' ] ), durOut,
-						h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'Show it 2 seconds longer', onclick: function () { durStep( 2 ); } }, [ '+' ] ) ] )
+						h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'Show it 2 seconds shorter', onclick: function () { durStep( -1 ); } }, [ '−' ] ), durOut,
+						h( 'button', { type: 'button', class: 'ta-at__b', 'aria-label': 'Show it 2 seconds longer', onclick: function () { durStep( 1 ); } }, [ '+' ] ) ] )
 				] ),
 				h( 'div', { class: 'ta-extras__ic' }, [ h( 'span', { class: 'ta-extras__k' }, [ 'Icon: ', icName ] ), grid ] )
 			] );
