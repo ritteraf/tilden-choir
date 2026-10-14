@@ -658,3 +658,11 @@ body.tcc-app-on { overflow: hidden; }
 .ta-pin.is-on .ta-pin__dot, .ta-pin.is-draft .ta-pin__dot { fill: #d29d33; stroke: #d29d33; }
 .ta-pin.is-on .ta-pin__ic, .ta-pin.is-draft .ta-pin__ic { color: #1a1408; }
 .ta-pin__glow { fill: #d29d33; }
+/* pins: just the icon, in ink. Lit, it turns gold over a soft highlighter glow — no outline at all */
+.ta-pin__dot { display: none; }
+.ta-pin__ic { color: #1f1f1f; }
+.ta-pin__glow { fill: #f2b84b; opacity: 0; }
+.ta-pin.is-on .ta-pin__glow, .ta-pin.is-draft .ta-pin__glow { opacity: 0.85; }
+.ta-pin.is-on .ta-pin__ic, .ta-pin.is-draft .ta-pin__ic { color: #6b4300; }
+.ta-pin__glow { fill: #f0a92e; }
+.ta-pin.is-on .ta-pin__glow, .ta-pin.is-draft .ta-pin__glow { opacity: 1; }

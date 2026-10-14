@@ -1394,7 +1394,7 @@
 	function pinSvg( c, vh, cls ) {
 		var ic = c.icon && ICONS[ c.icon ] ? ICONS[ c.icon ].svg : I.pen;
 		return '<g class="ta-pin' + ( cls ? ' ' + cls : '' ) + '" data-id="' + c.id + '" transform="translate(' + ( c.x * 1000 ).toFixed( 1 ) + ' ' + ( c.y * vh ).toFixed( 1 ) + ')">' +
-			'<circle class="ta-pin__glow" r="40"/><circle class="ta-pin__dot" r="24"/>' + ic.replace( '<svg ', '<svg class="ta-pin__ic" x="-14" y="-14" width="28" height="28" ' ) + '</g>';
+			'<circle class="ta-pin__glow" r="34" filter="url(#ta-soft)"/>' + ic.replace( '<svg ', '<svg class="ta-pin__ic" x="-17" y="-17" width="34" height="34" ' ) + '</g>';
 	}
 	function paintInk() {
 		if ( ! ui.pagesIn ) { return; }
@@ -1407,7 +1407,8 @@
 				( D.cues || [] ).forEach( function ( c ) { if ( c.pg === pg && seesCue( c ) && ! ( S.pinDraft && c.id === S.cnForm ) ) { out += pinSvg( c, vh ); } } );
 			}
 			if ( S.pinDraft && S.pinDraft.pg === pg ) { out += pinSvg( { id: '_draft', x: S.pinDraft.x, y: S.pinDraft.y, icon: S.pinDraft.icon }, vh, 'is-draft' ); }
-			sv.innerHTML = out;
+			/* a lit pin's glow has no edge — circles mean CD numbers and boxes mean measures in a score */
+			sv.innerHTML = '<defs><filter id="ta-soft" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="6"/></filter></defs>' + out;
 		} );
 		litPins();
 	}
