@@ -678,3 +678,9 @@ body.tcc-app-on { overflow: hidden; }
 .ta-pin__ic path { fill: currentColor; }
 .ta-pin__glow { fill: #fff; }
 .ta-pin.is-on .ta-pin__glow, .ta-pin.is-draft .ta-pin__glow { opacity: 1; }
+/* lit, the star beats gently */
+.ta-pin__star { transform-box: fill-box; transform-origin: center; }
+.ta-pin.is-on .ta-pin__star, .ta-pin.is-draft .ta-pin__star { animation: ta-starbeat 1.1s ease-in-out infinite; }
+.ta-pin.is-draft .ta-pin__glow { animation: none; }
+@keyframes ta-starbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+@media (prefers-reduced-motion: reduce) { .ta-pin.is-on .ta-pin__star, .ta-pin.is-draft .ta-pin__star { animation: none; } }

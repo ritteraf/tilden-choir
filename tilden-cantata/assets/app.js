@@ -1378,7 +1378,7 @@
 	function pinSvg( c, vh, cls ) {
 		var ic = STAR.svg;
 		return '<g class="ta-pin' + ( cls ? ' ' + cls : '' ) + '" data-id="' + c.id + '" transform="translate(' + ( c.x * 1000 ).toFixed( 1 ) + ' ' + ( c.y * vh ).toFixed( 1 ) + ')">' +
-			'<circle class="ta-pin__glow" r="66" filter="url(#ta-soft)"/>' + ic.replace( '<svg ', '<svg class="ta-pin__ic" x="-17" y="-17" width="34" height="34" ' ) + '</g>';
+			'<circle class="ta-pin__glow" r="66" filter="url(#ta-soft)"/><g class="ta-pin__star">' + ic.replace( '<svg ', '<svg class="ta-pin__ic" x="-17" y="-17" width="34" height="34" ' ) + '</g></g>';
 	}
 	function paintInk() {
 		if ( ! ui.pagesIn ) { return; }
