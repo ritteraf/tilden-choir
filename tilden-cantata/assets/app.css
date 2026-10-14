@@ -719,3 +719,20 @@ body.tcc-app-on { overflow: hidden; }
 	.ta.is-music:not(.is-cond) .ta-tool { padding-left: 0; padding-right: 0; }
 	.ta.is-music:not(.is-cond) .ta-tool span { font-size: 11px; letter-spacing: -0.02em; }
 }
+
+/* the bar runs full width; the times sit underneath it, at its ends */
+.ta-dock__scrub { flex-wrap: wrap; gap: 0; }
+.ta-dock__scrub > .ta-scrub { order: 0; flex: 0 0 100%; }
+.ta-dock__scrub > span { order: 1; min-width: 0; margin-top: -8px; font-size: 12px; text-align: left; }
+.ta-dock__scrub > span:first-child { text-align: left; }
+.ta-dock__scrub > span:last-child { order: 2; margin-left: auto; text-align: right; }
+/* CD numbers a little smaller; one that would crowd its neighbour is a tick on the bar */
+.ta-cd { min-width: 20px; height: 20px; font-size: 11px; line-height: 17px; padding: 0 4px; }
+.ta-cd--tick { min-width: 0; width: 14px; padding: 0; border: 0; background: transparent !important; }
+.ta-cd--tick::after { top: 8px; height: 12px; width: 2px; margin-left: -1px; background: var(--gold); }
+@media (min-width: 900px) {
+	.ta-dock__scrub > span { margin-top: -10px; font-size: 13px; }
+	.ta-cd { min-width: 22px; height: 22px; font-size: 12px; line-height: 19px; padding: 0 5px; border-radius: 11px; }
+	.ta-cd::after { height: 10px; }
+	.ta-cd--tick::after { top: 10px; height: 14px; }
+}

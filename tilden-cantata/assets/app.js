@@ -1781,7 +1781,7 @@
 		var d = audio.duration; if ( ! d ) { return; }
 		var o = OFF();
 		CUES.forEach( function ( c ) { var x = c.t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--' + c.kind } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } );
-		if ( S.view === 'music' ) { turnsFor().forEach( function ( t ) { var x = t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--turn' } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } ); }
+		if ( S.view === 'music' && S.cond ) { turnsFor().forEach( function ( t ) { var x = t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--turn' } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } ); }
 		paintCdLabels( d, o );
 	}
 	/* the circled CD numbers from the score, along the bar: tap one to start there */
@@ -1789,9 +1789,12 @@
 		ui.cds.innerHTML = '';
 		var t = current(); if ( ! t || ! S.list || ! S.list.now || t.song < 0 || ! d ) { return; }
 		var ms = CDREC && CDREC.song === t.song ? CDREC.marks : marksFor( t.song );
+		var W = ui.scrub.clientWidth || 300, room = W >= 360 ? 26 : 22, last = -1e9;
 		ms.forEach( function ( m ) {
 			var x = m.t - ( o || 0 ); if ( x < 0 || x > d ) { return; }
-			var b = h( 'button', { type: 'button', class: 'ta-cd', title: 'Start at CD ' + m.n, 'aria-label': 'Start at CD ' + m.n }, [ String( m.n ) ] );
+			var px = x / d * W, tight = px - last < room; // too close to the one before: a tick, not a number
+			if ( ! tight ) { last = px; }
+			var b = h( 'button', { type: 'button', class: 'ta-cd' + ( tight ? ' ta-cd--tick' : '' ), title: 'Start at CD ' + m.n, 'aria-label': 'Start at CD ' + m.n }, [ tight ? '' : String( m.n ) ] );
 			b.style.left = ( x / d * 100 ) + '%';
 			b.addEventListener( 'pointerdown', function ( e ) { e.stopPropagation(); } );
 			b.addEventListener( 'click', function ( e ) { e.stopPropagation(); seek( x ); S.cdKey = t.song + ':' + m.n; if ( audio.paused ) { audio.play().catch( function () {} ); } toast( 'CD ' + m.n ); } );
