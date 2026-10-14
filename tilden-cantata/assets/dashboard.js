@@ -155,7 +155,6 @@
 		tenor: 'The higher men’s voices.',
 		bass: 'The lowest men’s voices.',
 		accompaniment: 'The music we perform with — full accompaniment, no voices.',
-		sections: 'The accompaniment in sections, starting at the circled CD numbers in the score.',
 		listen: 'Everyone together, the way it will sound.'
 	};
 	function perfLine() {

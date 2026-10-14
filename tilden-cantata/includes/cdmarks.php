@@ -3,63 +3,20 @@ defined( 'ABSPATH' ) || exit;
 
 /* =====================================================================
  * CD marks: where each circled CD number in the score starts, as a time in that song's
- * whole-song tracks (the accompaniment and the voice parts are aligned, so one set of
- * times serves them all). The director taps them in, like page turns. Until a song has
- * been tapped, its marks come from the old sectioned accompaniment files: each section's
- * CD number and length add up to where it starts in the song.
+ * whole-song tracks (the accompaniment, all-voices and voice-part tracks are aligned, so
+ * one set of times serves them all). The director taps them in, like page turns.
  * ===================================================================== */
 
 /** [ song => [ [ 'n' => CD number, 't' => seconds into the song ], … ] ], soonest first. */
 function tcc_cd_marks( int $cantata_id ): array {
 	$stored = get_post_meta( $cantata_id, '_tcc_cdmarks', true );
-	$stored = is_array( $stored ) ? $stored : [];
 	$out    = [];
-	foreach ( $stored as $song => $list ) {
+	foreach ( is_array( $stored ) ? $stored : [] as $song => $list ) {
 		$out[ (int) $song ] = array_values( array_filter( (array) $list, 'is_array' ) );
 	}
-	$seeded = false;
-	foreach ( tcc_cd_marks_from_sections( $cantata_id ) as $song => $list ) {
-		if ( ! isset( $out[ $song ] ) ) {
-			$out[ $song ] = $list;
-			$seeded       = true;
-		}
-	}
 	ksort( $out );
-	/* keep the seeded marks, so the sectioned files can be deleted without losing them */
-	if ( $seeded ) {
-		update_post_meta( $cantata_id, '_tcc_cdmarks', $out );
-	}
 	return $out;
 }
-
-/** Starting marks worked out from the sectioned accompaniment files (number + length, in order). */
-function tcc_cd_marks_from_sections( int $cantata_id ): array {
-	$tracks = function_exists( 'tcc_tracks' ) ? ( tcc_tracks( $cantata_id )['sections'] ?? [] ) : [];
-	$out = []; $at = [];
-	foreach ( $tracks as $t ) {
-		$song = (int) $t['song'];
-		if ( $song < 0 ) {
-			continue;
-		}
-		$meta = wp_get_attachment_metadata( $t['id'] ) ?: [];
-		$n    = (int) ( $meta['track_number'] ?? 0 ) ?: ( preg_match( '/(?:track|^)\s*0*(\d{1,3})\b/i', get_the_title( $t['id'] ), $mm ) ? (int) $mm[1] : 0 );
-		$len  = (float) ( $meta['length'] ?? 0 );
-		$t0   = $at[ $song ] ?? 0.0;
-		if ( $n > 0 ) {
-			$out[ $song ][] = [ 'n' => $n, 't' => round( $t0, 1 ) ];
-		}
-		$at[ $song ] = $t0 + $len;
-	}
-	return $out;
-}
-
-/* 2.23.0 saved a stray empty song 1 before anything was tapped: clear it once so it seeds again */
-add_action( 'init', function () {
-	if ( get_option( 'tcc_cdmarks_fix' ) !== '1' ) {
-		delete_post_meta_by_key( '_tcc_cdmarks' );
-		update_option( 'tcc_cdmarks_fix', '1' );
-	}
-} );
 
 add_action( 'rest_api_init', function () {
 	/* the director saves one song's marks */

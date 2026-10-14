@@ -106,7 +106,7 @@
 	}
 	if ( PAGE ) {
 		var saved = ''; try { saved = localStorage.getItem( 'tcc_part' ) || ''; } catch ( e ) {}
-		var pick = urlPart() || ( LISTS[ 'now:' + saved ] ? saved : '' ) || VOICE.concat( [ 'accompaniment', 'sections', 'listen' ] ).filter( function ( p ) { return LISTS[ 'now:' + p ]; } )[ 0 ] || 'soprano';
+		var pick = urlPart() || ( LISTS[ 'now:' + saved ] ? saved : '' ) || VOICE.concat( [ 'accompaniment', 'listen' ] ).filter( function ( p ) { return LISTS[ 'now:' + p ]; } )[ 0 ] || 'soprano';
 		setPart( pick, true );
 	}
 
@@ -178,7 +178,7 @@
 	function renderSwitch() {
 		ui.switch.innerHTML = '';
 		var mine = S.who && S.who.part ? ( D.voice[ S.who.part ] || { tracks: [] } ).tracks : [];
-		VOICE.concat( [ 'accompaniment', 'sections', 'listen' ] ).forEach( function ( p ) {
+		VOICE.concat( [ 'accompaniment', 'listen' ] ).forEach( function ( p ) {
 			if ( ! LISTS[ 'now:' + p ] ) { return; }
 			var own = mine.indexOf( p ) !== -1;
 			ui.switch.appendChild( h( 'button', { type: 'button', role: 'tab', 'aria-selected': p === D.part ? 'true' : 'false', class: 'tcc-pp__tab' + ( p === D.part ? ' is-on' : '' ) + ( own ? ' is-mine' : '' ) + ( VOICE.indexOf( p ) === -1 ? ' tcc-pp__tab--other' : '' ), onclick: function () { setPart( p ); } }, [ partLabel( p ), own ? h( 'small', {}, [ 'your part' ] ) : null ] ) );

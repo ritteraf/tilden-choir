@@ -39,6 +39,7 @@
 		down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>',
 		list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1" fill="currentColor"/><circle cx="3.5" cy="12" r="1" fill="currentColor"/><circle cx="3.5" cy="18" r="1" fill="currentColor"/></svg>',
 		accomp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+		person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>',
 		people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
 		pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
 		loop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
@@ -83,10 +84,11 @@
 	var LISTS = {};
 	Object.keys( D.lists || {} ).forEach( function ( p ) { LISTS[ 'now:' + p ] = { key: 'now:' + p, now: true, cantata: { id: D.cantata.id, token: D.token, title: D.cantata.title, year: D.cantata.year }, part: p, tracks: D.lists[ p ] }; } );
 	/* the sectioned accompaniment: each CD section starts partway into its song, so notes and page turns need that offset */
-	( function () { var L = LISTS[ 'now:sections' ], at = {}; if ( ! L ) { return; } L.tracks.forEach( function ( t ) { if ( t.song < 0 ) { return; } t.off = at[ t.song ] || 0; at[ t.song ] = t.off + ( +t.dur || 0 ); } ); } )();
 	( D.past || [] ).forEach( function ( c ) { Object.keys( c.parts || {} ).forEach( function ( p ) { LISTS[ 'past:' + c.id + ':' + p ] = { key: 'past:' + c.id + ':' + p, now: false, cantata: { id: c.id, token: c.token, title: c.title, year: c.year }, part: p, tracks: c.parts[ p ] }; } ); } );
 	function label( p ) { return ( D.partLabels && D.partLabels[ p ] ) || p; }
-	function shortLabel( p ) { if ( String( p ).indexOf( 'team:' ) === 0 ) { return ( D.teams || {} )[ p.slice( 5 ) ] || p.slice( 5 ); } return { accompaniment: 'Accompaniment', sections: 'CD sections', listen: 'All voices' }[ p ] || label( p ); }
+	function shortLabel( p ) { if ( String( p ).indexOf( 'team:' ) === 0 ) { return ( D.teams || {} )[ p.slice( 5 ) ] || p.slice( 5 ); } return { accompaniment: 'Accompaniment', listen: 'All voices' }[ p ] || label( p ); }
+	/* the singer's three-way button and the conductor's part buttons */
+	function tinyLabel( p ) { return { accompaniment: 'Accomp.', listen: 'All', soprano: 'Sop', alto: 'Alto', tenor: 'Ten', bass: 'Bass' }[ p ] || label( p ); }
 	var NEXT = D.next || null;
 	function inNext( song ) { return !! ( NEXT && ! NEXT.full && NEXT.songs.indexOf( song ) !== -1 ); }
 	function isFocus( song ) { return !! ( NEXT && ( NEXT.focus || [] ).indexOf( song ) !== -1 ); }
@@ -128,8 +130,7 @@
 	}
 	function onAudio( ev, fn ) { HANDLERS.push( [ ev, fn ] ); PLAYERS.forEach( function ( el ) { wire( el, ev, fn ); } ); }
 	var audio = newPlayer(); audio.muted = false;
-	/* a second player holds the other version of the song (voices ⇄ accompaniment), so switching is seamless */
-	var spare = newPlayer();
+
 
 	/* ---------- the frame ---------- */
 	var ui = {};
@@ -282,7 +283,7 @@
 		var head = h( 'section', { class: 'ta-songhead' + ( CUES.length ? '' : ' is-alone' ) }, [
 			h( 'span', { class: 'ta-songhead__num' }, [ t.song >= 0 ? String( t.song + 1 ) : '♪' ] ),
 			h( 'h1', { class: 'ta-songhead__title' }, [ t.title ] ),
-			h( 'p', { class: 'ta-songhead__sub' }, [ ( label( S.list.part ) + ( S.alt && altTrack() ? ' · voices off' : '' ) ) + ' · ' + fmt( t.dur || audio.duration ) + ( CUES.length ? ' · ' + CUES.length + ( CUES.length === 1 ? ' note' : ' notes' ) : '' ) ] ),
+			h( 'p', { class: 'ta-songhead__sub' }, [ ( label( S.list.part ) + ( S.alt ? ' · hearing ' + shortLabel( S.alt ).toLowerCase() : '' ) ) + ' · ' + fmt( t.dur || audio.duration ) + ( CUES.length ? ' · ' + CUES.length + ( CUES.length === 1 ? ' note' : ' notes' ) : '' ) ] ),
 			tags.length ? h( 'div', { class: 'ta-songhead__tags' }, tags ) : null,
 			S.who && st !== '' ? feelRow( t.song, st ) : null
 		] );
@@ -766,7 +767,6 @@
 	/* director: record the page turns by tapping along */
 	function startRec() {
 		var r = scoreRange(); if ( ! r ) { return; }
-		if ( OFF() || ( current() && current().off !== undefined && ! S.alt ) ) { toast( 'Record page turns with a full-song track (a voice part), not a CD section.' ); return; }
 		M.rec = { times: [], old: ( SC.turns[ current().song ] || [] ).slice(), song: current().song };
 		M.shown = null;
 		M.manual = null;
@@ -829,7 +829,7 @@
 				h( 'span', { class: 'ta-row__n' }, [ t.song >= 0 ? String( t.song + 1 ) : '·' ] ),
 				h( 'span', { class: 'ta-row__t' }, [
 					h( 'b', {}, [ t.title ] ),
-					h( 'small', {}, [ ( L.part === 'sections' && t.cd ? 'CD ' + t.cd + ' · starts ' + fmt( t.off || 0 ) + ' in · ' : '' ) + fmt( t.dur ), now && isFocus( t.song ) ? h( 'span', { class: 'ta-row__star', title: 'Focus on this one' }, [ '★' ] ) : null, now && inNext( t.song ) ? h( 'span', { class: 'ta-row__tag' }, [ nextDow || 'Next' ] ) : null ] )
+					h( 'small', {}, [ fmt( t.dur ), now && isFocus( t.song ) ? h( 'span', { class: 'ta-row__star', title: 'Focus on this one' }, [ '★' ] ) : null, now && inNext( t.song ) ? h( 'span', { class: 'ta-row__tag' }, [ nextDow || 'Next' ] ) : null ] )
 				] ),
 				st ? h( 'span', { class: 'ta-ring ta-ring--' + st, title: STATE[ st ], html: ring( st ) } ) : null,
 				on ? h( 'span', { class: 'ta-row__eq', 'aria-hidden': 'true' }, [ h( 'i' ), h( 'i' ), h( 'i' ) ] ) : null
@@ -906,7 +906,7 @@
 		// keep the same song going in the new part, at the same moment
 		var t = current(), L = LISTS[ 'now:' + p ];
 		var j = -1; L.tracks.some( function ( x, i ) { if ( x.song === t.song && t.song >= 0 ) { j = i; return true; } return false; } );
-		if ( j >= 0 && S.list.now ) { var playing = ! audio.paused; flushPlay(); S.list = L; S.idx = j; S.alt = false; S.playPart = p; loadTrack( playing, true ); toast( S.cond ? 'Conductor' : label( p ) ); }
+		if ( j >= 0 && S.list.now ) { var playing = ! audio.paused; flushPlay(); S.list = L; S.idx = j; S.alt = ''; S.playPart = p; loadTrack( playing, true ); toast( S.cond ? 'Conductor' : label( p ) ); }
 	}
 	function signIn() {
 		if ( ! D.signin || ! window.tccSignin ) { return; }
@@ -1055,7 +1055,7 @@
 	function canCond() { return !! ( D.director && D.canEdit && LISTS[ 'now:accompaniment' ] ); }
 	function setCond( on ) {
 		S.cond = !! on && canCond(); ls( 'tcc_cond', S.cond ? '1' : null );
-		if ( S.cond ) { S.alt = false; if ( S.part !== 'accompaniment' || ( S.list && S.list.part !== 'accompaniment' ) ) { setPart( 'accompaniment' ); } }
+		if ( S.cond ) { S.alt = ''; if ( S.part !== 'accompaniment' || ( S.list && S.list.part !== 'accompaniment' ) ) { setPart( 'accompaniment' ); } }
 		S.cdKey = ''; S.cnotes = false; S.cnForm = null;
 		if ( S.cond && ! S.cnow ) { S.cnow = 'accompaniment'; }
 		/* leaving with a voice part sounding: back to the accompaniment the list says is playing */
@@ -1205,11 +1205,11 @@
 	/* ---------- conductor: any part, at the same spot ---------- */
 	/* The voice tracks line up with the accompaniment, so one time serves them all. A part loads the first time
 	   it's picked (the one playing carries on meanwhile), then stays ready for the rest of the song. */
-	var CPARTS = [ [ 'accompaniment', 'Accomp' ], [ 'soprano', 'Sop' ], [ 'alto', 'Alto' ], [ 'tenor', 'Tenor' ], [ 'bass', 'Bass' ] ];
+	var CPARTS = [ [ 'accompaniment', 'Acc' ], [ 'listen', 'All' ], [ 'soprano', 'Sop' ], [ 'alto', 'Alto' ], [ 'tenor', 'Ten' ], [ 'bass', 'Bass' ] ];
 	function cTrack( p, song ) { var L = LISTS[ 'now:' + p ]; if ( ! L ) { return null; } for ( var j = 0; j < L.tracks.length; j++ ) { if ( L.tracks[ j ].song === song ) { return L.tracks[ j ]; } } return null; }
 	var POOL = { song: -1, by: {} }, FREE = [];
 	function poolReset( song ) {
-		Object.keys( POOL.by ).forEach( function ( p ) { var el = POOL.by[ p ]; if ( el !== audio && el !== spare ) { el.pause(); el.removeAttribute( 'src' ); try { el.load(); } catch ( e ) {} el.preload = 'metadata'; FREE.push( el ); } } );
+		Object.keys( POOL.by ).forEach( function ( p ) { var el = POOL.by[ p ]; if ( el !== audio ) { el.pause(); el.removeAttribute( 'src' ); try { el.load(); } catch ( e ) {} el.preload = 'metadata'; FREE.push( el ); } } );
 		POOL = { song: song, by: {} };
 	}
 	function setCPart( p ) {
@@ -1309,33 +1309,33 @@
 	function playList( key, i, only ) {
 		flushPlay();
 		queue = only || null;
-		S.list = LISTS[ key ]; S.idx = i; S.alt = false; S.loopA = S.loopB = null;
+		S.list = LISTS[ key ]; S.idx = i; S.alt = ''; S.loopA = S.loopB = null;
 		S.playPart = S.list.part;
 		loadTrack( true );
 	}
-	function altTrack() {
-		var t = current(); if ( ! t || t.song < 0 || ! S.list.now ) { return null; }
-		/* the same song as one full-length accompaniment track (performance) — never a CD section, which is only part of the song */
-		if ( S.list.part === 'accompaniment' || S.list.part === 'sections' ) { return null; }
-		var pref = [ 'now:accompaniment' ];
-		for ( var k = 0; k < pref.length; k++ ) {
-			var L = LISTS[ pref[ k ] ]; if ( ! L || pref[ k ] === S.list.key ) { continue; }
-			for ( var j = 0; j < L.tracks.length; j++ ) { if ( L.tracks[ j ].song === t.song ) { return { key: pref[ k ], track: L.tracks[ j ] }; } }
-		}
-		return null;
+	/* the singer's button: their part → all voices → accompaniment → their part (only the versions this song has) */
+	function altCycle() {
+		var t = current(); if ( ! t || t.song < 0 || ! S.list || ! S.list.now ) { return []; }
+		var out = [ S.list.part ];
+		[ 'listen', 'accompaniment' ].forEach( function ( k ) { if ( k !== S.list.part && cTrack( k, t.song ) ) { out.push( k ); } } );
+		return out;
 	}
+	function hearing() { return S.cond ? S.cnow : ( S.alt || ( S.list && S.list.part ) ); }
+	/* the file that's sounding: the singer's own track, or the all-voices / accompaniment version of it */
+	function soundTrack() { var t = current(); if ( ! t ) { return null; } var k = S.cond ? S.cnow : S.alt; return k && k !== S.list.part ? cTrack( k, t.song ) || t : t; }
 	function loadTrack( autoplay, keepTime ) {
 		flushHeat();
 		var t = current(); if ( ! t ) { return; }
 		var src = t;
-		if ( S.alt ) { var a = altTrack(); if ( a ) { src = a.track; } else { S.alt = false; } }
+		if ( S.alt ) { var a = S.list.now && t.song >= 0 ? cTrack( S.alt, t.song ) : null; if ( a ) { src = a; } else { S.alt = ''; } }
 		var was = keepTime ? audio.currentTime : null;
 		XGEN++; swapping = false; S.cwait = ''; // a part still loading for the last song: drop it
-		poolReset( S.cond ? t.song : -1 );
+		poolReset( t.song );
 		if ( S.cond ) { var cp = S.cpart && S.cpart !== 'accompaniment' && cTrack( S.cpart, t.song ) ? S.cpart : 'accompaniment'; S.cnow = cp; if ( cp !== 'accompaniment' ) { src = cTrack( cp, t.song ); } }
 		audio.muted = false;
 		audio.src = src.url;
-		if ( S.cond ) { audio.preload = 'auto'; POOL.by[ S.cnow ] = audio; }
+		if ( S.cond ) { audio.preload = 'auto'; }
+		POOL.by[ hearing() ] = audio;
 		audio.playbackRate = S.rate;
 		S.listened = 0; S.heard = 0; S.counted = false; S.lastT = 0; // heard: this song's whole listen, through any pauses
 		var resume = S.cond ? 0 : parseFloat( ls( posKey( src.id ) ) || '0' );
@@ -1358,12 +1358,14 @@
 		if ( autoplay ) { audio.play().catch( function () {} ); }
 		prepSpare();
 	}
-	/* the other version of this song, loaded just enough (its length) to be ready when someone switches */
+	/* the next version on the singer's button, loaded just enough (its length) to be ready when they tap */
 	function prepSpare() {
-		var t = current(), a = t ? altTrack() : null;
-		var other = ! t ? null : S.alt ? t : ( a && a.track );
-		if ( ! other ) { if ( spare._id ) { spare.removeAttribute( 'src' ); spare.load(); spare._id = null; } return; }
-		if ( spare._id !== other.id ) { spare.src = other.url; spare._id = other.id; }
+		if ( S.cond ) { return; }
+		var cyc = altCycle(); if ( cyc.length < 2 ) { return; }
+		var nx = cyc[ ( cyc.indexOf( hearing() ) + 1 ) % cyc.length ];
+		if ( POOL.by[ nx ] ) { return; }
+		var t = current(), tr = nx === S.list.part ? t : cTrack( nx, t.song );
+		var el = FREE.pop() || newPlayer(); el.preload = 'metadata'; el.src = tr.url; POOL.by[ nx ] = el;
 	}
 	function toggle() {
 		if ( ! current() ) { var L = LISTS[ 'now:' + S.part ]; if ( L ) { playList( L.key, 0 ); } return; }
@@ -1383,24 +1385,10 @@
 	/* Tapping a note plays from a few seconds before it, so you hear the lead-in. */
 	var LEAD_IN = 4;
 	/* where we are in the song (not just the file): a CD section starts partway in */
-	function OFF() { var t = current(); return ! t || S.alt ? 0 : ( +t.off || 0 ); }
+	function OFF() { return 0; } // every track is a whole song now (CD sections are marks, not files)
 	function songNow() { return ( audio.currentTime || 0 ) + OFF(); }
 	function jumpTo( c ) {
 		var want = c.t - LEAD_IN, t = current();
-		/* playing a section and the note is in another one: switch to the section that holds it */
-		if ( t && t.off !== undefined && ! S.alt && S.list ) {
-			var local = want - OFF(), dur = audio.duration || t.dur || 0;
-			if ( local < 0 || ( dur && local >= dur ) ) {
-				for ( var j = 0; j < S.list.tracks.length; j++ ) {
-					var x = S.list.tracks[ j ];
-					if ( x.song === t.song && c.t >= x.off && c.t < x.off + ( +x.dur || 0 ) ) {
-						S.idx = j; loadTrack( true );
-						audio.addEventListener( 'loadedmetadata', function () { seek( Math.max( 0, want - x.off ) ); setFollow( true ); }, { once: true } );
-						return;
-					}
-				}
-			}
-		}
 		function go() { seek( want - OFF() ); if ( audio.paused ) { audio.play().catch( function () {} ); } setFollow( true ); }
 		if ( audio.duration ) { go(); } else { audio.addEventListener( 'loadedmetadata', go, { once: true } ); audio.load(); }
 	}
@@ -1440,12 +1428,15 @@
 	 */
 	var swapping = false;
 	function toggleAlt() {
-		var t = current(); if ( ! t || ( ! altTrack() && ! S.alt ) || swapping ) { return; }
-		var next = S.alt ? t : altTrack().track;
-		if ( spare._id !== next.id ) { spare.src = next.url; spare._id = next.id; }
-		S.alt = ! S.alt;
+		var t = current(), cyc = altCycle(); if ( ! t || cyc.length < 2 || swapping ) { return; }
+		var was = hearing(), next = cyc[ ( cyc.indexOf( was ) + 1 ) % cyc.length ];
+		var tr = next === S.list.part ? t : cTrack( next, t.song );
+		var el = POOL.by[ next ];
+		if ( ! el ) { el = FREE.pop() || newPlayer(); el.preload = 'auto'; el.src = tr.url; POOL.by[ next ] = el; }
+		S.alt = next === S.list.part ? '' : next;
 		paintTools(); paintTop(); ui.altBtn.classList.add( 'is-busy' );
-		crossTo( spare, 4000, function ( from ) { spare = from; ui.altBtn.classList.remove( 'is-busy' ); paintTools(); toast( S.alt ? 'Accompaniment' : 'Voices' ); } );
+		crossTo( el, 8000, function () { ui.altBtn.classList.remove( 'is-busy' ); paintTools(); toast( next === S.list.part ? shortLabel( next ) : next === 'listen' ? 'All voices' : 'Accompaniment' ); prepSpare(); },
+			function () { S.alt = was === S.list.part ? '' : was; ui.altBtn.classList.remove( 'is-busy' ); paintTools(); toast( 'Couldn’t load that — try again.' ); } );
 	}
 	/* the current player keeps sounding while `to` starts silently, finds the same spot and lines itself up; then the sound cuts over */
 	var XGEN = 0;
@@ -1496,13 +1487,14 @@
 		ui.loopBtn.classList.toggle( 'is-on', S.loopA !== null );
 		ui.loopBtn.querySelector( 'span' ).textContent = S.loopA === null ? 'Loop' : S.loopB === null ? 'Set end' : fmt( S.loopA ) + '–' + fmt( S.loopB );
 		/* always there; greyed out when this song has no accompaniment track yet */
-		var hasAlt = !! ( current() && ( altTrack() || S.alt ) );
+		/* one button, up to three versions of the song: shows what's playing now */
+		var cyc = altCycle(), now = hearing(), nx = cyc.length > 1 ? cyc[ ( cyc.indexOf( now ) + 1 ) % cyc.length ] : '';
 		ui.altBtn.hidden = false;
-		ui.altBtn.disabled = ! hasAlt;
-		ui.altBtn.title = hasAlt ? ( S.alt ? 'Switch back to the track with voices' : 'Switch to the accompaniment (no voices)' ) : 'No accompaniment track for this song yet';
-		ui.altBtn.classList.toggle( 'is-on', S.alt );
-		ui.altBtn.querySelector( 'b' ).innerHTML = S.alt ? I.accomp : I.people;
-		ui.altBtn.querySelector( 'span' ).textContent = S.alt ? 'Accomp.' : 'Voices';
+		ui.altBtn.disabled = cyc.length < 2;
+		ui.altBtn.title = cyc.length > 1 ? 'Now: ' + shortLabel( now ) + '. Tap for ' + shortLabel( nx ).toLowerCase() + '.' : 'No other version of this song yet';
+		ui.altBtn.classList.toggle( 'is-on', !! S.alt );
+		ui.altBtn.querySelector( 'b' ).innerHTML = now === 'accompaniment' ? I.accomp : now === 'listen' ? I.people : I.person;
+		ui.altBtn.querySelector( 'span' ).textContent = now ? tinyLabel( now ) : 'Voices';
 		/* guests can't keep notes (nobody to keep them for); the director can always leave notes for the singers */
 		ui.noteBtn.disabled = ! current() || ( ! S.who && ! director() );
 		/* conductor mode: no feedback, no voices toggle; jump by CD instead */
@@ -1603,7 +1595,7 @@
 		S.lastT = now;
 		if ( S.loopA !== null && S.loopB !== null && now >= S.loopB ) { heat( 'loop', S.loopA, S.loopB ); audio.currentTime = S.loopA; }
 		if ( ! S.counted && audio.duration && S.heard >= audio.duration * 0.6 ) { flushPlay( true ); }
-		var t = current(); if ( t && ! S.cond ) { ls( posKey( S.alt && altTrack() ? altTrack().track.id : t.id ), String( now ) ); }
+		var t = current(); if ( t && ! S.cond ) { ls( posKey( ( soundTrack() || t ).id ), String( now ) ); }
 		if ( S.cond ) { tickCd( now - prev ); }
 		paintScrub(); tickStream();
 	} );

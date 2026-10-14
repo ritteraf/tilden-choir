@@ -213,7 +213,7 @@
 							options: [
 								{ label: 'From the page title', value: 'auto' },
 								{ label: 'Soprano', value: 'soprano' }, { label: 'Alto', value: 'alto' }, { label: 'Tenor', value: 'tenor' }, { label: 'Bass', value: 'bass' },
-								{ label: 'Accompaniment (performance)', value: 'accompaniment' }, { label: 'Accompaniment, sectioned', value: 'sections' }, { label: 'All voices (listening)', value: 'listen' }
+								{ label: 'Accompaniment (performance)', value: 'accompaniment' }, { label: 'All voices (listening)', value: 'listen' }
 							],
 							onChange: function ( v ) { props.setAttributes( { part: v } ); }
 						} ),

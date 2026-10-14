@@ -22,7 +22,6 @@ function tcc_track_parts(): array {
 		'tenor'         => 'Tenor',
 		'bass'          => 'Bass',
 		'accompaniment' => 'Accompaniment (performance)',
-		'sections'      => 'Accompaniment, sectioned (rehearsal)',
 		'listen'        => 'All voices (listening)',
 	] );
 }
@@ -30,7 +29,7 @@ function tcc_track_parts(): array {
 /** Guess the part from a title such as "Bass Practice Tracks" or "Advent Dreams (Alto)". */
 function tcc_guess_part( string $title ): string {
 	$t = strtolower( $title );
-	foreach ( [ 'soprano' => 'soprano', 'alto' => 'alto', 'tenor' => 'tenor', 'bass' => 'bass', 'section' => 'sections', 'all voices' => 'listen', 'full mix' => 'listen', 'listen' => 'listen', 'demo' => 'listen', 'accomp' => 'accompaniment', 'piano' => 'accompaniment', 'orchestra' => 'accompaniment' ] as $needle => $part ) {
+	foreach ( [ 'soprano' => 'soprano', 'alto' => 'alto', 'tenor' => 'tenor', 'bass' => 'bass', 'all voices' => 'listen', 'full mix' => 'listen', 'listen' => 'listen', 'demo' => 'listen', 'accomp' => 'accompaniment', 'piano' => 'accompaniment', 'orchestra' => 'accompaniment' ] as $needle => $part ) {
 		if ( str_contains( $t, $needle ) ) {
 			return $part;
 		}
@@ -540,7 +539,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 	$songs  = tcc_song_titles( $current );
 	$tracks = tcc_tracks( $current );
 	$lists  = [];
-	foreach ( $page ? array_diff( array_keys( tcc_track_parts() ), [ 'sections' ] ) : [ $part, 'listen', 'accompaniment' ] as $p ) {
+	foreach ( $page ? array_keys( tcc_track_parts() ) : [ $part, 'listen', 'accompaniment' ] as $p ) {
 		if ( ! empty( $tracks[ $p ] ) ) {
 			$lists[ $p ] = tcc_player_list( $tracks[ $p ], $songs );
 		}
@@ -555,7 +554,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 			$t = tcc_tracks( $c->ID );
 			if ( $page ) {
 				$by = [];
-				foreach ( [ 'soprano', 'alto', 'tenor', 'bass', 'accompaniment', 'sections', 'listen' ] as $p ) {
+				foreach ( [ 'soprano', 'alto', 'tenor', 'bass', 'accompaniment', 'listen' ] as $p ) {
 					if ( ! empty( $t[ $p ] ) ) {
 						$by[ $p ] = tcc_player_list( $t[ $p ], tcc_song_titles( $c->ID ) );
 					}
