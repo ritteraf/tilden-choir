@@ -433,9 +433,6 @@ body.tcc-app-on { overflow: hidden; }
 .ta-jump__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .ta-jump__t { min-width: 0; font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ta-jump__song.is-on .ta-jump__t { color: var(--gold); }
-.ta-jump__whole { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px 7px 9px; border-radius: 16px; border: 1.5px solid rgba(255, 255, 255, 0.22); background: transparent; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-.ta-jump__whole svg { width: 14px; height: 14px; }
-.ta-jump__whole:hover { border-color: var(--gold); color: var(--gold) !important; }
 .ta-jump__cds { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; margin-top: 10px; }
 .ta-jump__cd { height: 44px; border-radius: 10px; border: 0; background: rgba(255, 255, 255, 0.08); font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; }
 .ta-jump__cd:hover { background: rgba(255, 255, 255, 0.14); }
@@ -469,3 +466,79 @@ body.tcc-app-on { overflow: hidden; }
 .ta-jumpwrap__head .ta-link { font-size: 13px; }
 /* six tools with longer words: let each take the width its label needs */
 .ta.is-cond .ta-dock__tools .ta-tool { flex: 1 1 auto; padding-left: 2px; padding-right: 2px; }
+
+/* WS: the whole song, first in each song's row */
+.ta-jump__cd.ta-jump__ws { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(244, 243, 239, 0.45); font-size: 14px; font-weight: 800; letter-spacing: 0.04em; }
+.ta-jump__cd.ta-jump__ws:hover { box-shadow: inset 0 0 0 1.5px var(--gold); color: var(--gold) !important; }
+.ta-jump__top { margin-bottom: 0; }
+
+/* which part plays: always there in conductor mode, just above the bar */
+.ta-cparts { display: flex; gap: 6px; margin: 0 auto 10px; }
+.ta-cparts[hidden] { display: none; }
+.ta-cpart { flex: 1 1 0; min-width: 0; height: 44px; border: 0; border-radius: 12px; background: rgba(255, 255, 255, 0.09); font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; overflow: hidden; }
+.ta-cpart:hover { background: rgba(255, 255, 255, 0.14); }
+.ta-cpart.is-on { background: var(--gold); color: #1a1408 !important; font-weight: 800; }
+.ta-cpart.is-wait { background: rgba(210, 157, 51, 0.12); box-shadow: inset 0 0 0 2px var(--gold); color: var(--gold) !important; }
+.ta-cpart.is-none { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.12); color: rgba(244, 243, 239, 0.25) !important; text-decoration: line-through; cursor: default; }
+.ta-spin { flex-shrink: 0; width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(210, 157, 51, 0.3); border-top-color: var(--gold); animation: ta-spin 0.8s linear infinite; }
+@keyframes ta-spin { to { transform: rotate(360deg); } }
+
+/* the Notes view */
+.ta-cn { display: none; }
+.ta.is-cnotes .ta-cn { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.ta-streamwrap > .ta-cn { position: absolute; inset: 0; z-index: 2; overflow-y: auto; overscroll-behavior: contain; padding: 14px 16px 24px; background: var(--bg); }
+.ta-cn__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ta-cn__head span { min-width: 0; font-family: var(--display); font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ta-cn__add { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border: 0; border-radius: 14px; background: var(--gold); color: #1a1408 !important; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
+.ta-cn__add svg { width: 18px; height: 18px; }
+.ta-cn__list { display: flex; flex-direction: column; gap: 6px; }
+.ta-cn__i { display: flex; align-items: stretch; border-left: 3px solid transparent; border-radius: 10px; background: rgba(255, 255, 255, 0.04); }
+.ta-cn__i.is-on { border-left-color: var(--gold); background: rgba(210, 157, 51, 0.12); }
+.ta-cn__go { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 12px; padding: 11px 6px 11px 12px; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.ta-cn__ic { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, 0.07); display: inline-flex; align-items: center; justify-content: center; }
+.ta-cn__ic svg { width: 18px; height: 18px; }
+.ta-cn__i.is-on .ta-cn__ic { color: var(--gold); }
+.ta-cn__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ta-cn__meta { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--faint); font-variant-numeric: tabular-nums; }
+.ta-cn__i.is-on .ta-cn__meta { color: var(--gold); }
+.ta-cn__who { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin-left: auto; }
+.ta-cn__chip { padding: 1px 7px; border-radius: 8px; background: rgba(210, 157, 51, 0.16); color: var(--gold); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.ta-cn__chip--all, .ta-cn__chip--me { background: rgba(255, 255, 255, 0.08); color: var(--dim); }
+.ta-cn__chip--team { background: rgba(143, 196, 143, 0.15); color: var(--green); }
+.ta-cn__t { font-size: 15px; line-height: 1.35; }
+.ta-cn__i.is-on .ta-cn__t { font-weight: 600; }
+.ta-cn__ed { flex-shrink: 0; width: 44px; border: 0; background: transparent; color: var(--faint) !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 0 10px 10px 0; }
+.ta-cn__ed:hover { color: var(--ink) !important; background: rgba(255, 255, 255, 0.05); }
+.ta-cn__ed svg { width: 18px; height: 18px; }
+.ta-cn__form { display: flex; flex-direction: column; gap: 12px; }
+.ta-cn .ta-noteform { gap: 12px; }
+.ta-cn .ta-at { justify-content: flex-start; }
+.ta-noteform__x { margin-left: 4px; }
+/* who sees it: pills */
+.ta-who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ta-who[hidden] { display: none; }
+.ta-who__k { width: 100%; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+.ta-pick { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 13px; border: 0; border-radius: 18px; background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.22); font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; user-select: none; }
+.ta-pick input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.ta-pick:has(input:checked), .ta-pick--all.is-on { background: var(--gold); box-shadow: none; color: #1a1408 !important; }
+.ta-pick--team:has(input:checked) { background: var(--green); color: #10200f !important; }
+.ta-pick:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* computer: the Notes view takes the side panel */
+@media (min-width: 900px) {
+	.ta-side > .ta-cn { padding-bottom: 20px; }
+}
+/* tablet beside the score: the Notes view takes the jump list's place above the controls */
+@media (min-width: 900px) and (orientation: landscape) {
+	.ta.is-cnotes.is-music .ta-dock > .ta-cn { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px 6px; }
+	.ta.is-music .ta-cparts { margin: 0; }
+}
+
+/* conductor: toasts sit above the part buttons */
+.ta.is-cond .ta-toast { bottom: calc(250px + env(safe-area-inset-bottom)); }
+@media (min-width: 900px) and (orientation: landscape) {
+	.ta.is-cond.is-music .ta-tool--songs { display: none; } /* the jump list is right there */
+	.ta.is-cond.is-music .ta-dock__tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.ta.is-cond.is-music .ta-cpart { font-size: 13px; }
+	.ta.is-cond.is-music .ta-toast { bottom: 40px; }
+}

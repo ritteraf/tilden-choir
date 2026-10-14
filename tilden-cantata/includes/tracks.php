@@ -437,7 +437,7 @@ add_action( 'rest_api_init', function () {
 				return new WP_Error( 'bad', 'Missing text', [ 'status' => 400 ] );
 			}
 			$cues = tcc_cues( $cantata );
-			$parts = array_values( array_intersect( array_keys( tcc_track_parts() ), (array) $r->get_param( 'parts' ) ) );
+			$parts = tcc_cue_parts( $r->get_param( 'parts' ) );
 			$id = (string) $r->get_param( 'id' );
 			if ( $id !== '' ) { // an edit: same id and song; new time, words and parts
 				foreach ( $cues as &$c ) {
@@ -471,6 +471,15 @@ add_action( 'rest_api_init', function () {
 		} ],
 	] );
 } );
+
+/** Who a director note is for: voice parts and/or teams ("team:<slug>"); none = everyone. */
+function tcc_cue_parts( $in ): array {
+	$ok = array_keys( tcc_track_parts() );
+	foreach ( array_keys( function_exists( 'tcc_teams' ) ? tcc_teams() : [] ) as $slug ) {
+		$ok[] = 'team:' . $slug;
+	}
+	return array_values( array_intersect( $ok, array_map( 'strval', (array) $in ) ) );
+}
 
 /* ---------- what's on at the next rehearsal ---------- */
 
@@ -575,6 +584,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'partLabels'=> array_map( fn( $l ) => trim( preg_replace( '/\s*\(.*$/', '', $l ) ), tcc_track_parts() ),
 		'songs'     => array_values( $songs ),
 		'lists'     => $lists,
+		'teams'     => (object) ( function_exists( 'tcc_teams' ) ? array_map( fn( $t ) => $t['label'], tcc_teams() ) : [] ),
 		'cdmarks'   => (object) ( function_exists( 'tcc_cd_marks' ) ? tcc_cd_marks( $current ) : [] ),
 		'cues'      => $cues,
 		'cueIcons'  => tcc_cue_icons(),
@@ -684,7 +694,7 @@ function tcc_store_tracks( int $post_id, $tracks_json, $cues_json ): array {
 		foreach ( $cues as $c ) {
 			$text = sanitize_text_field( (string) ( $c['text'] ?? '' ) );
 			if ( $text !== '' ) {
-				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => array_values( array_intersect( array_keys( tcc_track_parts() ), (array) ( $c['parts'] ?? [] ) ) ), 'm' => tcc_cue_measure( $c['m'] ?? '' ), 'icon' => tcc_cue_icon( $c['icon'] ?? '' ), 'd' => tcc_cue_dur( $c['d'] ?? 0 ) ];
+				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => tcc_cue_parts( $c['parts'] ?? [] ), 'm' => tcc_cue_measure( $c['m'] ?? '' ), 'icon' => tcc_cue_icon( $c['icon'] ?? '' ), 'd' => tcc_cue_dur( $c['d'] ?? 0 ) ];
 			}
 		}
 		update_post_meta( $post_id, '_tcc_cues', $clean );
