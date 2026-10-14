@@ -208,7 +208,11 @@ function tcc_cues( int $cantata_id ): array {
 	$out = [];
 	foreach ( (array) get_post_meta( $cantata_id, '_tcc_cues', true ) as $c ) {
 		if ( is_array( $c ) && isset( $c['t'], $c['text'] ) ) {
-			$out[] = [ 'id' => (string) ( $c['id'] ?? '' ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => (float) $c['t'], 'text' => (string) $c['text'], 'parts' => array_values( (array) ( $c['parts'] ?? [] ) ), 'm' => (string) ( $c['m'] ?? '' ), 'icon' => (string) ( $c['icon'] ?? '' ), 'd' => (float) ( $c['d'] ?? 0 ) ];
+			$one = [ 'id' => (string) ( $c['id'] ?? '' ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => (float) $c['t'], 'text' => (string) $c['text'], 'parts' => array_values( (array) ( $c['parts'] ?? [] ) ), 'm' => (string) ( $c['m'] ?? '' ), 'icon' => (string) ( $c['icon'] ?? '' ), 'd' => (float) ( $c['d'] ?? 0 ) ];
+			if ( ! empty( $c['pg'] ) ) { // pinned on the score: page, and where on it (shares of its width and height)
+				$one += [ 'pg' => (int) $c['pg'], 'x' => (float) ( $c['x'] ?? 0 ), 'y' => (float) ( $c['y'] ?? 0 ) ];
+			}
+			$out[] = $one;
 		}
 	}
 	usort( $out, fn( $a, $b ) => [ $a['song'], $a['t'] ] <=> [ $b['song'], $b['t'] ] );
@@ -358,7 +362,7 @@ add_action( 'rest_api_init', function () {
 		}
 		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT song, part, plays, seconds, flag, last_played FROM ' . tcc_practice_table() . ' WHERE person_id = %d AND cantata_id = %d', $who, $cantata ), ARRAY_A );
 		$notes = $wpdb->get_results( $wpdb->prepare( 'SELECT id, song, t, text FROM ' . tcc_pnotes_table() . ' WHERE person_id = %d AND cantata_id = %d ORDER BY song, t', $who, $cantata ), ARRAY_A );
-		return [ 'who' => [ 'id' => $who, 'name' => get_the_title( $who ) ], 'rows' => $rows, 'notes' => $notes ];
+		return [ 'who' => [ 'id' => $who, 'name' => get_the_title( $who ) ], 'rows' => $rows, 'notes' => $notes, 'marks' => function_exists( 'tcc_my_marks' ) ? tcc_my_marks( $who, $cantata ) : [] ];
 	} ] );
 
 	register_rest_route( $ns, '/play', [ 'methods' => 'POST', 'permission_callback' => $open, 'callback' => function ( WP_REST_Request $r ) {
@@ -450,6 +454,8 @@ add_action( 'rest_api_init', function () {
 						$c['m'] = tcc_cue_measure( $r->get_param( 'm' ) );
 						$c['icon'] = tcc_cue_icon( $r->get_param( 'icon' ) );
 						$c['d'] = tcc_cue_dur( $r->get_param( 'd' ) );
+						unset( $c['pg'], $c['x'], $c['y'] );
+						$c += tcc_cue_pin( $r->get_param( 'pg' ), $r->get_param( 'x' ), $r->get_param( 'y' ) );
 						$cue = $c;
 					}
 				}
@@ -460,7 +466,7 @@ add_action( 'rest_api_init', function () {
 				update_post_meta( $cantata, '_tcc_cues', $cues );
 				return [ 'ok' => true, 'cue' => $cue ];
 			}
-			$cue = [ 'id' => wp_generate_password( 8, false ), 'song' => (int) $r->get_param( 'song' ), 't' => round( (float) $r->get_param( 't' ), 1 ), 'text' => $text, 'parts' => $parts, 'm' => tcc_cue_measure( $r->get_param( 'm' ) ), 'icon' => tcc_cue_icon( $r->get_param( 'icon' ) ), 'd' => tcc_cue_dur( $r->get_param( 'd' ) ) ];
+			$cue = [ 'id' => wp_generate_password( 8, false ), 'song' => (int) $r->get_param( 'song' ), 't' => round( (float) $r->get_param( 't' ), 1 ), 'text' => $text, 'parts' => $parts, 'm' => tcc_cue_measure( $r->get_param( 'm' ) ), 'icon' => tcc_cue_icon( $r->get_param( 'icon' ) ), 'd' => tcc_cue_dur( $r->get_param( 'd' ) ) ] + tcc_cue_pin( $r->get_param( 'pg' ), $r->get_param( 'x' ), $r->get_param( 'y' ) );
 			$cues[] = $cue;
 			update_post_meta( $cantata, '_tcc_cues', $cues );
 			return [ 'ok' => true, 'cue' => $cue ];
@@ -473,6 +479,15 @@ add_action( 'rest_api_init', function () {
 		} ],
 	] );
 } );
+
+/** A note's pin on the score from a request: [ pg, x, y ], or [] for none. */
+function tcc_cue_pin( $pg, $x, $y ): array {
+	$pg = (int) $pg;
+	if ( $pg < 1 || $pg > 2000 || $x === null || $x === '' ) {
+		return [];
+	}
+	return [ 'pg' => $pg, 'x' => round( min( 1, max( 0, (float) $x ) ), 4 ), 'y' => round( min( 1, max( 0, (float) $y ) ), 4 ) ];
+}
 
 /** Who a director note is for: voice parts and/or teams ("team:<slug>"); none = everyone. */
 function tcc_cue_parts( $in ): array {
@@ -588,6 +603,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'songs'     => array_values( $songs ),
 		'lists'     => $lists,
 		'teams'     => (object) ( function_exists( 'tcc_teams' ) ? array_map( fn( $t ) => $t['label'], tcc_teams() ) : [] ),
+		'marks'     => function_exists( 'tcc_marks' ) ? tcc_marks( $current ) : [],
 		'cdmarks'   => (object) ( function_exists( 'tcc_cd_marks' ) ? tcc_cd_marks( $current ) : [] ),
 		'cues'      => $cues,
 		'cueIcons'  => tcc_cue_icons(),
@@ -697,7 +713,7 @@ function tcc_store_tracks( int $post_id, $tracks_json, $cues_json ): array {
 		foreach ( $cues as $c ) {
 			$text = sanitize_text_field( (string) ( $c['text'] ?? '' ) );
 			if ( $text !== '' ) {
-				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => tcc_cue_parts( $c['parts'] ?? [] ), 'm' => tcc_cue_measure( $c['m'] ?? '' ), 'icon' => tcc_cue_icon( $c['icon'] ?? '' ), 'd' => tcc_cue_dur( $c['d'] ?? 0 ) ];
+				$clean[] = [ 'id' => preg_replace( '/[^a-zA-Z0-9]/', '', (string) ( $c['id'] ?? '' ) ) ?: wp_generate_password( 8, false ), 'song' => (int) ( $c['song'] ?? -1 ), 't' => round( (float) ( $c['t'] ?? 0 ), 1 ), 'text' => $text, 'parts' => tcc_cue_parts( $c['parts'] ?? [] ), 'm' => tcc_cue_measure( $c['m'] ?? '' ), 'icon' => tcc_cue_icon( $c['icon'] ?? '' ), 'd' => tcc_cue_dur( $c['d'] ?? 0 ) ] + tcc_cue_pin( $c['pg'] ?? 0, $c['x'] ?? null, $c['y'] ?? null );
 			}
 		}
 		update_post_meta( $post_id, '_tcc_cues', $clean );

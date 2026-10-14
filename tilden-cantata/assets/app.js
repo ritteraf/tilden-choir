@@ -47,6 +47,10 @@
 		score: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2"/><line x1="7" y1="7" x2="17" y2="7"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/><line x1="7" y1="17" x2="17" y2="17"/><circle cx="10" cy="17" r="1.4" fill="currentColor"/><line x1="11.4" y1="17" x2="11.4" y2="12.5"/></svg>',
 		notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
 		left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>',
+		eraser: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l9.9-9.9a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>',
+		undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+		eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+		eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 4.2A10.4 10.4 0 0 1 12 4c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6A17.7 17.7 0 0 0 2 11s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg>',
 		plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
 		keypad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 18h.01M12 18h4"/></svg>',
 		stopAfter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>',
@@ -242,12 +246,15 @@
 	}
 	function cuesForCurrent() {
 		var t = current(); if ( ! t || t.song < 0 || ! S.list.now ) { return []; }
+		return notesFor( t.song, seesCue );
+	}
+	/* for everyone, for this part, or for the singer's team; the conductor sees them all */
+	function seesCue( c ) {
 		var part = countPart(), team = S.who && S.who.role ? 'team:' + S.who.role : '';
-		/* for everyone, for this part, or for the singer's team; the conductor sees them all */
-		return notesFor( t.song, function ( c ) { return S.cond || ! c.parts || ! c.parts.length || c.parts.indexOf( part ) !== -1 || ( team && c.parts.indexOf( team ) !== -1 ); } );
+		return !! ( S.cond || ! c.parts || ! c.parts.length || c.parts.indexOf( part ) !== -1 || ( team && c.parts.indexOf( team ) !== -1 ) );
 	}
 	function notesFor( song, keep ) {
-		var out = ( D.cues || [] ).filter( function ( c ) { return c.song === song && ( ! keep || keep( c ) ); } ).map( function ( c ) { return { t: +c.t, text: c.text, kind: 'cue', id: c.id, parts: c.parts || [], m: c.m || '', icon: c.icon || '', d: +c.d || 0 }; } );
+		var out = ( D.cues || [] ).filter( function ( c ) { return c.song === song && ( ! keep || keep( c ) ); } ).map( function ( c ) { return { t: +c.t, text: c.text, kind: 'cue', id: c.id, parts: c.parts || [], m: c.m || '', icon: c.icon || '', d: +c.d || 0, pg: +c.pg || 0, x: +c.x || 0, y: +c.y || 0 }; } );
 		S.notes.filter( function ( n ) { return +n.song === song; } ).forEach( function ( n ) { out.push( { t: +n.t, text: n.text, kind: 'mine', id: n.id } ); } );
 		return out.sort( function ( a, b ) { return a.t - b.t; } );
 	}
@@ -407,7 +414,7 @@
 		tickFlow( a, on, now );
 		if ( a === S.reached && on === S.active && ! force ) { return; }
 		S.reached = a; S.active = on;
-		topNote();
+		topNote(); litPins();
 		items.forEach( function ( li, i ) {
 			li.classList.toggle( 'is-past', i < a || ( i === a && on < 0 ) );
 			li.classList.toggle( 'is-on', i === on );
@@ -497,6 +504,11 @@
 		ui.music.appendChild( ui.drop );
 		ui.music.appendChild( ui.pageNow );
 		if ( ui.recBtn ) { ui.recBtn.hidden = ! S.cond; ui.music.appendChild( ui.recBtn ); }
+		ui.inkFab = h( 'button', { type: 'button', class: 'ta-inkfab', 'aria-label': 'Pencil and marks', onclick: openInk }, [ h( 'span', { html: I.pen } ), h( 'span', { class: 'ta-inkfab__off', html: I.eyeOff } ) ] );
+		ui.inkBar = h( 'div', { class: 'ta-inkbar', role: 'toolbar', 'aria-label': 'Pencil', hidden: true } );
+		ui.pinHint = h( 'div', { class: 'ta-pinhint', hidden: true }, [ 'Tap the music to pin a note' ] );
+		ui.music.appendChild( ui.inkFab ); ui.music.appendChild( ui.inkBar ); ui.music.appendChild( ui.pinHint );
+		paintInkUi();
 		M.pdf.getPage( 1 ).then( function ( pg ) { var v = pg.getViewport( { scale: 1 } ); M.aspect = v.width / v.height; M.shown = ''; tickMusic( true ); } );
 		ui.recBar = h( 'div', { class: 'ta-rec', hidden: true } );
 		ui.music.appendChild( ui.recBar );
@@ -532,6 +544,7 @@
 		var live = pageAt( now );
 		if ( M.manual !== null && M.manual === live ) { M.manual = null; }
 		var p = M.manual !== null ? M.manual : live;
+		if ( ( drawing() || INK.busy ) && M.cur ) { p = M.cur; } // the page holds still under the pencil
 		var two = spread();
 		/* two pages: show the open book, and only flip when the music leaves the right-hand page */
 		var pages = two ? spreadOf( p ) : [ p ];
@@ -591,7 +604,14 @@
 				c.className = 'ta-page';
 				c.setAttribute( 'data-page', pages[ k ] );
 				page.render( { canvasContext: c.getContext( '2d' ), viewport: v } );
-				frag.appendChild( c );
+				/* the pencil layer: drawn in shares of the page, so marks keep their place at any size */
+				var box = document.createElement( 'div' ), vh = Math.round( 1000 * ph / pw );
+				box.className = 'ta-pagebox'; box.setAttribute( 'data-page', pages[ k ] );
+				box.style.width = pw + 'px'; box.style.height = ph + 'px';
+				var ink = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
+				ink.setAttribute( 'class', 'ta-ink' ); ink.setAttribute( 'viewBox', '0 0 1000 ' + vh ); ink.setAttribute( 'preserveAspectRatio', 'none' ); ink.setAttribute( 'data-vh', vh );
+				box.appendChild( c ); box.appendChild( ink );
+				frag.appendChild( box );
 			} );
 			ui.pagesIn.innerHTML = '';
 			ui.pagesIn.style.width = ( pw * n + gap * ( n - 1 ) ) + 'px';
@@ -599,6 +619,7 @@
 			ui.pagesIn.classList.toggle( 'is-spread', n > 1 );
 			ui.pagesIn.appendChild( frag );
 			markCurrent2();
+			paintInk();
 			M.base = { w: pw * n + gap * ( n - 1 ), h: ph };
 			M.drawnZoom = rz;
 			if ( turned ) {
@@ -622,6 +643,7 @@
 	}
 	/* when the page is taller than the screen, drift down it as the music moves through it */
 	function follow( pages, p, now ) {
+		if ( drawing() || INK.busy ) { return; }
 		if ( M.zoom > 1.01 || M.manual !== null || pages.length > 1 || Date.now() - M.userAt < 5000 ) { return; }
 		var H = ui.pages.clientHeight, over = M.base.h - ( H - 16 );
 		if ( over <= 4 ) { return; }
@@ -657,7 +679,10 @@
 			g = { mode: 'pinch', d: Math.hypot( p.x - q.x, p.y - q.y ) || 1, z: M.zoom, fx: ( mx - M.tx ) / M.zoom, fy: ( my - M.ty ) / M.zoom };
 		}
 		el.addEventListener( 'touchstart', function ( e ) {
-			e.preventDefault(); M.userAt = Date.now(); ui.pagesIn.classList.remove( 'is-glide' );
+			e.preventDefault();
+			/* drawing: an Apple Pencil always draws; a finger draws only in pencil mode, unless a Pencil is in use */
+			if ( ( drawing() && ! INK.sawPen ) || ( e.touches[ 0 ] && e.touches[ 0 ].touchType === 'stylus' && canInk() ) ) { g = null; return; }
+			M.userAt = Date.now(); ui.pagesIn.classList.remove( 'is-glide' );
 			if ( e.touches.length >= 2 ) { startPinch( e.touches[ 0 ], e.touches[ 1 ] ); } else { startPan( e.touches[ 0 ] ); }
 		}, { passive: false } );
 		el.addEventListener( 'touchmove', function ( e ) {
@@ -685,8 +710,12 @@
 			var dx = g.x - g.sx, dy = g.y - g.sy, dt = Date.now() - g.t0;
 			if ( ! g.moved && dt < 300 ) {
 				if ( Date.now() - lastTap.t < 320 && Math.hypot( g.x - lastTap.x, g.y - lastTap.y ) < 40 ) {
+					clearTimeout( M.pinT );
 					zoomAt( M.zoom > 1.05 ? 1 : 2.2, g.x, g.y ); sharpenSoon(); lastTap.t = 0;
-				} else { lastTap = { t: Date.now(), x: g.x, y: g.y }; }
+				} else {
+					lastTap = { t: Date.now(), x: g.x, y: g.y };
+					if ( pinMode() ) { var er = el.getBoundingClientRect(), cx = er.left + g.x, cy = er.top + g.y; clearTimeout( M.pinT ); M.pinT = setTimeout( function () { pinAt( cx, cy ); }, 330 ); } // a single tap, not the first of a double
+				}
 			} else if ( M.zoom <= 1.01 && Math.abs( dx ) > 60 && Math.abs( dx ) > Math.abs( dy ) * 1.5 && dt < 700 ) {
 				manualPage( dx < 0 ? 1 : -1 );
 			}
@@ -701,9 +730,15 @@
 			if ( e.ctrlKey ) { zoomAt( M.zoom * Math.exp( -e.deltaY * 0.01 ), r.x, r.y ); sharpenSoon(); }
 			else { M.tx -= e.deltaX; M.ty -= e.deltaY; applyT( false ); }
 		}, { passive: false } );
-		el.addEventListener( 'dblclick', function ( e ) { var r = rel( e ); zoomAt( M.zoom > 1.05 ? 1 : 2.2, r.x, r.y ); sharpenSoon(); } );
-		var drag = null;
-		el.addEventListener( 'mousedown', function ( e ) { drag = { x: e.clientX, y: e.clientY, tx: M.tx, ty: M.ty }; M.userAt = Date.now(); } );
+		el.addEventListener( 'dblclick', function ( e ) { clearTimeout( M.pinT ); if ( drawing() ) { return; } var r = rel( e ); zoomAt( M.zoom > 1.05 ? 1 : 2.2, r.x, r.y ); sharpenSoon(); } );
+		var drag = null, down = null;
+		el.addEventListener( 'mousedown', function ( e ) { down = { x: e.clientX, y: e.clientY }; if ( drawing() ) { return; } drag = { x: e.clientX, y: e.clientY, tx: M.tx, ty: M.ty }; M.userAt = Date.now(); } );
+		/* a click (not a drag) in the conductor's Notes view pins a note there */
+		el.addEventListener( 'click', function ( e ) {
+			if ( ! pinMode() || ! down || Math.hypot( e.clientX - down.x, e.clientY - down.y ) > 5 ) { return; }
+			var cx = e.clientX, cy = e.clientY; clearTimeout( M.pinT ); M.pinT = setTimeout( function () { pinAt( cx, cy ); }, 280 );
+		} );
+		inkInput( el );
 		window.addEventListener( 'mousemove', function ( e ) { if ( ! drag ) { return; } M.tx = drag.tx + e.clientX - drag.x; M.ty = drag.ty + e.clientY - drag.y; applyT( false ); M.userAt = Date.now(); } );
 		window.addEventListener( 'mouseup', function () { drag = null; } );
 	}
@@ -741,7 +776,7 @@
 			var cd = h( 'span', { class: 'ta-flow__in' } );
 			var el = h( 'div', { class: 'ta-flow__i ta-flow__i--' + c.kind + ' is-later' }, [
 				h( 'button', { type: 'button', class: 'ta-strip__go', title: 'Play from just before ' + fmt( c.t ), onclick: function () { jumpTo( c ); } }, [
-					h( 'span', { class: 'ta-strip__k' }, [ fmt( c.t ) + ( c.kind === 'cue' ? ' · Director' : ' · You' ) + ( c.m ? ' · m. ' + c.m : '' ), cd ] ),
+					h( 'span', { class: 'ta-strip__k' }, [ c.pg ? h( 'i', { class: 'ta-pindot', title: 'On the music', 'aria-hidden': 'true' } ) : null, fmt( c.t ) + ( c.kind === 'cue' ? ' · Director' : ' · You' ) + ( c.m ? ' · m. ' + c.m : '' ), cd ] ),
 					h( 'span', { class: 'ta-strip__line' }, [ gist( c ), h( 'span', { class: 'ta-strip__t' }, [ c.text ] ) ] )
 				] ),
 				canEditNote( c ) ? h( 'button', { type: 'button', class: 'ta-strip__ed', 'aria-label': 'Edit this note', title: 'Edit', html: I.edit, onclick: function () { openNote( c ); } } ) : null
@@ -915,7 +950,7 @@
 	}
 
 	/* ---------- notes: write one, or change one ---------- */
-	function openNote( edit ) {
+	function openNote( edit, pinAtTap ) {
 		var t = current();
 		if ( ! t ) { toast( 'Play a song first.' ); return; }
 		if ( ! S.list.now || t.song < 0 ) { toast( 'Notes are for this year’s songs.' ); return; }
@@ -923,8 +958,28 @@
 		edit = edit && edit.id ? edit : null;
 		/* conductor mode: the form opens in the Notes view, where the notes are; the controls below stay put */
 		var host = S.cond ? ui.cn : null;
-		if ( host ) { S.cnForm = edit ? edit.id : 'new'; if ( ! S.cnotes ) { S.cnotes = true; paintTools(); paintSide(); } placeCn(); }
-		function close() { if ( host ) { S.cnForm = null; paintCn(); } else { closeSheet(); } }
+		if ( host ) { S.cnForm = edit ? edit.id : 'new'; if ( ! S.cnotes ) { S.cnotes = true; paintTools(); paintSide(); } placeCn(); paintInkUi(); }
+		function close() { if ( host ) { S.cnForm = null; S.pinDraft = null; S.pinSet = null; paintCn(); paintInk(); paintInkUi(); } else { closeSheet(); } }
+		/* where it sits on the music: tap the music (with the form open) to place or move it */
+		var pinRow = null;
+		if ( host && director() ) {
+			var p0 = pinAtTap || ( edit && edit.pg ? { pg: edit.pg, x: edit.x, y: edit.y } : null );
+			S.pinDraft = p0 ? { pg: p0.pg, x: p0.x, y: p0.y, icon: edit && edit.icon || '' } : null;
+			pinRow = h( 'div', { class: 'ta-pinrow' } );
+			var paintPin = function () {
+				pinRow.innerHTML = '';
+				if ( S.pinDraft ) {
+					pinRow.appendChild( h( 'i', { class: 'ta-pindot', 'aria-hidden': 'true' } ) );
+					pinRow.appendChild( h( 'span', {}, [ 'On the music, p. ' + printedNo( S.pinDraft.pg ) + ' · tap the music to move it' ] ) );
+					pinRow.appendChild( h( 'button', { type: 'button', class: 'ta-link', onclick: function () { S.pinDraft = null; paintPin(); paintInk(); } }, [ 'Remove' ] ) );
+				} else if ( scoreRange() ) {
+					pinRow.appendChild( h( 'span', {}, [ 'Tap the music to pin it there' ] ) );
+				}
+				pinRow.hidden = ! pinRow.firstChild;
+			};
+			S.pinSet = function ( p ) { S.pinDraft = { pg: p.pg, x: p.x, y: p.y, icon: S.pinDraft ? S.pinDraft.icon : icon }; paintPin(); paintInk(); };
+			paintPin();
+		}
 		var at = edit ? +edit.t : Math.max( 0, songNow() - ( audio.paused ? 0 : 0.8 ) ); // people tap a beat late
 		var kind = edit ? edit.kind : ( director() ? 'cue' : 'mine' );
 		var when = h( 'b', { class: 'ta-at__t' }, [ fmt( at ) ] );
@@ -963,6 +1018,7 @@
 			var paintIc = function () {
 				grid.querySelectorAll( '.ta-icpick__b' ).forEach( function ( b ) { var on = b.getAttribute( 'data-k' ) === icon; b.classList.toggle( 'is-on', on ); b.setAttribute( 'aria-checked', on ? 'true' : 'false' ); } );
 				icName.textContent = icon && ICONS[ icon ] ? ICONS[ icon ].label : 'none — tap one to add';
+				if ( S.pinDraft ) { S.pinDraft.icon = icon; paintInk(); }
 			};
 			Object.keys( ICONS ).forEach( function ( k ) {
 				grid.appendChild( h( 'button', { type: 'button', class: 'ta-icpick__b', role: 'radio', 'data-k': k, title: ICONS[ k ].label, 'aria-label': ICONS[ k ].label, html: ICONS[ k ].svg, onclick: function () { icon = icon === k ? '' : k; paintIc(); } } ) );
@@ -990,7 +1046,7 @@
 			} }, [ 'Delete note' ] );
 		}
 		var body = h( 'div', { class: 'ta-noteform' }, [
-			atRow, nowBtn,
+			pinRow, atRow, nowBtn,
 			kindRow, input, extras, partsRow,
 			h( 'div', { class: 'ta-noteform__go' }, [ h( 'button', { type: 'button', class: 'ta-btn ta-btn--gold', onclick: save }, [ edit ? 'Save changes' : host ? 'Add note' : 'Save note' ] ), host ? h( 'button', { type: 'button', class: 'ta-link ta-noteform__x', onclick: close }, [ 'Cancel' ] ) : null, edit ? delBtn : host ? null : h( 'span', { class: 'ta-fine' }, [ audio.paused ? '' : 'The music keeps playing.' ] ) ] )
 		] );
@@ -1012,11 +1068,12 @@
 			if ( k === 'cue' ) {
 				var parts = Array.prototype.map.call( partsRow.querySelectorAll( 'input:checked' ), function ( c ) { return c.value; } );
 				var req = { cantata: D.cantata.id, song: t.song, t: at, text: text, parts: parts, m: mInput ? mInput.value.trim() : '', icon: icon, d: dur };
+				if ( S.pinDraft ) { req.pg = S.pinDraft.pg; req.x = Math.round( S.pinDraft.x * 1e4 ) / 1e4; req.y = Math.round( S.pinDraft.y * 1e4 ) / 1e4; }
 				if ( edit ) { req.id = edit.id; }
 				api( 'cue', 'POST', req ).then( function ( r ) {
 					if ( r && r.cue ) {
 						if ( edit ) { D.cues = D.cues.map( function ( x ) { return x.id === r.cue.id ? r.cue : x; } ); } else { D.cues.push( r.cue ); }
-						paintStream(); toast( done );
+						paintStream(); paintInk(); toast( done );
 					} else { toast( 'Couldn’t save — try again.' ); }
 				} ).catch( function () { toast( 'Couldn’t save — try again.' ); } );
 			} else {
@@ -1035,7 +1092,7 @@
 	}
 	function removeNote( c ) {
 		var fail = function () { toast( 'Couldn’t delete — try again.' ); };
-		if ( c.kind === 'cue' ) { api( 'cue', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { D.cues = D.cues.filter( function ( x ) { return x.id !== c.id; } ); paintStream(); toast( 'Note deleted' ); } ).catch( fail ); }
+		if ( c.kind === 'cue' ) { api( 'cue', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { D.cues = D.cues.filter( function ( x ) { return x.id !== c.id; } ); paintStream(); paintInk(); toast( 'Note deleted' ); } ).catch( fail ); }
 		else { api( 'note', 'DELETE', { cantata: D.cantata.id, id: c.id } ).then( function () { S.notes = S.notes.filter( function ( x ) { return String( x.id ) !== String( c.id ); } ); paintStream(); toast( 'Note deleted' ); } ).catch( fail ); }
 	}
 
@@ -1243,8 +1300,8 @@
 	function wideLayout() { return window.matchMedia( '(min-width: 900px)' ).matches; }
 	function besideMusic() { return wideLayout() && window.matchMedia( '(orientation: landscape)' ).matches && ui.app.classList.contains( 'is-music' ); }
 	function toggleCn() {
-		S.cnotes = ! S.cnotes; S.cnForm = null;
-		paintTools(); paintSide(); paintCn();
+		S.cnotes = ! S.cnotes; S.cnForm = null; S.pinDraft = null; S.pinSet = null;
+		paintTools(); paintSide(); paintCn(); paintInk();
 	}
 	/* tablet beside the score: in the controls' column; computer: the side panel; phone: over the music */
 	function placeCn() {
@@ -1283,7 +1340,7 @@
 				h( 'button', { type: 'button', class: 'ta-cn__go', 'aria-label': 'Play from ' + fmt( c.t ) + ': ' + c.text, onclick: function () { jumpTo( c ); } }, [
 					h( 'span', { class: 'ta-cn__ic', html: ic } ),
 					h( 'span', { class: 'ta-cn__body' }, [
-						h( 'span', { class: 'ta-cn__meta' }, [ h( 'span', {}, [ fmt( c.t ) + ( c.m ? ' · m. ' + c.m : '' ) ] ), h( 'span', { class: 'ta-cn__who' }, whoOf( c ).map( function ( w ) { return h( 'span', { class: 'ta-cn__chip ta-cn__chip--' + w[ 1 ] }, [ w[ 0 ] ] ); } ) ) ] ),
+						h( 'span', { class: 'ta-cn__meta' }, [ c.pg ? h( 'i', { class: 'ta-pindot', title: 'On the music', 'aria-hidden': 'true' } ) : null, h( 'span', {}, [ fmt( c.t ) + ( c.m ? ' · m. ' + c.m : '' ) ] ), h( 'span', { class: 'ta-cn__who' }, whoOf( c ).map( function ( w ) { return h( 'span', { class: 'ta-cn__chip ta-cn__chip--' + w[ 1 ] }, [ w[ 0 ] ] ); } ) ) ] ),
 						h( 'span', { class: 'ta-cn__t' }, [ c.text ] )
 					] )
 				] ),
@@ -1301,6 +1358,199 @@
 		var now = songNow() + 0.05, on = -1;
 		ui.cnRows.forEach( function ( r, i ) { if ( r._t <= now ) { on = i; } } );
 		ui.cnRows.forEach( function ( r, i ) { r.classList.toggle( 'is-on', i === on ); } );
+	}
+
+	/* ---------- pencil marks and note pins, on the music ----------
+	   Everything is stored in shares of its page (0–1 across, 0–1 down), so it sits on the same notehead
+	   on a phone, an iPad, a spread or zoomed in. The director's pencil is red and goes to whoever it's for;
+	   a singer's own is graphite and only theirs. */
+	var INK = { dir: ( D.marks || [] ).slice(), mine: [], mode: '', undo: [], add: { dir: [], mine: [] }, del: { dir: [], mine: [] }, sawPen: false, who: [] };
+	try { INK.who = JSON.parse( ls( 'tcc_ink_who' ) || '[]' ) || []; } catch ( e ) {}
+	var SVGNS = 'http://www.w3.org/2000/svg';
+	function inkOff() { return ls( 'tcc_ink_off' ) === '1'; }
+	function drawing() { return INK.mode === 'pen' || INK.mode === 'erase'; }
+	function inkKind() { return director() ? 'dir' : S.who && S.list && S.list.now ? 'mine' : ''; } // whose pencil this is
+	function canInk() { return !! inkKind(); }
+	function rid() { return Math.random().toString( 36 ).slice( 2, 10 ); }
+	function strokeD( s, vh ) {
+		return s.pts.map( function ( p, i ) { return ( i ? 'L' : 'M' ) + ( p[ 0 ] * 1000 ).toFixed( 1 ) + ' ' + ( p[ 1 ] * vh ).toFixed( 1 ); } ).join( '' );
+	}
+	function pinSvg( c, vh, cls ) {
+		var ic = c.icon && ICONS[ c.icon ] ? ICONS[ c.icon ].svg : I.pen;
+		return '<g class="ta-pin' + ( cls ? ' ' + cls : '' ) + '" data-id="' + c.id + '" transform="translate(' + ( c.x * 1000 ).toFixed( 1 ) + ' ' + ( c.y * vh ).toFixed( 1 ) + ')">' +
+			'<circle class="ta-pin__glow" r="40"/><circle class="ta-pin__dot" r="24"/>' + ic.replace( '<svg ', '<svg class="ta-pin__ic" x="-14" y="-14" width="28" height="28" ' ) + '</g>';
+	}
+	function paintInk() {
+		if ( ! ui.pagesIn ) { return; }
+		var off = inkOff();
+		ui.pagesIn.querySelectorAll( '.ta-pagebox' ).forEach( function ( box ) {
+			var pg = +box.getAttribute( 'data-page' ), sv = box.querySelector( '.ta-ink' ), vh = +sv.getAttribute( 'data-vh' ), out = '';
+			if ( ! off ) {
+				INK.dir.forEach( function ( st ) { if ( st.pg === pg && seesCue( st ) ) { out += '<path class="ta-ink__s ta-ink__s--dir" stroke-width="' + ( st.w * 1000 ).toFixed( 2 ) + '" d="' + strokeD( st, vh ) + '"/>'; } } );
+				INK.mine.forEach( function ( st ) { if ( st.pg === pg ) { out += '<path class="ta-ink__s ta-ink__s--mine" stroke-width="' + ( st.w * 1000 ).toFixed( 2 ) + '" d="' + strokeD( st, vh ) + '"/>'; } } );
+				( D.cues || [] ).forEach( function ( c ) { if ( c.pg === pg && seesCue( c ) && ! ( S.pinDraft && c.id === S.cnForm ) ) { out += pinSvg( c, vh ); } } );
+			}
+			if ( S.pinDraft && S.pinDraft.pg === pg ) { out += pinSvg( { id: '_draft', x: S.pinDraft.x, y: S.pinDraft.y, icon: S.pinDraft.icon }, vh, 'is-draft' ); }
+			sv.innerHTML = out;
+		} );
+		litPins();
+	}
+	/* the pin of the note that's lit glows with it */
+	function litPins() {
+		if ( ! ui.pagesIn ) { return; }
+		var on = S.active >= 0 && CUES[ S.active ] ? CUES[ S.active ].id : '';
+		ui.pagesIn.querySelectorAll( '.ta-pin' ).forEach( function ( g ) { g.classList.toggle( 'is-on', !! on && g.getAttribute( 'data-id' ) === on ); } );
+	}
+	/* drawing: pointer events, in shares of the page under the pencil */
+	function inkInput( el ) {
+		var cur = null;
+		function boxAt( e ) { var t = document.elementFromPoint( e.clientX, e.clientY ); return t && t.closest ? t.closest( '.ta-pagebox' ) : null; }
+		function at( e, box ) { var r = box.getBoundingClientRect(); return [ ( e.clientX - r.left ) / r.width, ( e.clientY - r.top ) / r.height ]; }
+		el.addEventListener( 'pointerdown', function ( e ) {
+			var pen = e.pointerType === 'pen';
+			if ( pen && canInk() && ! INK.sawPen ) { INK.sawPen = true; }
+			if ( ! ( drawing() || ( pen && canInk() ) ) ) { return; }
+			if ( INK.sawPen && e.pointerType === 'touch' ) { return; } // with a Pencil in hand, fingers still pan and zoom
+			var box = boxAt( e ); if ( ! box ) { return; }
+			e.preventDefault(); e.stopPropagation();
+			try { el.setPointerCapture( e.pointerId ); } catch ( x ) {}
+			if ( INK.mode === 'erase' ) { cur = { erase: true }; eraseAt( e, box, at( e, box ) ); return; }
+			var kind = inkKind(); if ( ! kind ) { return; }
+			var sv = box.querySelector( '.ta-ink' ), path = document.createElementNS( SVGNS, 'path' );
+			INK.busy = true;
+			cur = { box: box, kind: kind, pg: +box.getAttribute( 'data-page' ), vh: +sv.getAttribute( 'data-vh' ), w: kind === 'dir' ? 0.0042 : 0.0034, pts: [ at( e, box ) ], path: path, id: e.pointerId };
+			path.setAttribute( 'class', 'ta-ink__s ta-ink__s--' + kind ); path.setAttribute( 'stroke-width', ( cur.w * 1000 ).toFixed( 2 ) );
+			sv.appendChild( path );
+			path.setAttribute( 'd', strokeD( cur, cur.vh ) );
+		} );
+		el.addEventListener( 'pointermove', function ( e ) {
+			if ( ! cur ) { return; }
+			e.preventDefault();
+			if ( cur.erase ) { var b = boxAt( e ); if ( b ) { eraseAt( e, b, at( e, b ) ); } return; }
+			var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null; // the in-between samples a fast pen makes
+			( evs && evs.length ? evs : [ e ] ).forEach( function ( ev ) {
+				var p = at( ev, cur.box ), q = cur.pts[ cur.pts.length - 1 ];
+				if ( Math.hypot( p[ 0 ] - q[ 0 ], ( p[ 1 ] - q[ 1 ] ) * cur.vh / 1000 ) > 0.0012 ) { cur.pts.push( p ); }
+			} );
+			cur.path.setAttribute( 'd', strokeD( cur, cur.vh ) );
+		} );
+		function up() {
+			if ( ! cur ) { return; }
+			var c = cur; cur = null; INK.busy = false;
+			if ( c.erase ) { return; }
+			if ( c.pts.length === 1 ) { c.pts.push( [ c.pts[ 0 ][ 0 ] + 0.0008, c.pts[ 0 ][ 1 ] ] ); } // a dot
+			var st = { id: rid(), pg: c.pg, w: c.w, pts: simplify( c.pts, 0.0007 ).map( function ( p ) { return [ Math.round( p[ 0 ] * 1e4 ) / 1e4, Math.round( p[ 1 ] * 1e4 ) / 1e4 ]; } ) };
+			if ( c.kind === 'dir' ) { st.parts = INK.who.slice(); }
+			inkAdd( c.kind, st, true );
+			paintInk();
+		}
+		el.addEventListener( 'pointerup', up );
+		el.addEventListener( 'pointercancel', up );
+	}
+	/* fewer points, same line (Ramer–Douglas–Peucker) */
+	function simplify( pts, eps ) {
+		if ( pts.length < 3 ) { return pts; }
+		var a = pts[ 0 ], b = pts[ pts.length - 1 ], dx = b[ 0 ] - a[ 0 ], dy = b[ 1 ] - a[ 1 ], len = Math.hypot( dx, dy ) || 1e-9, far = 0, at = 0;
+		for ( var i = 1; i < pts.length - 1; i++ ) { var d = Math.abs( dy * pts[ i ][ 0 ] - dx * pts[ i ][ 1 ] + b[ 0 ] * a[ 1 ] - b[ 1 ] * a[ 0 ] ) / len; if ( d > far ) { far = d; at = i; } }
+		if ( far <= eps ) { return [ a, b ]; }
+		return simplify( pts.slice( 0, at + 1 ), eps ).slice( 0, -1 ).concat( simplify( pts.slice( at ), eps ) );
+	}
+	function inkAdd( kind, st, record ) {
+		INK[ kind ].push( st ); INK.add[ kind ].push( st );
+		INK.del[ kind ] = INK.del[ kind ].filter( function ( id ) { return id !== st.id; } );
+		if ( record ) { INK.undo.push( { kind: kind, added: st } ); }
+		saveInkSoon();
+	}
+	function inkDel( kind, st, record ) {
+		INK[ kind ] = INK[ kind ].filter( function ( x ) { return x.id !== st.id; } );
+		INK.add[ kind ] = INK.add[ kind ].filter( function ( x ) { return x.id !== st.id; } );
+		INK.del[ kind ].push( st.id );
+		if ( record ) { INK.undo.push( { kind: kind, removed: st } ); }
+		saveInkSoon();
+	}
+	/* the eraser takes whole strokes, only your own */
+	function eraseAt( e, box, p ) {
+		var kind = inkKind(); if ( ! kind ) { return; }
+		var pg = +box.getAttribute( 'data-page' ), vh = +box.querySelector( '.ta-ink' ).getAttribute( 'data-vh' ), k = vh / 1000, hit = null;
+		INK[ kind ].some( function ( st ) {
+			if ( st.pg !== pg || ( kind === 'dir' && ! seesCue( st ) ) ) { return false; }
+			for ( var i = 0; i < st.pts.length; i++ ) { if ( Math.hypot( st.pts[ i ][ 0 ] - p[ 0 ], ( st.pts[ i ][ 1 ] - p[ 1 ] ) * k ) < 0.016 ) { hit = st; return true; } }
+			return false;
+		} );
+		if ( hit ) { inkDel( kind, hit, true ); paintInk(); }
+	}
+	function inkUndo() {
+		var u = INK.undo.pop(); if ( ! u ) { toast( 'Nothing to undo.' ); return; }
+		if ( u.added ) { inkDel( u.kind, u.added, false ); } else { inkAdd( u.kind, u.removed, false ); }
+		paintInk();
+	}
+	function saveInkSoon() { clearTimeout( saveInkSoon.t ); saveInkSoon.t = setTimeout( saveInk, 1500 ); }
+	function saveInk() {
+		clearTimeout( saveInkSoon.t );
+		[ 'dir', 'mine' ].forEach( function ( kind ) {
+			var add = INK.add[ kind ], del = INK.del[ kind ];
+			if ( ! add.length && ! del.length ) { return; }
+			INK.add[ kind ] = []; INK.del[ kind ] = [];
+			api( kind === 'dir' ? 'marks' : 'mymarks', 'POST', { cantata: D.cantata.id, add: JSON.stringify( add ), del: JSON.stringify( del ) } ).then( function ( r ) {
+				if ( ! r || ! r.ok ) { throw new Error( 'no' ); }
+			} ).catch( function () {
+				INK.add[ kind ] = add.concat( INK.add[ kind ] ); INK.del[ kind ] = del.concat( INK.del[ kind ] );
+				toast( 'Couldn’t save your marks — they’ll try again.' ); saveInkSoon();
+			} );
+		} );
+	}
+	/* the pencil button and its toolbar */
+	function openInk() { INK.mode = canInk() ? 'pen' : 'view'; paintInkUi(); }
+	function closeInk() { INK.mode = ''; saveInk(); paintInkUi(); tickMusic( true ); } // and the page catches up with the music
+	function toggleInkOff() { ls( 'tcc_ink_off', inkOff() ? null : '1' ); paintInk(); paintInkUi(); toast( inkOff() ? 'Marks hidden' : 'Marks showing' ); }
+	function inkWhoLabel() { return ! INK.who.length ? 'Everyone' : INK.who.length === 1 ? shortLabel( INK.who[ 0 ] ) : INK.who.length + ' groups'; }
+	function pickInkWho() {
+		var box = h( 'div', { class: 'ta-who' } );
+		function draw() {
+			box.innerHTML = '';
+			box.appendChild( h( 'button', { type: 'button', class: 'ta-pick ta-pick--all' + ( INK.who.length ? '' : ' is-on' ), onclick: function () { INK.who = []; draw(); } }, [ 'Everyone' ] ) );
+			VOICE.map( function ( p ) { return [ p, label( p ) ]; } ).concat( Object.keys( D.teams || {} ).map( function ( k ) { return [ 'team:' + k, D.teams[ k ] ]; } ) ).forEach( function ( x ) {
+				var on = INK.who.indexOf( x[ 0 ] ) !== -1;
+				box.appendChild( h( 'button', { type: 'button', class: 'ta-pick' + ( x[ 0 ].indexOf( 'team:' ) === 0 ? ' ta-pick--team' : '' ) + ( on ? ' is-on' : '' ), 'aria-pressed': on ? 'true' : 'false', onclick: function () { INK.who = on ? INK.who.filter( function ( k ) { return k !== x[ 0 ]; } ) : INK.who.concat( [ x[ 0 ] ] ); draw(); } }, [ x[ 1 ] ] ) );
+			} );
+			ls( 'tcc_ink_who', INK.who.length ? JSON.stringify( INK.who ) : null );
+			paintInkUi();
+		}
+		draw();
+		openSheet( 'Your pencil marks are for', h( 'div', { class: 'ta-noteform' }, [ box, h( 'button', { type: 'button', class: 'ta-btn ta-btn--gold', onclick: closeSheet }, [ 'Done' ] ) ] ) );
+	}
+	function paintInkUi() {
+		if ( ! ui.inkFab ) { return; }
+		var bar = ui.inkBar, drawing = INK.mode === 'pen' || INK.mode === 'erase';
+		ui.inkFab.hidden = !! INK.mode || !! M.rec;
+		ui.inkFab.classList.toggle( 'is-off', inkOff() );
+		ui.inkFab.classList.toggle( 'is-dir', inkKind() === 'dir' );
+		ui.app.classList.toggle( 'is-inking', drawing );
+		ui.pinHint.hidden = ! pinMode() || !! S.cnForm;
+		bar.hidden = ! INK.mode;
+		if ( ! INK.mode ) { return; }
+		bar.innerHTML = '';
+		var kind = inkKind();
+		function b( icon, lbl, on, fn, cls ) { return h( 'button', { type: 'button', class: 'ta-inkbar__b' + ( on ? ' is-on' : '' ) + ( cls ? ' ' + cls : '' ), 'aria-label': lbl, title: lbl, 'aria-pressed': on ? 'true' : 'false', html: icon, onclick: fn } ); }
+		if ( kind ) {
+			bar.appendChild( b( I.pen + '<i class="ta-inkbar__dot ta-inkbar__dot--' + kind + '"></i>', 'Pencil', INK.mode === 'pen', function () { INK.mode = 'pen'; paintInkUi(); } ) );
+			bar.appendChild( b( I.eraser, 'Eraser', INK.mode === 'erase', function () { INK.mode = 'erase'; paintInkUi(); } ) );
+			bar.appendChild( b( I.undo, 'Undo', false, inkUndo ) );
+			if ( kind === 'dir' ) { bar.appendChild( h( 'button', { type: 'button', class: 'ta-inkbar__who', onclick: pickInkWho }, [ 'For: ' + inkWhoLabel(), h( 'span', { html: I.down } ) ] ) ); }
+			bar.appendChild( h( 'span', { class: 'ta-inkbar__sep' } ) );
+		}
+		bar.appendChild( b( inkOff() ? I.eyeOff : I.eye, inkOff() ? 'Marks hidden — show them' : 'Hide marks', inkOff(), toggleInkOff, 'ta-inkbar__eye' ) );
+		bar.appendChild( h( 'button', { type: 'button', class: 'ta-inkbar__done', onclick: closeInk }, [ 'Done' ] ) );
+	}
+	/* pins: in the conductor's Notes view a tap on the music places the note there */
+	function pinMode() { return !! ( director() && S.cnotes && ! drawing() && S.view === 'music' && ui.music && ! ui.music.hidden ); }
+	function pinAt( cx, cy ) {
+		if ( ! pinMode() ) { return; }
+		var t = document.elementFromPoint( cx, cy ), box = t && t.closest ? t.closest( '.ta-pagebox' ) : null;
+		if ( ! box ) { return; }
+		var r = box.getBoundingClientRect();
+		var pin = { pg: +box.getAttribute( 'data-page' ), x: Math.max( 0, Math.min( 1, ( cx - r.left ) / r.width ) ), y: Math.max( 0, Math.min( 1, ( cy - r.top ) / r.height ) ) };
+		if ( S.cnForm && S.pinSet ) { S.pinSet( pin ); } else { openNote( null, pin ); }
 	}
 
 	/* ---------- playback ---------- */
@@ -1513,6 +1763,7 @@
 		ui.noteBtn.title = current() && ! S.who && ! director() ? 'Sign in to leave notes and feedback' : '';
 		paintFeelBtn();
 		applyView();
+		paintInk(); paintInkUi();
 	}
 
 	/* ---------- the scrubber ---------- */
@@ -1615,7 +1866,7 @@
 	onAudio( 'play', function () { ui.play.innerHTML = I.pause; ui.play.setAttribute( 'aria-label', 'Pause' ); ui.app.classList.add( 'is-playing' ); setFollow( S.follow ); } );
 	onAudio( 'pause', function () { flushHeat(); ui.play.innerHTML = I.play; ui.play.setAttribute( 'aria-label', 'Play' ); ui.app.classList.remove( 'is-playing' ); ui.followBtn.hidden = true; flushPlay(); } );
 	onAudio( 'durationchange', function () { paintScrub(); paintMarks(); paintLoop(); } );
-	window.addEventListener( 'pagehide', function () { flushPlay(); flushHeat( true ); } );
+	window.addEventListener( 'pagehide', function () { flushPlay(); flushHeat( true ); saveInk(); } );
 	document.addEventListener( 'keydown', function ( e ) {
 		if ( e.target.matches( 'input, textarea, select' ) ) { if ( e.key === 'Escape' ) { closeSheet(); } return; }
 		if ( e.key === 'Escape' ) { closeSheet(); }
@@ -1637,8 +1888,8 @@
 			( r && r.rows || [] ).forEach( function ( row ) { S.rows[ rowKey( row.song, row.part ) ] = row; } );
 			var own = S.who ? partForVoice( S.who.part ) : '';
 			if ( switched && own && own !== S.part && ! current() ) { S.part = own; ls( 'tcc_part', own ); }
-			if ( ! S.who ) { S.notes = []; done(); return; }
-			return api( 'state', 'GET', { cantata: D.cantata.id } ).then( function ( st ) { S.notes = st && st.notes || []; done(); } );
+			if ( ! S.who ) { S.notes = []; INK.mine = []; done(); return; }
+			return api( 'state', 'GET', { cantata: D.cantata.id } ).then( function ( st ) { S.notes = st && st.notes || []; INK.mine = st && st.marks || []; done(); paintInk(); } );
 		} ).catch( function () { done(); } );
 		function done() { paintTop(); paintSide(); paintStream(); paintTools(); }
 	}

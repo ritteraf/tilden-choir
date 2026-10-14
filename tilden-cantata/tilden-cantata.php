@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Choir Plugin (Tilden)
  * Description: Cantata fields, season logic, the home-page cantata stack, and members-only (Backstage) page protections for the Tilden Community Choir site.
- * Version:     2.26.0
+ * Version:     2.27.0
  * Author:      Tilden Community Choir
  * Requires at least: 6.5
  * Requires PHP: 8.1
@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TCC_VERSION', '2.26.0' );
+define( 'TCC_VERSION', '2.27.0' );
 define( 'TCC_FILE', __FILE__ );
 define( 'TCC_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TCC_URL', plugin_dir_url( __FILE__ ) );
@@ -37,6 +37,7 @@ require_once TCC_DIR . 'includes/score.php';
 require_once TCC_DIR . 'includes/director.php';
 require_once TCC_DIR . 'includes/teams.php';
 require_once TCC_DIR . 'includes/cdmarks.php';
+require_once TCC_DIR . 'includes/marks.php';
 
 /**
  * Activation: make sure the Cantata category exists.

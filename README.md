@@ -59,6 +59,12 @@ Full-screen, built for phones and older singers with "fat fingers" — big contr
   - No feedback prompts, and conductor playback isn't counted as practice.
 - **CD marks** — where each circled CD number starts, as a time in the whole-song tracks (voices, all-voices and accompaniment are aligned, so one set serves all). In conductor mode, *Set CD marks* taps them in, like page turns. Everyone sees the CD numbers on the progress bar and can tap one to start there. There are no sectioned files any more.
 - **Three versions for singers** — the button beside Loop cycles *their part → All (every voice, equal) → Accomp.* → their part, at the same spot. Versions a song doesn't have yet are skipped.
+- **On the music** — a pencil button in the corner of the score. Everything is stored as a position on its page (shares of the page's width and height), so it stays on the same notehead on any screen, spread or zoom.
+  - **The director's pencil** (conductor mode, red): pencil, eraser, undo and *For: Everyone / parts / teams*; saved on the cantata (`_tcc_marks`), shown to whoever it's for.
+  - **A singer's own pencil** (signed-in singers, gray): saved to their person record (`_tcc_marks_<cantata>`), seen only by them, on any device.
+  - **Apple Pencil** draws any time, with no button; fingers still pan, zoom and turn. A finger draws only while the pencil toolbar is open. The page holds still (no turns or drifting) while drawing.
+  - **Note pins** — in the conductor's Notes view, tap the music to start a note there, or tap with a note's form open to place or move its pin. The pin (the note's icon in gold) sits on the page and glows while its note is lit; the words stay in the notes column (or the strip on phones). Pinned notes show a gold dot in the column.
+  - **Show/hide** — the eye in the pencil toolbar hides all marks and pins for that device; the pencil button wears a crossed-out eye while they're hidden.
 
 ### Director tools
 - **Director report** (`/director/`, editors only) — "How the cantata is coming", one practice week at a time (rehearsal to rehearsal), or the whole season:
@@ -144,4 +150,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.26.0**, theme **1.8.0**.
+Current versions: plugin **2.27.0**, theme **1.8.0**.
