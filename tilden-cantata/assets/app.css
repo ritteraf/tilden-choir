@@ -736,3 +736,13 @@ body.tcc-app-on { overflow: hidden; }
 	.ta-cd::after { height: 10px; }
 	.ta-cd--tick::after { top: 10px; height: 14px; }
 }
+/* phones: the pencil button is just the pencil — it mustn't cover the music */
+@media (max-width: 699px) {
+	.ta-inkfab { width: 44px; padding: 0; gap: 0; }
+	.ta-inkfab__t { display: none; }
+}
+/* the play button rises into the times row: the times sit at the ends, the button in the middle (the side icons clear the times) */
+.ta-dock__main { margin-top: -12px; }
+@media (min-width: 900px) and (orientation: landscape) {
+	.ta.is-music .ta-dock__main { margin-top: -26px; }
+}
