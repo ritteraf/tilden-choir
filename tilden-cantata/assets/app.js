@@ -178,7 +178,7 @@
 		ui.strip = h( 'div', { class: 'ta-flow', hidden: true, 'aria-live': 'polite' } );
 		/* conductor mode */
 		ui.goBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: openKeypad, hidden: true }, [ h( 'b', { html: I.keypad } ), h( 'span', {}, [ 'Go to CD' ] ) ] );
-		ui.cnBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: toggleCn, hidden: true, 'aria-pressed': 'false' }, [ h( 'b', { html: I.pen } ), h( 'span', {}, [ 'Notes' ] ) ] );
+		ui.cnBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: toggleCn, hidden: true, 'aria-pressed': 'false' }, [ h( 'b', { html: STAR.svg } ), h( 'span', {}, [ 'Notes' ] ) ] );
 		ui.cparts = h( 'div', { class: 'ta-cparts', role: 'group', 'aria-label': 'Which part plays', hidden: true } );
 		ui.cn = h( 'section', { class: 'ta-cn', 'aria-label': 'Notes' } );
 		ui.jump = h( 'div', { class: 'ta-jumpwrap', hidden: true } );
