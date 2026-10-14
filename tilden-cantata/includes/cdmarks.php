@@ -11,7 +11,8 @@ defined( 'ABSPATH' ) || exit;
 
 /** [ song => [ [ 'n' => CD number, 't' => seconds into the song ], … ] ], soonest first. */
 function tcc_cd_marks( int $cantata_id ): array {
-	$stored = (array) get_post_meta( $cantata_id, '_tcc_cdmarks', true );
+	$stored = get_post_meta( $cantata_id, '_tcc_cdmarks', true );
+	$stored = is_array( $stored ) ? $stored : [];
 	$out    = [];
 	foreach ( $stored as $song => $list ) {
 		$out[ (int) $song ] = array_values( array_filter( (array) $list, 'is_array' ) );
@@ -52,6 +53,14 @@ function tcc_cd_marks_from_sections( int $cantata_id ): array {
 	return $out;
 }
 
+/* 2.23.0 saved a stray empty song 1 before anything was tapped: clear it once so it seeds again */
+add_action( 'init', function () {
+	if ( get_option( 'tcc_cdmarks_fix' ) !== '1' ) {
+		delete_post_meta_by_key( '_tcc_cdmarks' );
+		update_option( 'tcc_cdmarks_fix', '1' );
+	}
+} );
+
 add_action( 'rest_api_init', function () {
 	/* the director saves one song's marks */
 	register_rest_route( 'tcc/v1', '/cdmarks', [ 'methods' => 'POST', 'permission_callback' => fn() => current_user_can( 'edit_posts' ), 'callback' => function ( WP_REST_Request $r ) {
@@ -68,7 +77,8 @@ add_action( 'rest_api_init', function () {
 			}
 		}
 		usort( $marks, fn( $a, $b ) => $a['t'] <=> $b['t'] );
-		$all = (array) get_post_meta( $cantata, '_tcc_cdmarks', true );
+		$all = get_post_meta( $cantata, '_tcc_cdmarks', true );
+		$all = is_array( $all ) ? $all : [];
 		$all[ $song ] = $marks; // an empty list on purpose means "no CDs in this song"
 		update_post_meta( $cantata, '_tcc_cdmarks', $all );
 		return [ 'ok' => true, 'marks' => $marks ];
