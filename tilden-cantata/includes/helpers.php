@@ -370,3 +370,24 @@ function tcc_gallery_ids( int $post_id ): array {
 	};
 	return $find( parse_blocks( $post->post_content ) );
 }
+
+/* ---------- the director ---------- */
+
+/** A WordPress administrator is the director: no "who are you" on Backstage, conductor mode in the player. */
+function tcc_is_director(): bool {
+	return is_user_logged_in() && current_user_can( 'manage_options' );
+}
+
+/* the director already proved who they are by logging in: no page password for them */
+add_filter( 'post_password_required', function ( $required ) {
+	return $required && tcc_is_director() ? false : $required;
+}, 10, 1 );
+
+/* and they aren't one of the people: forget any "who's practicing" this device remembered for them */
+add_action( 'template_redirect', function () {
+	if ( isset( $_COOKIE['tcc_who'] ) && tcc_is_director() ) {
+		setcookie( 'tcc_who', '', [ 'expires' => time() - 3600, 'path' => '/', 'secure' => is_ssl(), 'samesite' => 'Lax' ] );
+		unset( $_COOKIE['tcc_who'] );
+	}
+} );
+

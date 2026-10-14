@@ -1052,7 +1052,7 @@
 		marksFor( t.song ).forEach( function ( m ) { if ( m.t <= now ) { cur = m; } } );
 		return cur;
 	}
-	function canCond() { return !! ( D.canEdit && LISTS[ 'now:accompaniment' ] ); }
+	function canCond() { return !! ( D.director && D.canEdit && LISTS[ 'now:accompaniment' ] ); }
 	function setCond( on ) {
 		S.cond = !! on && canCond(); ls( 'tcc_cond', S.cond ? '1' : null );
 		if ( S.cond ) { S.alt = false; if ( S.part !== 'accompaniment' || ( S.list && S.list.part !== 'accompaniment' ) ) { setPart( 'accompaniment' ); } }
@@ -1653,7 +1653,7 @@
 	function start() {
 		var saved = ls( 'tcc_part' ) || '';
 		S.part = urlPart() || ( LISTS[ 'now:' + saved ] ? saved : '' ) || ORDER.filter( function ( p ) { return LISTS[ 'now:' + p ]; } )[ 0 ] || 'soprano';
-		S.cond = canCond() && ls( 'tcc_cond' ) === '1' && ! urlPart();
+		S.cond = canCond() && ! urlPart(); // the director always opens on the podium; a part link (?part=) previews a singer's view
 		S.cpart = ls( 'tcc_cond_part' ) || 'accompaniment';
 		if ( S.cond ) { S.part = 'accompaniment'; }
 		build();

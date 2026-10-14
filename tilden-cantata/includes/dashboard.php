@@ -189,6 +189,9 @@ function tcc_world( int $cantata_id ): array {
 		'icons'      => [ 'doc' => tcc_svg( 'file-doc' ), 'image' => tcc_svg( 'file-image' ), 'play' => tcc_svg( 'file-play' ), 'link' => tcc_svg( 'file-link' ), 'star' => tcc_svg( 'star' ), 'bell' => tcc_svg( 'bell' ), 'then' => tcc_svg( 'then' ), 'note' => tcc_svg( 'note' ) ],
 		'icon'       => TCC_URL . 'assets/icons/icon-192.png',
 		'canEdit'    => current_user_can( 'edit_posts' ),
+		'isDirector' => function_exists( 'tcc_is_director' ) && tcc_is_director(),
+		'dirName'    => is_user_logged_in() ? (string) wp_get_current_user()->first_name ?: (string) wp_get_current_user()->display_name : '',
+		'logout'     => is_user_logged_in() ? wp_logout_url( home_url( '/' ) ) : '',
 		'admin'      => current_user_can( 'edit_posts' ) ? ( ( $dp = get_page_by_path( 'director' ) ) && $dp->post_status === 'publish' ? get_permalink( $dp ) : admin_url( 'admin.php?page=tcc-tracks' ) ) : '',
 	];
 }
@@ -262,7 +265,7 @@ add_action( 'init', function () {
 			wp_enqueue_style( 'tcc-dash', TCC_URL . 'assets/dashboard.css', [ 'tcc-signin' ], TCC_VERSION );
 			wp_enqueue_script( 'tcc-dash', TCC_URL . 'assets/dashboard.js', [ 'tcc-signin' ], TCC_VERSION, [ 'strategy' => 'defer' ] );
 			$world = tcc_world( $current );
-			if ( $view === 'home' && current_user_can( 'edit_posts' ) && function_exists( 'tcc_director_summary' ) ) {
+			if ( $view === 'home' && function_exists( 'tcc_is_director' ) && tcc_is_director() && function_exists( 'tcc_director_summary' ) ) {
 				$world['director'] = tcc_director_summary( $current );
 			}
 			if ( $view === 'schedule' ) {

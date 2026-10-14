@@ -484,7 +484,7 @@
 
 	/* the director's glance at the week: a tap opens the full report */
 	function directorWidget() {
-		var d = W.director; if ( ! d || ! d.url ) { return null; }
+		var d = W.director; if ( ! d || ! d.url || preview() ) { return null; }
 		var mins = fmtMin;
 		var stat = function ( big, small, cls ) { return h( 'span', { class: 'tcc-hm__dstat' + ( cls ? ' ' + cls : '' ) }, [ h( 'b', {}, [ big ] ), h( 'span', {}, [ small ] ) ] ); };
 		/* the whole choir, day by day: the line is every singer doing a good practice */
@@ -623,7 +623,7 @@
 				h( 'h2', { class: 'tcc-hm__hello' }, [ greeting() + ', ' + firstOf( who ) ] ),
 				meta.length ? h( 'span', { class: 'tcc-hm__meta' }, [ meta.join( ' · ' ) ] ) : null
 			] ),
-			h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] )
+			h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': preview() ? 'Director menu' : 'Switch person — now ' + who.name, onclick: preview() ? openDirMenu : openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] )
 		] );
 	}
 
@@ -654,7 +654,7 @@
 		var strip = homeStrip(); if ( strip ) { grid.appendChild( strip ); }
 		show( [ head( who ), grid, h( 'footer', { class: 'tcc-hm__foot' }, [
 			h( 'span', {}, [ who.name + ( W.voice[ who.part ] && isSinger() ? ' · ' + W.voice[ who.part ].label : '' ) + ' · ' ] ),
-			h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ),
+			who.id ? h( 'button', { type: 'button', class: 'tcc-hm__link', onclick: function () { signIn( 'details', { id: who.id, name: who.name, onSeason: true } ); } }, [ 'Update my details' ] ) : null,
 			! W.director && W.canEdit && W.admin ? h( 'br' ) : null,
 			! W.director && W.canEdit && W.admin ? h( 'a', { class: 'tcc-hm__link', href: W.admin }, [ 'Director: how the cantata is coming' ] ) : null
 		] ) ] );
@@ -796,11 +796,12 @@
 
 	/* ---------- the Schedule tab: every rehearsal, month by month ---------- */
 	function personHead( title, meta ) {
+		if ( isDir() ) { return dirHead( title, meta ); }
 		var who = me && me.who && me.who.onSeason ? me.who : null;
 		if ( ! who ) { return guestHead( title, meta ? [ meta ] : null ); }
 		return h( 'header', { class: 'tcc-hm__head' }, [
 			h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ title ] ), meta ? h( 'span', { class: 'tcc-hm__meta' }, [ meta ] ) : null ] ),
-			h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] )
+			h( 'button', { type: 'button', class: 'tcc-hm__me', 'aria-label': preview() ? 'Director menu' : 'Switch person — now ' + who.name, onclick: preview() ? openDirMenu : openSwitch }, [ avatar( who ), h( 'span', { class: 'tcc-hm__me-n' }, [ firstOf( who ) ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] )
 		] );
 	}
 	function viewSchedule() {
@@ -855,9 +856,132 @@
 		show( nodes );
 	}
 
+	/* ---------- the director: a WordPress administrator, so no "who are you" ---------- */
+	/* They can preview a singer's Backstage for one voice part; it lasts until the tab closes. */
+	function preview() { var k = W.isDirector ? store( 'ss', 'tcc_preview' ) : ''; return k && W.voice[ k ] ? k : ''; }
+	function isDir() { return !! W.isDirector && ! preview(); }
+	function previewMe( k ) { return { who: { id: 0, name: 'Preview', first: W.voice[ k ].label, onSeason: true, types: [ 'singers' ], part: k, role: '', solos: false }, rows: [], notes: [], days: null }; }
+	function setPreview( k ) { store( 'ss', 'tcc_preview', k || null ); closeSheet(); route(); window.scrollTo( 0, 0 ); }
+	function dirButton( cls, nameCls ) {
+		return h( 'button', { type: 'button', class: cls, 'aria-label': 'Director menu', onclick: openDirMenu }, [ h( 'span', { class: 'tcc-hm__av tcc-hm__av--dir', 'aria-hidden': 'true' }, [ 'D' ] ), h( 'span', { class: nameCls || '' }, [ 'Director' ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] );
+	}
+	function dirHead( title, meta ) {
+		return h( 'header', { class: 'tcc-hm__head' }, [
+			h( 'div', { class: 'tcc-hm__head-t' }, [ h( 'span', { class: 'tcc-hm__eyebrow' }, [ W.cantata.year + ' · ' + W.cantata.title ] ), h( 'h2', { class: 'tcc-hm__hello' }, [ title ] ), meta ? h( 'span', { class: 'tcc-hm__meta' }, [ meta ] ) : null ] ),
+			dirButton( 'tcc-hm__me', 'tcc-hm__me-n' )
+		] );
+	}
+	function openDirMenu() {
+		var voices = Object.keys( W.voice );
+		openSheet( 'Director', h( 'div', { class: 'tcc-hm__switch' }, [
+			h( 'p', { class: 'tcc-hm__fine' }, [ 'See Backstage the way a singer does:' ] ),
+			h( 'div', { class: 'tcc-hm__more2 tcc-hm__more2--voices' }, voices.map( function ( k ) {
+				return h( 'button', { type: 'button', class: 'tcc-hm__opt', onclick: function () { setPreview( k ); } }, [ h( 'b', {}, [ W.voice[ k ].label ] ), h( 'span', {}, [ 'Preview' ] ) ] );
+			} ) ),
+			h( 'div', { class: 'tcc-hm__dirlinks' }, [
+				W.admin ? h( 'a', { class: 'tcc-hm__link', href: W.admin }, [ 'Director report' ] ) : null,
+				W.logout ? h( 'a', { class: 'tcc-hm__link', href: W.logout }, [ 'Log out' ] ) : null
+			] )
+		] ) );
+	}
+	function previewBar() {
+		var k = preview(); if ( ! k ) { return null; }
+		return h( 'div', { class: 'tcc-hm__preview', role: 'status' }, [
+			h( 'span', {}, [ 'Previewing as a ', h( 'b', {}, [ W.voice[ k ].label ] ), ' — what singers see.' ] ),
+			h( 'button', { type: 'button', class: 'tcc-hm__btn tcc-hm__btn--sm', onclick: function () { setPreview( '' ); } }, [ 'Back to director' ] )
+		] );
+	}
+	/* rehearsing: conductor mode, with the next rehearsal's songs a tap away */
+	function condWidget( next ) {
+		var list = next && ! next.full && next.songs && next.songs.length ? next.songs : W.songs.map( function ( t, i ) { return i; } );
+		var label = next ? ( next.full ? 'Full run-through · ' + next.dow : next.dow + '’s songs' ) : 'Every song';
+		return widget( 'tcc-hm__cond', [
+			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Conductor mode' ), h( 'a', { class: 'tcc-hm__dir-go', href: practiceUrl( '', null ) }, [ 'Open', h( 'span', { html: SVG.right } ) ] ) ] ),
+			h( 'span', { class: 'tcc-hm__fine' }, [ label ] ),
+			h( 'ul', { class: 'tcc-hm__condsongs' }, list.slice( 0, 8 ).map( function ( i ) {
+				var f = next && next.focus && next.focus.indexOf( i ) !== -1;
+				return h( 'li', {}, [ h( 'a', { href: practiceUrl( '', i ) }, [ h( 'b', {}, [ String( i + 1 ) ] ), h( 'span', {}, [ W.songs[ i ] || '' ] ), f ? h( 'span', { class: 'tcc-hm__star' }, [ '★' ] ) : null, h( 'span', { class: 'tcc-hm__condsongs-p', html: SVG.play } ) ] ) ] );
+			} ) )
+		] );
+	}
+	/* how each team is doing: a task is done once everyone on the team has ticked it */
+	function teamStats( k ) {
+		var n = ( W.teams[ k ] || [] ).length, tasks = ( W.tasks || [] ).filter( function ( x ) { return x.team === k; } );
+		var open = tasks.filter( function ( x ) { return ! n || x.done.length < n; } );
+		open.sort( function ( a, b ) { return ( a.due || '9999' ) < ( b.due || '9999' ) ? -1 : 1; } );
+		return { n: n, tasks: tasks, open: open };
+	}
+	function teamsWidget() {
+		var keys = Object.keys( W.roles ); if ( ! keys.length ) { return null; }
+		return widget( 'tcc-hm__wide tcc-hm__dteams', [
+			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Teams', 'is-red' ), h( 'a', { class: 'tcc-hm__dir-go', href: '#team' }, [ 'All tasks', h( 'span', { html: SVG.right } ) ] ) ] ),
+			h( 'ul', { class: 'tcc-hm__dteam-list' }, keys.map( function ( k ) {
+				var st = teamStats( k ), nx = st.open[ 0 ], due = nx ? dueLabel( nx.due, false ) : null;
+				return h( 'li', {}, [
+					h( 'b', {}, [ W.roles[ k ].label ] ),
+					h( 'span', { class: 'tcc-hm__fine' }, [ st.n + ( st.n === 1 ? ' person' : ' people' ) + ( st.tasks.length ? ' · ' + ( st.tasks.length - st.open.length ) + ' of ' + st.tasks.length + ' tasks done' : ' · no tasks yet' ) ] ),
+					nx ? h( 'span', { class: 'tcc-hm__dteam-next' }, [ nx.text, due ? h( 'span', { class: 'tcc-hm__chip tcc-hm__due ' + due[ 1 ] }, [ due[ 0 ] ] ) : null, h( 'span', { class: 'tcc-hm__fine' }, [ nx.done.length + '/' + st.n + ' ✓' ] ) ] ) : null
+				] );
+			} ) )
+		] );
+	}
+	function docsCard() {
+		var n = 0; Object.keys( W.docs || {} ).forEach( function ( g ) { n += ( W.docs[ g ] || [] ).length; } );
+		return h( 'a', { class: 'tcc-hm__w tcc-hm__sched', href: '#docs' }, [
+			h( 'span', { class: 'tcc-hm__sched-i', html: W.icons.doc } ),
+			h( 'span', { class: 'tcc-hm__sched-t' }, [ h( 'b', {}, [ 'Documents' ] ), h( 'span', {}, [ n ? n + ( n === 1 ? ' posted' : ' posted' ) : 'Nothing posted yet' ] ) ] )
+		] );
+	}
+	function viewDirHome() {
+		var next = ( W.rehearsals || [] )[ 0 ];
+		var grid = h( 'div', { class: 'tcc-hm__grid' } );
+		[ rehearsalWidget( next, '' ), condWidget( next ), directorWidget(), teamsWidget(), countdownWidget(), scheduleWidget(), docsCard(), homeStrip() ].forEach( function ( w ) { if ( w ) { grid.appendChild( w ); } } );
+		show( [ dirHead( greeting() + ( W.dirName ? ', ' + W.dirName : '' ), 'Director' ), grid ] );
+	}
+	function dirTaskRow( x, n ) {
+		var all = n && x.done.length >= n, due = dueLabel( x.due, all );
+		return h( 'li', { class: 'tcc-hm__task tcc-hm__task--ro' + ( all ? ' is-done' : '' ) }, [ h( 'div', { class: 'tcc-hm__task-l' }, [
+			h( 'span', { class: 'tcc-hm__task-n' + ( all ? ' is-all' : '' ) }, [ x.done.length + '/' + n ] ),
+			h( 'span', { class: 'tcc-hm__task-t' }, [
+				h( 'b', {}, [ x.text ] ),
+				x.details ? h( 'span', {}, [ x.details ] ) : null,
+				x.done.length ? h( 'span', { class: 'tcc-hm__task-who' }, [ '✓ ' + x.done.map( function ( d ) { return d.name.split( ' ' )[ 0 ]; } ).join( ', ' ) ] ) : null
+			] ),
+			due ? h( 'span', { class: 'tcc-hm__chip tcc-hm__due ' + due[ 1 ] }, [ due[ 0 ] ] ) : null
+		] ) ] );
+	}
+	function viewDirTeam() {
+		var nodes = [ dirHead( 'Teams', '' ) ], grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list' } );
+		Object.keys( W.roles ).forEach( function ( k ) {
+			var st = teamStats( k ), names = W.teams[ k ] || [], meet = nextMeeting( 'role:' + k );
+			var sorted = st.tasks.slice().sort( function ( a, b ) { var da = st.n && a.done.length >= st.n, db = st.n && b.done.length >= st.n; return ( da - db ) || ( ( a.due || '9999' ) < ( b.due || '9999' ) ? -1 : 1 ); } );
+			grid.appendChild( widget( 'tcc-hm__wide tcc-hm__dteam', [
+				h( 'div', { class: 'tcc-hm__row' }, [ wk( W.roles[ k ].label, 'is-red' ), h( 'span', { class: 'tcc-hm__fine' }, [ st.tasks.length ? ( st.tasks.length - st.open.length ) + ' of ' + st.tasks.length + ' done' : '' ] ) ] ),
+				h( 'p', { class: 'tcc-hm__body' }, [ names.length ? names.join( ', ' ) : 'Nobody yet.' ] ),
+				meet ? h( 'p', { class: 'tcc-hm__meet' }, [ h( 'span', { html: SVG.cal } ), h( 'span', {}, [ h( 'b', {}, [ 'Meets ' ] ), meet ] ) ] ) : null,
+				sorted.length ? h( 'ul', { class: 'tcc-hm__tasks' }, sorted.map( function ( x ) { return dirTaskRow( x, st.n ); } ) ) : h( 'p', { class: 'tcc-hm__fine' }, [ 'No tasks yet.' ] )
+			] ) );
+		} );
+		nodes.push( grid );
+		show( nodes );
+	}
+	function viewDirDocs() {
+		var groups = [ 'everyone' ].concat( Object.keys( W.types ) ).concat( Object.keys( W.roles ).map( function ( k ) { return 'role:' + k; } ) );
+		var grid = h( 'div', { class: 'tcc-hm__grid tcc-hm__grid--list tcc-hm__grid--docs' } ), any = false;
+		groups.forEach( function ( g ) {
+			var list = docList( [ g ], false ); if ( ! list ) { return; }
+			any = true;
+			var label = g === 'everyone' ? 'For everyone' : g.indexOf( 'role:' ) === 0 ? teamName( g.slice( 5 ) ) : 'For ' + ( W.types[ g ] || g ).toLowerCase();
+			grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ wk( label, 'is-red' ), list ] ) );
+		} );
+		if ( ! any ) { grid.appendChild( h( 'div', { class: 'tcc-hm__w tcc-hm__wide' }, [ h( 'p', { class: 'tcc-hm__fine' }, [ 'Nothing posted yet.' ] ) ] ) ); }
+		show( [ dirHead( 'Documents', 'Everything, for every group and team' ), grid ] );
+	}
+
 	/* ---------- go ---------- */
 	function load() {
 		root.innerHTML = '';
+		if ( W.isDirector ) { me = {}; rows = {}; route(); return; }
 		root.appendChild( h( 'p', { class: 'tcc-dash__loading' }, [ 'One moment…' ] ) );
 		api( 'me', { cantata: W.cantata.id } ).then( function ( r ) {
 			me = r || {}; rows = {};
@@ -872,20 +996,24 @@
 		var who = me && me.who && me.who.onSeason ? me.who : null;
 		slot.innerHTML = '';
 		document.documentElement.classList.add( 'tcc-navme' );
+		if ( W.isDirector ) { slot.appendChild( dirButton( 'tcc-tabs__who' ) ); return; }
 		if ( ! who ) {
 			slot.appendChild( h( 'button', { type: 'button', class: 'tcc-tabs__who', 'aria-label': 'Sign in — who’s practicing?', onclick: openSwitch }, [ h( 'span', { class: 'tcc-hm__av tcc-hm__av--guest', html: DOOR.user } ), h( 'span', {}, [ 'Sign in' ] ) ] ) );
 			return;
 		}
 		var part = W.voice[ who.part ] && isSinger() ? ' · ' + W.voice[ who.part ].label : '';
-		slot.appendChild( h( 'button', { type: 'button', class: 'tcc-tabs__who', 'aria-label': 'Switch person — now ' + who.name, onclick: openSwitch }, [ avatar( who ), h( 'span', {}, [ who.name + part ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) );
+		slot.appendChild( h( 'button', { type: 'button', class: 'tcc-tabs__who', 'aria-label': preview() ? 'Director menu' : 'Switch person — now ' + who.name, onclick: preview() ? openDirMenu : openSwitch }, [ avatar( who ), h( 'span', {}, [ who.name + part ] ), h( 'span', { class: 'tcc-hm__me-c', html: SVG.down } ) ] ) );
 	}
 	/* the hub draws three tabs: Home (default), Team (#team) and Docs (#docs) */
 	function route() {
+		if ( W.isDirector ) { var pv = preview(); me = pv ? previewMe( pv ) : {}; rows = {}; }
 		navMe();
+		route.after();
 		if ( W.view === 'schedule' ) { document.documentElement.setAttribute( 'data-tcc-tab', 'schedule' ); root.classList.add( 'tcc-dash--sched' ); viewSchedule(); return; }
 		var tab = ( location.hash || '' ).replace( '#', '' );
 		document.documentElement.setAttribute( 'data-tcc-tab', tab === 'team' || tab === 'docs' ? tab : 'home' );
 		if ( window.tccTabs ) { window.tccTabs(); }
+		if ( isDir() ) { if ( tab === 'team' ) { viewDirTeam(); } else if ( tab === 'docs' ) { viewDirDocs(); } else { viewDirHome(); } return; }
 		if ( tab === 'team' ) { viewTeam(); return; }
 		if ( tab === 'docs' ) { viewDocs(); return; }
 		var r = me || {};
@@ -894,6 +1022,8 @@
 		if ( ! r.who.onSeason ) { viewWelcomeBack( r.who ); return; }
 		viewDash();
 	}
+	/* previewing: a banner over whatever page is showing */
+	route.after = function () { setTimeout( function () { var old = root.querySelector( '.tcc-hm__preview' ); if ( old ) { old.remove(); } var b = previewBar(); if ( b ) { root.insertBefore( b, root.firstChild ); } }, 0 ); };
 	window.addEventListener( 'hashchange', function () { if ( me && W.view !== 'schedule' ) { route(); window.scrollTo( 0, 0 ); } } );
 	load();
 } )();

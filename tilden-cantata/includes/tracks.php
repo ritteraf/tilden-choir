@@ -292,6 +292,9 @@ function tcc_who_sign( int $id ): string {
 	return $id . '.' . substr( hash_hmac( 'sha256', 'who|' . $id, wp_salt( 'auth' ) ), 0, 24 );
 }
 function tcc_who(): int {
+	if ( function_exists( 'tcc_is_director' ) && tcc_is_director() ) {
+		return 0; // the director isn't one of the singers
+	}
 	$c = (string) ( $_COOKIE['tcc_who'] ?? '' );
 	if ( ! preg_match( '/^(\d+)\.([a-f0-9]{24})$/', $c, $m ) ) {
 		return 0;
@@ -576,6 +579,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'token'     => tcc_practice_token( $current ),
 		'nonce'     => current_user_can( 'edit_posts' ) ? wp_create_nonce( 'wp_rest' ) : '',
 		'canEdit'   => current_user_can( 'edit_posts' ),
+		'director'  => function_exists( 'tcc_is_director' ) && tcc_is_director(),
 		'cantata'   => [ 'id' => $current, 'year' => tcc_year( $current ), 'title' => get_the_title( $current ) ],
 		'part'      => $part,
 		'partLabel' => $label,
