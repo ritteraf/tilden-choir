@@ -151,4 +151,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.28.11**, theme **1.8.0**.
+Current versions: plugin **2.28.12**, theme **1.8.0**.

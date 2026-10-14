@@ -132,6 +132,9 @@
 		var el = new Audio(); el.preload = 'metadata'; el.muted = true;
 		try { el.preservesPitch = true; el.mozPreservesPitch = true; el.webkitPreservesPitch = true; } catch ( e ) {}
 		HANDLERS.forEach( function ( x ) { wire( el, x[ 0 ], x[ 1 ] ); } );
+		/* has this file really started playing? (a new file hasn't) — see seek() */
+		el.addEventListener( 'loadstart', function () { el._played = false; } );
+		el.addEventListener( 'playing', function () { el._played = true; } );
 		PLAYERS.push( el ); return el;
 	}
 	function onAudio( ev, fn ) { HANDLERS.push( [ ev, fn ] ); PLAYERS.forEach( function ( el ) { wire( el, ev, fn ); } ); }
@@ -1589,6 +1592,7 @@
 		poolReset( t.song );
 		if ( S.cond ) { var cp = S.cpart && S.cpart !== 'accompaniment' && cTrack( S.cpart, t.song ) ? S.cpart : 'accompaniment'; S.cnow = cp; if ( cp !== 'accompaniment' ) { src = cTrack( cp, t.song ); } }
 		audio.muted = false;
+		audio._played = false; S.seekTo = null;
 		audio.src = src.url;
 		if ( S.cond ) { audio.preload = 'auto'; }
 		POOL.by[ hearing() ] = audio;
@@ -1664,7 +1668,22 @@
 		try { var r = api( 'heat', 'POST', { cantata: D.cantata.id, items: JSON.stringify( items ) }, D.token, beacon ); if ( r && r.catch ) { r.catch( function () {} ); } } catch ( e ) {}
 	}
 	function back5() { var from = audio.currentTime || 0; seek( from - 5 ); heat( 'back', audio.currentTime || 0, from ); }
-	function seek( t ) { if ( ! audio.duration ) { return; } audio.currentTime = Math.max( 0, Math.min( audio.duration - 0.2, t ) ); paintScrub(); tickStream( true ); }
+	/* the song's length: the player's once it knows it; before that (iPhone and iPad fetch nothing until play), the track list's */
+	function songDur() { return audio.duration || ( current() && +current().dur ) || 0; }
+	/* Safari on iPhone and iPad can't really move a song it hasn't started: it says it did, then plays from 0:00
+	   with a frozen clock. So before the first play we remember the spot, and go there the moment the music starts. */
+	function seek( t ) {
+		var d = songDur(); if ( ! d ) { return; }
+		t = Math.max( 0, Math.min( d - 0.2, t ) );
+		if ( ! audio._played ) { S.seekTo = t; }
+		try { audio.currentTime = t; } catch ( e ) {}
+		paintScrub(); tickStream( true );
+	}
+	function applySeekTo() {
+		if ( S.seekTo === null || S.seekTo === undefined ) { return; }
+		var t = S.seekTo; S.seekTo = null;
+		if ( Math.abs( ( audio.currentTime || 0 ) - t ) > 0.4 ) { try { audio.currentTime = t; } catch ( e ) {} }
+	}
 	function cycleRate() {
 		var rates = [ 1, 0.85, 0.75 ], i = rates.indexOf( S.rate ); S.rate = rates[ ( i + 1 ) % rates.length ];
 		audio.playbackRate = S.rate; paintTools();
@@ -1771,7 +1790,7 @@
 
 	/* ---------- the scrubber ---------- */
 	function paintScrub() {
-		var d = audio.duration || 0, c = audio.currentTime || 0, pct = d ? c / d * 100 : 0;
+		var d = songDur(), c = S.seekTo !== null && S.seekTo !== undefined && ! audio._played ? S.seekTo : ( audio.currentTime || 0 ), pct = d ? Math.min( 100, c / d * 100 ) : 0;
 		ui.fill.style.width = pct + '%'; ui.knob.style.left = pct + '%';
 		ui.tcur.textContent = fmt( c ); ui.tdur.textContent = fmt( d || ( current() && current().dur ) );
 		ui.scrub.setAttribute( 'aria-valuenow', Math.round( c ) ); ui.scrub.setAttribute( 'aria-valuemax', Math.round( d ) ); ui.scrub.setAttribute( 'aria-valuetext', fmt( c ) + ' of ' + fmt( d ) );
@@ -1808,9 +1827,9 @@
 		else { ui.loopBand.hidden = true; }
 	}
 	function scrubStart( e ) {
-		if ( ! audio.duration ) { return; }
+		if ( ! songDur() ) { return; }
 		var rect = ui.scrub.getBoundingClientRect(), from = audio.currentTime || 0;
-		function at( ev ) { seek( Math.min( 1, Math.max( 0, ( ev.clientX - rect.left ) / rect.width ) ) * audio.duration ); }
+		function at( ev ) { seek( Math.min( 1, Math.max( 0, ( ev.clientX - rect.left ) / rect.width ) ) * songDur() ); }
 		at( e ); ui.scrub.setPointerCapture( e.pointerId ); ui.scrub.classList.add( 'is-drag' );
 		function move( ev ) { at( ev ); }
 		function up() { var to = audio.currentTime || 0; if ( from - to > 2 && from - to < 45 ) { heat( 'seek', to, from ); } ui.scrub.classList.remove( 'is-drag' ); ui.scrub.removeEventListener( 'pointermove', move ); ui.scrub.removeEventListener( 'pointerup', up ); setFollow( true ); scrollToActive(); }
@@ -1869,6 +1888,17 @@
 		}
 		if ( t && askAfter( t, heardEnough ) ) { return; }
 		step( 1 );
+	} );
+	onAudio( 'playing', function () {
+		applySeekTo();
+		/* a safety net for Safari: playing, with data, but the clock frozen — reload the song at that spot and carry on */
+		var el = audio, t0 = el.currentTime, want = t0;
+		clearTimeout( el._watch );
+		el._watch = setTimeout( function () {
+			if ( el !== audio || el.paused || el.seeking || el.readyState < 3 || Math.abs( el.currentTime - t0 ) > 0.05 ) { return; }
+			el.load();
+			el.addEventListener( 'loadedmetadata', function () { try { el.currentTime = want; } catch ( e ) {} el.play().catch( function () {} ); }, { once: true } );
+		}, 2000 );
 	} );
 	onAudio( 'play', function () { ui.play.innerHTML = I.pause; ui.play.setAttribute( 'aria-label', 'Pause' ); ui.app.classList.add( 'is-playing' ); setFollow( S.follow ); } );
 	onAudio( 'pause', function () { flushHeat(); ui.play.innerHTML = I.play; ui.play.setAttribute( 'aria-label', 'Play' ); ui.app.classList.remove( 'is-playing' ); ui.followBtn.hidden = true; flushPlay(); } );
