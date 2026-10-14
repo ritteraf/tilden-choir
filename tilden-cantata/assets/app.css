@@ -746,3 +746,11 @@ body.tcc-app-on { overflow: hidden; }
 @media (min-width: 900px) and (orientation: landscape) {
 	.ta.is-music .ta-dock__main { margin-top: -26px; }
 }
+
+/* scrollbars: thin and quiet, to match the dark player (jump list, notes, songs, sheets) */
+.ta * { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+.ta *::-webkit-scrollbar { width: 8px; height: 8px; }
+.ta *::-webkit-scrollbar-track { background: transparent; }
+.ta *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+.ta *::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.32); }
+.ta *::-webkit-scrollbar-corner { background: transparent; }
