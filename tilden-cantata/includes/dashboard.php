@@ -190,10 +190,22 @@ function tcc_world( int $cantata_id ): array {
 		'icon'       => TCC_URL . 'assets/icons/icon-192.png',
 		'canEdit'    => current_user_can( 'edit_posts' ),
 		'isDirector' => function_exists( 'tcc_is_director' ) && tcc_is_director(),
-		'dirName'    => is_user_logged_in() ? (string) wp_get_current_user()->first_name ?: (string) wp_get_current_user()->display_name : '',
+		'dirName'    => is_user_logged_in() ? tcc_director_first_name() : '',
 		'logout'     => is_user_logged_in() ? wp_logout_url( home_url( '/' ) ) : '',
 		'admin'      => current_user_can( 'edit_posts' ) ? ( ( $dp = get_page_by_path( 'director' ) ) && $dp->post_status === 'publish' ? get_permalink( $dp ) : admin_url( 'admin.php?page=tcc-tracks' ) ) : '',
 	];
+}
+
+/** The director's first name for the greeting: their profile's first name, else the first word of a display name (never an email). */
+function tcc_director_first_name(): string {
+	$u = wp_get_current_user();
+	foreach ( [ (string) $u->first_name, (string) $u->display_name, (string) $u->nickname ] as $n ) {
+		$n = trim( $n );
+		if ( $n !== '' && strpos( $n, '@' ) === false ) {
+			return explode( ' ', $n )[0];
+		}
+	}
+	return '';
 }
 
 /* ---------- REST: who am I, and how is my practice going ---------- */
