@@ -674,3 +674,7 @@ body.tcc-app-on { overflow: hidden; }
 .ta-inkfab__i svg { width: 19px; height: 19px; }
 /* the director's star notes are in the director's red pencil, like the marks; lit, a gold glow comes up behind */
 .ta-pin__ic, .ta-pin.is-on .ta-pin__ic, .ta-pin.is-draft .ta-pin__ic { color: #c2412d; }
+/* a filled red star; lit, the music around it fades back to white so the star stands out (no glow colour) */
+.ta-pin__ic path { fill: currentColor; }
+.ta-pin__glow { fill: #fff; }
+.ta-pin.is-on .ta-pin__glow, .ta-pin.is-draft .ta-pin__glow { opacity: 1; }
