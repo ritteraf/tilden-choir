@@ -1781,12 +1781,13 @@
 		var d = audio.duration; if ( ! d ) { return; }
 		var o = OFF();
 		CUES.forEach( function ( c ) { var x = c.t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--' + c.kind } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } );
-		if ( S.view === 'music' && S.cond ) { turnsFor().forEach( function ( t ) { var x = t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--turn' } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } ); }
+		if ( S.view === 'music' ) { turnsFor().forEach( function ( t ) { var x = t - o; if ( x < 0 || x > d ) { return; } var m = h( 'span', { class: 'ta-mark ta-mark--turn' } ); m.style.left = ( x / d * 100 ) + '%'; ui.marks.appendChild( m ); } ); }
 		paintCdLabels( d, o );
 	}
 	/* the circled CD numbers from the score, along the bar: tap one to start there */
 	function paintCdLabels( d, o ) {
 		ui.cds.innerHTML = '';
+		if ( ! S.cond ) { return; } // CD numbers are the director's map; singers don't need them
 		var t = current(); if ( ! t || ! S.list || ! S.list.now || t.song < 0 || ! d ) { return; }
 		var ms = CDREC && CDREC.song === t.song ? CDREC.marks : marksFor( t.song );
 		var W = ui.scrub.clientWidth || 300, room = W >= 360 ? 26 : 22, last = -1e9;
