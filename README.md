@@ -63,7 +63,7 @@ Full-screen, built for phones and older singers with "fat fingers" — big contr
   - **The director's pencil** (conductor mode, red): pencil, eraser, undo and *For: Everyone / parts / teams*; saved on the cantata (`_tcc_marks`), shown to whoever it's for.
   - **A singer's own pencil** (signed-in singers, gray): saved to their person record (`_tcc_marks_<cantata>`), seen only by them, on any device.
   - **Apple Pencil** draws any time, with no button; fingers still pan, zoom and turn. A finger draws only while the pencil toolbar is open. The page holds still (no turns or drifting) while drawing.
-  - **Note pins** — in the conductor's Notes view, tap the music to start a note there, or tap with a note's form open to place or move its pin. The pin (the note's icon in gold) sits on the page and glows while its note is lit; the words stay in the notes column (or the strip on phones). Pinned notes show a gold dot in the column.
+  - **Note pins** — in the conductor's Notes view, tap the music to start a note there, or tap with a note's form open to place or move its pin. The pin (the note's icon) sits on the page in gray and turns gold while its note is lit; the words stay in the notes column (or the strip on phones). Pinned notes show a gold dot in the column.
   - **Show/hide** — the eye in the pencil toolbar hides all marks and pins for that device; the pencil button wears a crossed-out eye while they're hidden.
 
 ### Director tools
@@ -150,4 +150,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.27.1**, theme **1.8.0**.
+Current versions: plugin **2.27.2**, theme **1.8.0**.

@@ -622,3 +622,32 @@ body.tcc-app-on { overflow: hidden; }
 .ta-pinrow__t { flex: 1; min-width: 0; }
 /* phone: the Notes view covers the music, so the pencil button and pin hint step aside */
 .ta-streamwrap:has(> .ta-cn) .ta-inkfab, .ta-streamwrap:has(> .ta-cn) .ta-pinhint { display: none; }
+
+/* pins: gray pencil-dots on the music until their note is lit; gold while lit (and while being placed) */
+.ta-pin__dot { fill: #8f8c85; }
+.ta-pin__ic { color: #fff; }
+.ta-pin.is-on .ta-pin__dot, .ta-pin.is-draft .ta-pin__dot { fill: #d29d33; }
+.ta-pin.is-on .ta-pin__ic, .ta-pin.is-draft .ta-pin__ic { color: #1a1408; }
+.ta-pindot { background: #8f8c85; }
+.ta-pindot--on, .ta-flow__i.is-on .ta-pindot, .ta-cn__i.is-on .ta-pindot { background: var(--gold); }
+/* the conductor's note form: steppers and icons instead of sentences */
+.ta-cn .ta-cn__head { align-items: center; }
+.ta-pinrow { display: inline-flex; flex-shrink: 0; }
+.ta-pinchip { display: inline-flex; align-items: center; gap: 2px; height: 28px; padding: 0 2px 0 9px; border-radius: 14px; background: rgba(210, 157, 51, 0.16); color: var(--gold); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.ta-pinchip .ta-pindot { margin-right: 5px; }
+.ta-pinchip__x { width: 24px; height: 24px; border: 0; border-radius: 50%; background: transparent; color: var(--gold) !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.ta-pinchip__x svg { width: 12px; height: 12px; }
+.ta-crow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.ta-step { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 3px; border-radius: 17px; border: 1.5px solid var(--line); }
+.ta-step__b { width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; font-size: 16px; font-weight: 700; line-height: 1; cursor: pointer; }
+.ta-step__b:hover { background: rgba(255, 255, 255, 0.08); }
+.ta-step .ta-at__t { min-width: 3.4ch; text-align: center; font-family: var(--body); font-size: 15px; font-weight: 700; }
+.ta-step__ic { display: inline-flex; padding: 0 2px 0 6px; color: var(--faint); }
+.ta-step__ic svg { width: 16px; height: 16px; }
+.ta-chipbtn { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 12px 0 9px; border-radius: 17px; border: 1.5px solid var(--line); background: transparent; font-size: 13px; font-weight: 700; cursor: pointer; }
+.ta-chipbtn svg { width: 16px; height: 16px; }
+.ta-chipbtn:hover { border-color: var(--gold); color: var(--gold) !important; }
+.ta-mfield { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--faint); }
+.ta-cn .ta-mfield .ta-input.ta-input--m { width: 56px; height: 34px; padding: 4px 8px; border-radius: 9px; font-size: 15px; }
+.ta-cn__head .ta-pinchip { font-family: var(--body); font-size: 13px; overflow: visible; }
+.ta-cn__head .ta-pinchip span { font: inherit; }
