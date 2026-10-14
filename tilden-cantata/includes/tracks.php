@@ -594,6 +594,7 @@ function tcc_render_player( string $attr = 'auto', bool $past = true ): string {
 		'nonce'     => current_user_can( 'edit_posts' ) ? wp_create_nonce( 'wp_rest' ) : '',
 		'canEdit'   => current_user_can( 'edit_posts' ),
 		'director'  => function_exists( 'tcc_is_director' ) && tcc_is_director(),
+		'version'   => TCC_VERSION,
 		'cantata'   => [ 'id' => $current, 'year' => tcc_year( $current ), 'title' => get_the_title( $current ) ],
 		'part'      => $part,
 		'partLabel' => $label,

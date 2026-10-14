@@ -939,6 +939,7 @@
 			] ) );
 		} );
 		if ( S.who ) { box.appendChild( h( 'p', { class: 'ta-fine' }, [ 'Practicing as ' + S.who.name + '. ', h( 'button', { type: 'button', class: 'ta-link', onclick: function () { closeSheet(); signIn(); } }, [ 'Not you?' ] ) ] ) ); }
+		if ( D.version ) { box.appendChild( h( 'p', { class: 'ta-fine ta-ver' }, [ 'v' + D.version ] ) ); }
 		openSheet( 'Which part?', box );
 	}
 	function setPart( p ) {
@@ -1646,7 +1647,7 @@
 	var LEAD_IN = 4;
 	/* where we are in the song (not just the file): a CD section starts partway in */
 	function OFF() { return 0; } // every track is a whole song now (CD sections are marks, not files)
-	function songNow() { return ( audio.currentTime || 0 ) + OFF(); }
+	function songNow() { return ( S.seekTo !== null && S.seekTo !== undefined && ! audio._played ? S.seekTo : ( audio.currentTime || 0 ) ) + OFF(); }
 	function jumpTo( c ) {
 		var want = c.t - LEAD_IN, t = current();
 		function go() { seek( want - OFF() ); if ( audio.paused ) { audio.play().catch( function () {} ); } setFollow( true ); }
@@ -1675,10 +1676,15 @@
 	function seek( t ) {
 		var d = songDur(); if ( ! d ) { return; }
 		t = Math.max( 0, Math.min( d - 0.2, t ) );
-		if ( ! audio._played ) { S.seekTo = t; }
+		if ( ! audio._played ) {
+			S.seekTo = t;
+			/* iPhone and iPad: don't even try until the song has loaded — that's what jams Safari */
+			if ( IOS || audio.readyState < 1 ) { paintScrub(); tickStream( true ); return; }
+		}
 		try { audio.currentTime = t; } catch ( e ) {}
 		paintScrub(); tickStream( true );
 	}
+	var IOS = /iP(hone|ad|od)/.test( navigator.userAgent ) || ( navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 );
 	function applySeekTo() {
 		if ( S.seekTo === null || S.seekTo === undefined ) { return; }
 		var t = S.seekTo; S.seekTo = null;
@@ -1889,6 +1895,7 @@
 		if ( t && askAfter( t, heardEnough ) ) { return; }
 		step( 1 );
 	} );
+	onAudio( 'loadedmetadata', function () { if ( ! IOS && S.seekTo !== null && S.seekTo !== undefined ) { try { this.currentTime = S.seekTo; } catch ( e ) {} } } ); // iPhone and iPad: only once it's playing
 	onAudio( 'playing', function () {
 		applySeekTo();
 		/* a safety net for Safari: playing, with data, but the clock frozen — reload the song at that spot and carry on */
@@ -1896,8 +1903,7 @@
 		clearTimeout( el._watch );
 		el._watch = setTimeout( function () {
 			if ( el !== audio || el.paused || el.seeking || el.readyState < 3 || Math.abs( el.currentTime - t0 ) > 0.05 ) { return; }
-			el.load();
-			el.addEventListener( 'loadedmetadata', function () { try { el.currentTime = want; } catch ( e ) {} el.play().catch( function () {} ); }, { once: true } );
+			S.seekTo = want; el.load(); el.play().catch( function () {} ); // the 'playing' above puts it back at the spot
 		}, 2000 );
 	} );
 	onAudio( 'play', function () { ui.play.innerHTML = I.pause; ui.play.setAttribute( 'aria-label', 'Pause' ); ui.app.classList.add( 'is-playing' ); setFollow( S.follow ); } );
