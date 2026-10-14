@@ -651,3 +651,10 @@ body.tcc-app-on { overflow: hidden; }
 .ta-cn .ta-mfield .ta-input.ta-input--m { width: 56px; height: 34px; padding: 4px 8px; border-radius: 9px; font-size: 15px; }
 .ta-cn__head .ta-pinchip { font-family: var(--body); font-size: 13px; overflow: visible; }
 .ta-cn__head .ta-pinchip span { font: inherit; }
+/* pins are written in the music, not laid on it: flat ink — a thin circle around the icon, no fill, no shadow.
+   Lit (or being placed), the circle fills gold. */
+.ta-pin__dot { fill: none; stroke: #1f1f1f; stroke-width: 2.4; filter: none; }
+.ta-pin__ic { color: #1f1f1f; }
+.ta-pin.is-on .ta-pin__dot, .ta-pin.is-draft .ta-pin__dot { fill: #d29d33; stroke: #d29d33; }
+.ta-pin.is-on .ta-pin__ic, .ta-pin.is-draft .ta-pin__ic { color: #1a1408; }
+.ta-pin__glow { fill: #d29d33; }
