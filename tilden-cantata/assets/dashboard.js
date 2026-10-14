@@ -452,37 +452,43 @@
 		].concat( rehBody( r ), [ skippedFirst ? h( 'p', { class: 'tcc-hm__fine' }, [ skippedFirst ] ) : null ] ) );
 	}
 
-	/* your own practice, day by day over the last two weeks */
-	function practiceWidget() {
-		var days = me && me.days; if ( ! days || ! days.length ) { return null; }
-		var mins = function ( m ) { return m < 60 ? m + ' min' : Math.floor( m / 60 ) + 'h ' + ( m % 60 ) + 'm'; };
-		var week = days.slice( -7 ).reduce( function ( a, x ) { return a + x.min; }, 0 );
-		var on = days.filter( function ( x ) { return x.min > 0; } ).length;
-		var top = Math.max( 10, Math.max.apply( null, days.map( function ( x ) { return x.min; } ) ) );
-		var bars = h( 'span', { class: 'tcc-hm__dbars tcc-hm__pbars', 'aria-hidden': 'true' }, days.map( function ( x, i ) {
-			var d = new Date( x.d + 'T12:00:00' ), last = i === days.length - 1;
-			return h( 'span', { class: 'tcc-hm__dbar' + ( x.min ? '' : ' is-zero' ) + ( last ? ' is-today' : '' ), title: d.toLocaleDateString( undefined, { weekday: 'short', month: 'short', day: 'numeric' } ) + ' · ' + mins( x.min ) }, [
-				h( 'i', { style: 'height:' + ( x.min ? Math.max( 8, Math.round( x.min / top * 100 ) ) : 0 ) + '%' } ),
+	/* "Good practice" is a few songs a day: about 20 minutes per singer. A bar reaches the
+	   dashed line at that, so a full bar always means a good day, whatever else happened. */
+	var GOOD_MIN = 20;
+	function fmtMin( m ) { return m < 60 ? m + ' min' : Math.floor( m / 60 ) + 'h ' + ( m % 60 ) + 'm'; }
+	function dayChart( days, per ) {
+		per = per || 1;
+		var goal = GOOD_MIN * per;
+		return h( 'span', { class: 'tcc-hm__dbars tcc-hm__dbars--goal', 'aria-hidden': 'true' }, days.map( function ( x, i ) {
+			var d = new Date( x.d + 'T12:00:00' ), last = i === days.length - 1, f = Math.min( 1, x.min / goal );
+			var tip = d.toLocaleDateString( undefined, { weekday: 'short', month: 'short', day: 'numeric' } ) + ' · ' + fmtMin( x.min ) + ( per > 1 ? ' · ' + Math.round( x.min / per ) + ' min per singer' : '' );
+			return h( 'span', { class: 'tcc-hm__dbar' + ( x.min ? '' : ' is-zero' ) + ( f >= 1 ? ' is-good' : '' ) + ( last ? ' is-today' : '' ), title: tip }, [
+				h( 'span', { class: 'tcc-hm__dbar-c' }, [ h( 'i', { style: 'height:' + ( x.min ? Math.max( 6, Math.round( f * 100 ) ) : 0 ) + '%' } ) ] ),
 				h( 'small', {}, [ d.toLocaleDateString( undefined, { weekday: 'narrow' } ) ] )
 			] );
 		} ) );
+	}
+
+	/* your own practice, day by day over the last two weeks */
+	function practiceWidget() {
+		var days = me && me.days; if ( ! days || ! days.length ) { return null; }
+		var week = days.slice( -7 ).reduce( function ( a, x ) { return a + x.min; }, 0 );
+		var on = days.filter( function ( x ) { return x.min > 0; } ).length;
 		var stat = function ( big, small ) { return h( 'span', { class: 'tcc-hm__dstat' }, [ h( 'b', {}, [ big ] ), h( 'span', {}, [ small ] ) ] ); };
 		return widget( 'tcc-hm__dir tcc-hm__pract', [
-			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Your practice', 'is-green' ), h( 'span', { class: 'tcc-hm__fine' }, [ 'Last 2 weeks' ] ) ] ),
-			h( 'div', { class: 'tcc-hm__dstats tcc-hm__dstats--2' }, [ stat( mins( week ), 'last 7 days' ), stat( String( on ), on === 1 ? 'day practiced' : 'days practiced' ) ] ),
-			bars
+			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Your practice', 'is-green' ), h( 'span', { class: 'tcc-hm__fine' }, [ 'Line = ' + GOOD_MIN + ' min' ] ) ] ),
+			h( 'div', { class: 'tcc-hm__dstats tcc-hm__dstats--2' }, [ stat( fmtMin( week ), 'last 7 days' ), stat( String( on ), on === 1 ? 'day practiced' : 'days practiced' ) ] ),
+			dayChart( days, 1 )
 		] );
 	}
 
 	/* the director's glance at the week: a tap opens the full report */
 	function directorWidget() {
 		var d = W.director; if ( ! d || ! d.url ) { return null; }
-		var mins = function ( m ) { return m < 60 ? m + ' min' : Math.floor( m / 60 ) + 'h ' + ( m % 60 ) + 'm'; };
+		var mins = fmtMin;
 		var stat = function ( big, small, cls ) { return h( 'span', { class: 'tcc-hm__dstat' + ( cls ? ' ' + cls : '' ) }, [ h( 'b', {}, [ big ] ), h( 'span', {}, [ small ] ) ] ); };
-		var top = Math.max( 1, d.singers || 0, Math.max.apply( null, d.songs.concat( [ 1 ] ) ) );
-		var bars = h( 'span', { class: 'tcc-hm__dbars', 'aria-hidden': 'true' }, d.songs.map( function ( n, i ) {
-			return h( 'span', { class: 'tcc-hm__dbar' + ( n ? '' : ' is-zero' ), title: ( i + 1 ) + '. ' + ( W.songs[ i ] || '' ) + ' · ' + n + ' practiced' }, [ h( 'i', { style: 'height:' + ( n ? Math.max( 8, Math.round( n / top * 100 ) ) : 0 ) + '%' } ), h( 'small', {}, [ String( i + 1 ) ] ) ] );
-		} ) );
+		/* the whole choir, day by day: the line is every singer doing a good practice */
+		var bars = d.days ? dayChart( d.days, Math.max( 1, d.singers || 1 ) ) : null;
 		return h( 'a', { class: 'tcc-hm__w tcc-hm__dir', href: d.url }, [
 			h( 'div', { class: 'tcc-hm__row' }, [ wk( 'Director', 'is-red' ), h( 'span', { class: 'tcc-hm__dir-go' }, [ d.week, h( 'span', { html: SVG.right } ) ] ) ] ),
 			h( 'div', { class: 'tcc-hm__dstats' }, [

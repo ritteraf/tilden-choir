@@ -256,6 +256,19 @@ function tcc_director_summary( int $cantata_id ): array {
 		foreach ( TCC_SECTIONS as $p ) { $n += $c[ $p ]['people']; }
 		$per[] = $n;
 	}
+	/* the whole choir's listening per day over the last two weeks */
+	global $wpdb;
+	$today = new DateTimeImmutable( 'today', wp_timezone() );
+	$from  = $today->modify( '-13 days' );
+	$by    = [];
+	foreach ( $wpdb->get_results( $wpdb->prepare( 'SELECT DATE(created) d, SUM(b) secs FROM ' . tcc_events_table() . " WHERE cantata_id = %d AND kind = 'listen' AND created >= %s GROUP BY DATE(created)", $cantata_id, $from->format( 'Y-m-d 00:00:00' ) ), ARRAY_A ) as $x ) {
+		$by[ $x['d'] ] = (float) $x['secs'];
+	}
+	$days = [];
+	for ( $d = $from; $d <= $today; $d = $d->modify( '+1 day' ) ) {
+		$k = $d->format( 'Y-m-d' );
+		$days[] = [ 'd' => $k, 'min' => (int) round( ( $by[ $k ] ?? 0 ) / 60 ) ];
+	}
 	$p = get_page_by_path( 'director' );
 	return [
 		'url'      => $p && $p->post_status === 'publish' ? get_permalink( $p ) : '',
@@ -266,5 +279,6 @@ function tcc_director_summary( int $cantata_id ): array {
 		'tricky'   => count( array_filter( $R['help'], fn( $x ) => ! $x['handled'] ) ),
 		'silent'   => $silent,
 		'songs'    => $per,
+		'days'     => $days,
 	];
 }
