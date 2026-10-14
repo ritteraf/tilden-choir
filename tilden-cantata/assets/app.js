@@ -173,7 +173,6 @@
 		ui.loopBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: loopTap, 'aria-label': 'Loop a section' }, [ h( 'b', { html: I.loop } ), h( 'span', {}, [ 'Loop' ] ) ] );
 		/* voices ⇄ accompaniment: the full orchestration we perform with, no voices, at the same spot in the song */
 		ui.altBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--alt', onclick: toggleAlt }, [ h( 'b', { html: I.people } ), h( 'span', {}, [ 'Voices' ] ) ] );
-		ui.noteBtn = h( 'button', { type: 'button', class: 'ta-tool', onclick: openNote }, [ h( 'b', { html: I.pen } ), h( 'span', {}, [ 'My note' ] ) ] );
 		ui.songsBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--songs', onclick: openSongs }, [ h( 'b', { html: I.list } ), h( 'span', {}, [ 'Songs' ] ) ] );
 		ui.viewBtn = h( 'button', { type: 'button', class: 'ta-tool ta-tool--feel', onclick: function () { openFeel(); } }, [ h( 'b', { html: ring( 'none' ) } ), h( 'span', {}, [ 'Feedback' ] ) ] );
 		ui.strip = h( 'div', { class: 'ta-flow', hidden: true, 'aria-live': 'polite' } );
@@ -200,7 +199,7 @@
 				ui.nextBtn,
 				h( 'button', { type: 'button', class: 'ta-icon ta-icon--dim', 'aria-label': 'Forward five seconds', html: I.fwd5, onclick: function () { seek( audio.currentTime + 5 ); } } )
 			] ),
-			h( 'div', { class: 'ta-dock__tools' }, [ ui.goBtn, ui.viewBtn, ui.noteBtn, ui.cnBtn, ui.rateBtn, ui.loopBtn, ui.altBtn, ui.songsBtn ] )
+			h( 'div', { class: 'ta-dock__tools' }, [ ui.goBtn, ui.viewBtn, ui.cnBtn, ui.rateBtn, ui.loopBtn, ui.altBtn, ui.songsBtn ] )
 		] ) );
 		ui.toast = h( 'div', { class: 'ta-toast', role: 'status', 'aria-live': 'polite' } );
 		ui.app.appendChild( ui.toast );
@@ -302,7 +301,7 @@
 		] );
 		s.appendChild( head );
 		if ( ! CUES.length ) {
-			s.appendChild( h( 'p', { class: 'ta-empty' }, [ director() ? 'No notes on this song yet. Open Notes to add one at this moment.' : S.who ? 'No notes on this song yet. Tap “My note” while it plays to leave yourself one.' : 'No notes on this song yet.' ] ) );
+			s.appendChild( h( 'p', { class: 'ta-empty' }, [ director() ? 'No notes on this song yet. Open Notes to add one at this moment.' : 'No notes on this song yet.' ] ) );
 		} else {
 			var ol = h( 'ol', { class: 'ta-notes' } );
 			CUES.forEach( function ( c, i ) {
@@ -510,7 +509,7 @@
 		ui.music.appendChild( ui.drop );
 		ui.music.appendChild( ui.pageNow );
 		if ( ui.recBtn ) { ui.recBtn.hidden = ! S.cond; ui.music.appendChild( ui.recBtn ); }
-		ui.inkFab = h( 'button', { type: 'button', class: 'ta-inkfab', 'aria-label': 'Pencil and marks', onclick: openInk }, [ h( 'span', { html: I.pen } ), h( 'span', { class: 'ta-inkfab__off', html: I.eyeOff } ) ] );
+		ui.inkFab = h( 'button', { type: 'button', class: 'ta-inkfab', onclick: openInk }, [ h( 'span', { class: 'ta-inkfab__i', html: I.pen } ), h( 'span', { class: 'ta-inkfab__t' }, [ 'Write' ] ), h( 'span', { class: 'ta-inkfab__off', html: I.eyeOff } ) ] );
 		ui.inkBar = h( 'div', { class: 'ta-inkbar', role: 'toolbar', 'aria-label': 'Pencil', hidden: true } );
 		ui.pinHint = h( 'div', { class: 'ta-pinhint', hidden: true }, [ 'Tap the music to pin a note' ] );
 		ui.music.appendChild( ui.inkFab ); ui.music.appendChild( ui.inkBar ); ui.music.appendChild( ui.pinHint );
@@ -1527,6 +1526,10 @@
 		ui.inkFab.hidden = !! INK.mode || !! M.rec;
 		ui.inkFab.classList.toggle( 'is-off', inkOff() );
 		ui.inkFab.classList.toggle( 'is-dir', inkKind() === 'dir' );
+		var can = canInk();
+		ui.inkFab.querySelector( '.ta-inkfab__i' ).innerHTML = can ? I.pen : I.eye;
+		ui.inkFab.querySelector( '.ta-inkfab__t' ).textContent = can ? 'Write' : 'Marks';
+		ui.inkFab.setAttribute( 'aria-label', can ? 'Write on the music' : 'Show or hide marks' );
 		ui.app.classList.toggle( 'is-inking', drawing );
 		ui.pinHint.hidden = ! pinMode() || !! ( S.cnForm && S.pinDraft );
 		ui.pinHint.textContent = S.cnForm ? 'Tap the music to pin this note' : 'Tap the music to pin a note';
@@ -1749,12 +1752,10 @@
 		ui.altBtn.querySelector( 'b' ).innerHTML = now === 'accompaniment' ? I.accomp : now === 'listen' ? I.people : I.person;
 		ui.altBtn.querySelector( 'span' ).textContent = now ? tinyLabel( now ) : 'Voices';
 		/* guests can't keep notes (nobody to keep them for); the director can always leave notes for the singers */
-		ui.noteBtn.disabled = ! current() || ( ! S.who && ! director() );
 		/* conductor mode: no feedback, no voices toggle; jump by CD instead */
 		ui.viewBtn.hidden = !! S.cond;
 		ui.altBtn.hidden = !! S.cond;
 		ui.goBtn.hidden = ! S.cond;
-		ui.noteBtn.hidden = !! S.cond; // in conductor mode, notes live in the Notes view
 		ui.cnBtn.hidden = ! S.cond;
 		ui.cnBtn.classList.toggle( 'is-on', !! S.cnotes );
 		ui.cnBtn.setAttribute( 'aria-pressed', S.cnotes ? 'true' : 'false' );
@@ -1763,7 +1764,6 @@
 		ui.songsBtn.querySelector( 'span' ).textContent = S.cond ? 'Jump to' : 'Songs';
 		ui.app.classList.toggle( 'is-cond', !! S.cond );
 		paintCdNav();
-		ui.noteBtn.title = current() && ! S.who && ! director() ? 'Sign in to leave notes and feedback' : '';
 		paintFeelBtn();
 		applyView();
 		paintInk(); paintInkUi();

@@ -668,3 +668,7 @@ body.tcc-app-on { overflow: hidden; }
 .ta-pin.is-on .ta-pin__glow, .ta-pin.is-draft .ta-pin__glow { opacity: 1; }
 /* "shows for" worked out from the note's length (until set by hand) */
 .ta-step .ta-at__t.is-auto { color: var(--dim); }
+/* the pencil button says what it does: ✎ Write */
+.ta-inkfab { width: auto; height: 44px; padding: 0 16px 0 13px; gap: 7px; border-radius: 22px; font-size: 15px; font-weight: 700; }
+.ta-inkfab__i { display: inline-flex; }
+.ta-inkfab__i svg { width: 19px; height: 19px; }
