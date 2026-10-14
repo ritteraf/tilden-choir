@@ -594,3 +594,31 @@ body.tcc-app-on { overflow: hidden; }
 @media (max-width: 699px) {
 	.ta-inkbar { top: auto; bottom: 12px; }
 }
+
+/* the conductor's note form: compact — it shares the space with the music and the controls */
+.ta-cn .ta-noteform { gap: 10px; }
+.ta-cn .ta-cn__head span { font-size: 17px; }
+.ta-cn .ta-at { gap: 10px; font-size: 14px; }
+.ta-cn .ta-at__t { font-size: 20px; }
+.ta-cn .ta-at__b { padding: 5px 10px; font-size: 12px; border-radius: 14px; }
+.ta-cn .ta-at__now { min-height: 0; font-size: 13px; align-self: flex-start; }
+.ta-cn .ta-seg__b { padding: 7px; font-size: 13px; }
+.ta-cn .ta-input { padding: 9px 11px; font-size: 15px; }
+.ta-cn .ta-input.ta-input--m { width: 72px; min-height: 0; padding: 6px 9px; font-size: 15px; }
+.ta-cn .ta-extras { gap: 8px; }
+.ta-cn .ta-extras__row { gap: 8px 16px; }
+.ta-cn .ta-extras__m, .ta-cn .ta-extras__d, .ta-cn .ta-extras__k { font-size: 13px; gap: 8px; }
+.ta-cn .ta-extras__d .ta-at__t { font-size: 18px; min-width: 32px; }
+.ta-cn .ta-icpick { grid-template-columns: repeat(auto-fill, 36px); gap: 5px; margin-top: 6px; }
+.ta-cn .ta-icpick__b { height: 36px; border-radius: 9px; }
+.ta-cn .ta-icpick__b svg { width: 18px; height: 18px; }
+.ta-cn .ta-who { gap: 5px; }
+.ta-cn .ta-pick { height: 30px; padding: 0 10px; border-radius: 15px; font-size: 13px; }
+.ta-cn .ta-noteform__go { gap: 12px; flex-wrap: nowrap; }
+.ta-cn .ta-noteform__go .ta-btn { padding: 8px 16px; font-size: 14px; white-space: nowrap; border-width: 1.5px; }
+.ta-cn .ta-noteform__go .ta-link { font-size: 14px; white-space: nowrap; }
+.ta-cn .ta-noteform__go .ta-btn--del { padding: 7px 12px; font-size: 13px; }
+.ta-pinrow { flex-wrap: nowrap; }
+.ta-pinrow__t { flex: 1; min-width: 0; }
+/* phone: the Notes view covers the music, so the pencil button and pin hint step aside */
+.ta-streamwrap:has(> .ta-cn) .ta-inkfab, .ta-streamwrap:has(> .ta-cn) .ta-pinhint { display: none; }

@@ -970,7 +970,7 @@
 				pinRow.innerHTML = '';
 				if ( S.pinDraft ) {
 					pinRow.appendChild( h( 'i', { class: 'ta-pindot', 'aria-hidden': 'true' } ) );
-					pinRow.appendChild( h( 'span', {}, [ 'On the music, p. ' + printedNo( S.pinDraft.pg ) + ' · tap the music to move it' ] ) );
+					pinRow.appendChild( h( 'span', { class: 'ta-pinrow__t' }, [ 'Pinned on p. ' + printedNo( S.pinDraft.pg ) + ' · tap the music to move' ] ) );
 					pinRow.appendChild( h( 'button', { type: 'button', class: 'ta-link', onclick: function () { S.pinDraft = null; paintPin(); paintInk(); } }, [ 'Remove' ] ) );
 				} else if ( scoreRange() ) {
 					pinRow.appendChild( h( 'span', {}, [ 'Tap the music to pin it there' ] ) );
@@ -1041,9 +1041,9 @@
 		var delBtn = null, armed = false;
 		if ( edit ) {
 			delBtn = h( 'button', { type: 'button', class: 'ta-btn ta-btn--del', onclick: function () {
-				if ( ! armed ) { armed = true; delBtn.textContent = 'Tap again to delete'; delBtn.classList.add( 'is-armed' ); setTimeout( function () { if ( armed ) { armed = false; delBtn.textContent = 'Delete note'; delBtn.classList.remove( 'is-armed' ); } }, 4000 ); return; }
+				if ( ! armed ) { armed = true; delBtn.textContent = host ? 'Sure?' : 'Tap again to delete'; delBtn.classList.add( 'is-armed' ); setTimeout( function () { if ( armed ) { armed = false; delBtn.textContent = host ? 'Delete' : 'Delete note'; delBtn.classList.remove( 'is-armed' ); } }, 4000 ); return; }
 				removeNote( edit ); close();
-			} }, [ 'Delete note' ] );
+			} }, [ host ? 'Delete' : 'Delete note' ] );
 		}
 		var body = h( 'div', { class: 'ta-noteform' }, [
 			pinRow, atRow, nowBtn,
