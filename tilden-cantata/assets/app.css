@@ -672,3 +672,5 @@ body.tcc-app-on { overflow: hidden; }
 .ta-inkfab { width: auto; height: 44px; padding: 0 16px 0 13px; gap: 7px; border-radius: 22px; font-size: 15px; font-weight: 700; }
 .ta-inkfab__i { display: inline-flex; }
 .ta-inkfab__i svg { width: 19px; height: 19px; }
+/* the director's star notes are in the director's red pencil, like the marks; lit, a gold glow comes up behind */
+.ta-pin__ic, .ta-pin.is-on .ta-pin__ic, .ta-pin.is-draft .ta-pin__ic { color: #c2412d; }

@@ -63,7 +63,7 @@ Full-screen, built for phones and older singers with "fat fingers" — big contr
   - **The director's pencil** (conductor mode, red): pencil, eraser, undo and *For: Everyone / parts / teams*; saved on the cantata (`_tcc_marks`), shown to whoever it's for.
   - **A singer's own pencil** (signed-in singers, gray) — the singers' only way to write notes; typed personal notes are gone (any written before still show, with a pencil to edit or delete). The button on the music reads **✎ Write** (or **Marks**, with only show/hide, for someone not signed in): saved to their person record (`_tcc_marks_<cantata>`), seen only by them, on any device.
   - **Apple Pencil** draws any time, with no button; fingers still pan, zoom and turn. A finger draws only while the pencil toolbar is open. The page holds still (no turns or drifting) while drawing.
-  - **Star notes** — the director's typed notes are star notes, the musician's "see note" mark: a black star at the spot (tap the music in the conductor's Notes view to start one there, or with a note's form open to place or move its star; the × on the *p. N* chip removes it). The star glows softly while its note is lit; the words stay in the notes column (or the strip on phones). Everything musical goes in pencil; stars are for the longer, contextual notes — staging included. A note without a star still shows at its time, for songs without a score and for listening away from the music.
+  - **Star notes** — the director's typed notes are star notes, the musician's "see note" mark: a star in the director's red pencil at the spot (tap the music in the conductor's Notes view to start one there, or with a note's form open to place or move its star; the × on the *p. N* chip removes it). The star glows softly while its note is lit; the words stay in the notes column (or the strip on phones). Everything musical goes in pencil; stars are for the longer, contextual notes — staging included. A note without a star still shows at its time, for songs without a score and for listening away from the music.
   - **How long a note stays lit** — worked out from its length (3 seconds, plus about a second for every three words past six) unless set by hand with − / +.
   - **Show/hide** — the eye in the pencil toolbar hides all marks and pins for that device; the pencil button wears a crossed-out eye while they're hidden.
 
@@ -151,4 +151,4 @@ Lints the PHP, checks for undefined `tcc_*` calls, parses the JS, then writes th
 
 Install: wp-admin → Plugins → Add New → Upload Plugin → `dist/choir-plugin.zip` → "Replace current with uploaded". Same for the theme under Appearance → Themes → Add New → Upload Theme. Bump the version in `tilden-cantata/tilden-cantata.php` (both the header and `TCC_VERSION`) so browsers pick up new scripts.
 
-Current versions: plugin **2.28.2**, theme **1.8.0**.
+Current versions: plugin **2.28.3**, theme **1.8.0**.
